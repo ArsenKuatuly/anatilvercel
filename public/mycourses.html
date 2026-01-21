@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Доступные курсы</title>
+
+    <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+
+
+<div class="profile-app">
+    <aside class="profile-sidebar">
+        <button class="profile-sidebar__back-btn" id="backBtn">
+            На главную
+        </button>
+        <div class="profile-sidebar__avatar-wrapper">
+            <img
+                    id="avatarImg"
+                    src="/uploads/avatars/default.png"
+                    class="profile-sidebar__avatar-img"
+                    alt="Avatar"
+            />
+
+        </div>
+
+        <div class="profile-sidebar__welcome">
+            Добро пожаловать,<br>
+            <span id="sidebarLogin">arsen1</span>
+        </div>
+
+        <nav>
+            <a href="/profile.html" class="profile-sidebar__menu-link">
+                Мой профиль
+            </a>
+            <a href="/mycourses.html" class="profile-sidebar__menu-link profile-sidebar__menu-link--active">
+                Доступные курсы
+            </a>
+
+        </nav>
+
+
+
+    </aside>
+
+    <main class="profile-content">
+        <h2 class="profile-content__title">
+            Доступный вам курс
+        </h2>
+
+
+        <div id="recommendedCourse"></div>
+
+    </main>
+
+
+</div>
+
+<script src="js/authFetch.js"></script>
+<script src="usersidebar.js"></script>
+<script src="mycoursesrec.js"></script>
+
+
+</body>
+</html>
