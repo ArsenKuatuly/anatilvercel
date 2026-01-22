@@ -1,18 +1,6 @@
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-    try {
-
-        await fetch("/logout", {
-            method: "POST",
-            credentials: "include"
-        });
-    } catch (e) {
-        console.warn("Logout error:", e);
-    }
-
-
-    localStorage.clear();
-    sessionStorage.clear();
-
-
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-logout]");
+    if (!btn) return;
+    localStorage.removeItem("token");
     window.location.href = "/auth.html";
 });

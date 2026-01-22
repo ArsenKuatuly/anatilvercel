@@ -1,116 +1,101 @@
-const registerBtn = document.getElementById("registerBtn");
-const message = document.getElementById("message");
+document.addEventListener("DOMContentLoaded", () => {
+    const registerBtn = document.getElementById("registerBtn");
+    const message = document.getElementById("message");
 
-// если у тебя другой endpoint — поменяй тут
-const REGISTER_ENDPOINT = "/register";
-const REDIRECT_AFTER_SUCCESS = "/auth.html";
+    if (!registerBtn || !message) return;
 
-if (registerBtn) {
-  registerBtn.addEventListener("click", async () => {
-    const loginInput = document.getElementById("login");
-    const passwordInputs = document.querySelectorAll(".js-password");
+    registerBtn.addEventListener("click", async () => {
+        const loginInput = document.getElementById("login");
+        const passwordInputs = document.querySelectorAll(".js-password");
 
-    if (!loginInput || passwordInputs.length < 2) {
-      console.error("Поля регистрации не найдены");
-      return;
+        if (!loginInput || passwordInputs.length < 2) return;
+
+        const password = passwordInputs[0];
+        const passwordRepeat = passwordInputs[1];
+
+        resetMessage();
+        clearInputErrors([loginInput, password, passwordRepeat]);
+
+        if (!loginInput.value.trim() || !password.value || !passwordRepeat.value) {
+            showError("Заполните все поля", [loginInput, password, passwordRepeat]);
+            return;
+        }
+
+        if (loginInput.value.trim().length < 3) {
+            showError("Логин должен содержать минимум 3 символа", [loginInput]);
+            return;
+        }
+
+        if (password.value.length < 6) {
+            showError("Пароль должен содержать минимум 6 символов", [password]);
+            return;
+        }
+
+        if (password.value !== passwordRepeat.value) {
+            showError("Пароли не совпадают", [password, passwordRepeat]);
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    login: loginInput.value.trim(),
+                    password: password.value
+                })
+            });
+
+            const result = await safeJson(res);
+
+            if (!result || !result.success) {
+                setMessage((result && result.message) || "Ошибка регистрации", "error");
+                return;
+            }
+
+            localStorage.setItem("token", result.token);
+
+            setMessage("Регистрация успешна", "success");
+
+            setTimeout(() => {
+                window.location.href = "/dashboard.html";
+            }, 500);
+
+        } catch (e) {
+            setMessage("Ошибка соединения с сервером", "error");
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    function showError(text, inputs) {
+        setMessage(text, "error");
+        inputs.forEach(i => i.classList.add("auth__input--error"));
     }
 
-    const password = passwordInputs[0];
-    const passwordRepeat = passwordInputs[1];
-
-    resetMessage();
-    clearInputErrors([loginInput, password, passwordRepeat]);
-
-    // ===== Валидация как в TSX-дизайне =====
-    if (!loginInput.value.trim() || !password.value || !passwordRepeat.value) {
-      showError("Заполните все поля", [loginInput, password, passwordRepeat]);
-      return;
+    function resetMessage() {
+        message.textContent = "";
+        message.className = "auth__message";
     }
 
-    if (loginInput.value.trim().length < 3) {
-      showError("Логин должен содержать минимум 3 символа", [loginInput]);
-      return;
+    function setMessage(text, type) {
+        message.textContent = text;
+        message.classList.remove("auth__message--success", "auth__message--error");
+        message.classList.add(type === "success" ? "auth__message--success" : "auth__message--error");
     }
 
-    if (password.value.length < 6) {
-      showError("Пароль должен содержать минимум 6 символов", [password]);
-      return;
+    function clearInputErrors(inputs) {
+        inputs.forEach(i => i.classList.remove("auth__input--error"));
     }
 
-    if (password.value !== passwordRepeat.value) {
-      showError("Пароли не совпадают", [password, passwordRepeat]);
-      return;
+    function setLoading(v) {
+        registerBtn.disabled = v;
+        registerBtn.classList.toggle("is-loading", v);
     }
 
-    // ===== Отправка =====
-    setLoading(true);
-
-    try {
-      const response = await fetch(REGISTER_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          login: loginInput.value.trim(),
-          password: password.value,
-        }),
-      });
-
-      // даже если 4xx/5xx — попробуем прочитать json с сообщением
-      const result = await safeJson(response);
-
-      // сервер может вернуть {success, message}
-      const success = Boolean(result && result.success);
-      const text = (result && result.message) ||
-        (response.ok ? "Успешно" : "Ошибка регистрации");
-
-      setMessage(text, success ? "success" : "error");
-
-      if (success) {
-        setTimeout(() => {
-          window.location.href = REDIRECT_AFTER_SUCCESS;
-        }, 700);
-      }
-
-    } catch (err) {
-      setMessage("Ошибка соединения с сервером", "error");
-    } finally {
-      setLoading(false);
+    async function safeJson(res) {
+        try { return await res.json(); } catch { return null; }
     }
-  });
-}
-
-function showError(text, inputs) {
-  setMessage(text, "error");
-  inputs.forEach((input) => input.classList.add("auth__input--error"));
-}
-
-function resetMessage() {
-  if (!message) return;
-  message.textContent = "";
-  message.className = "auth__message";
-}
-
-function setMessage(text, type) {
-  if (!message) return;
-  message.textContent = text;
-  message.classList.remove("auth__message--success", "auth__message--error");
-  message.classList.add(type === "success" ? "auth__message--success" : "auth__message--error");
-}
-
-function clearInputErrors(inputs) {
-  inputs.forEach((input) => input.classList.remove("auth__input--error"));
-}
-
-function setLoading(isLoading) {
-  if (!registerBtn) return;
-  registerBtn.disabled = isLoading;
-  registerBtn.classList.toggle("is-loading", isLoading);
-}
-
-async function safeJson(res) {
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
+});

@@ -130,7 +130,7 @@ submitBtn.addEventListener("click", async () => {
 
             // 🔹 Перенаправление через 2 секунды
             setTimeout(() => {
-                window.location.href = "/mycourses.html";
+                window.location.href = "/profile.html";
             }, 2000);
 
         } else {

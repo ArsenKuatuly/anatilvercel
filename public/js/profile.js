@@ -145,7 +145,7 @@
     const mobileHomeBtn = $("#mobileHomeBtn");
     const mobileLogoutBtn = $("#mobileLogoutBtn");
 
-    if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/dashboard"));
+    if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/dashboard.html"));
     if (mobileHomeBtn) mobileHomeBtn.addEventListener("click", () => (window.location.href = "/"));
 
     async function doLogout() {

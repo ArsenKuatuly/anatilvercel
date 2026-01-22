@@ -1,8 +1,4 @@
 const OpenAI = require("openai");
-const { setCors } = require("../../lib/cors");
-const { readJson } = require("../../lib/body");
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const AI_SYSTEM_PROMPT = `
 Ты — ИИ-ассистент образовательной платформы AnaTil.
@@ -20,44 +16,46 @@ const AI_SYSTEM_PROMPT = `
 `;
 
 module.exports = async (req, res) => {
-  if (setCors(req, res)) return;
+    const t0 = Date.now();
 
-  try {
-    if (req.method !== "POST") {
-      res.statusCode = 405;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ error: "Method not allowed" }));
+    try {
+        console.log("[ai/chat] start", req.method);
+
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Method not allowed" });
+        }
+
+        const apiKey = process.env.OPENAI_API_KEY;
+        console.log("[ai/chat] key:", apiKey ? "OK" : "MISSING");
+        if (!apiKey) {
+            return res.status(500).json({ error: "OPENAI_API_KEY missing" });
+        }
+
+        const { message } = req.body || {};
+        if (!message) return res.status(400).json({ error: "Message is required" });
+
+        // Таймаут на OpenAI (20 сек)
+        const openai = new OpenAI({ apiKey, timeout: 20000 });
+
+        console.log("[ai/chat] calling openai...");
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: AI_SYSTEM_PROMPT },
+                { role: "user", content: message }
+            ],
+            temperature: 0.4
+        });
+
+        const reply = completion.choices?.[0]?.message?.content || "";
+        console.log("[ai/chat] done in", Date.now() - t0, "ms");
+
+        return res.json({ reply });
+    } catch (err) {
+        console.error("[ai/chat] error:", err?.message || err);
+        return res.status(500).json({
+            error: "AI error",
+            details: err?.message || String(err)
+        });
     }
-
-    if (!process.env.OPENAI_API_KEY) {
-      res.statusCode = 500;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ error: "OPENAI_API_KEY is not set" }));
-    }
-
-    const { message } = await readJson(req);
-
-    if (!message) {
-      res.statusCode = 400;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ error: "Message is required" }));
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: AI_SYSTEM_PROMPT },
-        { role: "user", content: message }
-      ],
-      temperature: 0.4
-    });
-
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ reply: completion.choices[0].message.content }));
-  } catch (err) {
-    console.error("❌ AI error:", err);
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ error: "AI error" }));
-  }
 };

@@ -1,40 +1,27 @@
-const db = require("../../lib/db");
-const { setCors } = require("../../lib/cors");
-const { getBearerToken, verifyToken } = require("../../lib/jwt");
+const { verifyToken } = require("../../lib/jwt");
 
 module.exports = async (req, res) => {
-  if (setCors(req, res)) return;
-
-  try {
-    const token = getBearerToken(req);
-    if (!token) {
-      res.statusCode = 401;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ success: false, message: "Не авторизован" }));
+    if (req.method !== "GET") {
+        return res.status(405).json({ success: false, message: "Method not allowed" });
     }
 
-    const payload = verifyToken(token);
+    try {
+        const auth = req.headers.authorization || "";
+        const m = auth.match(/^Bearer\s+(.+)$/i);
+        if (!m) return res.status(401).json({ success: false, message: "Unauthorized" });
 
-    const [rows] = await db.execute(
-      "SELECT avatar FROM user_profiles WHERE user_id = ?",
-      [payload.id]
-    );
+        const token = m[1];
+        const payload = verifyToken(token);
 
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(
-      JSON.stringify({
-        success: true,
-        user: {
-          id: payload.id,
-          login: payload.login,
-          role: payload.role,
-          avatar: rows[0]?.avatar || "/uploads/avatars/default.png"
-        }
-      })
-    );
-  } catch (err) {
-    res.statusCode = 401;
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ success: false, message: "Токен недействителен" }));
-  }
+        return res.json({
+            success: true,
+            user: {
+                id: payload.id,
+                login: payload.login,
+                role: payload.role || "user"
+            }
+        });
+    } catch {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
 };

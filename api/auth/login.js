@@ -1,46 +1,32 @@
 const bcrypt = require("bcrypt");
 const db = require("../../lib/db");
-const { setCors } = require("../../lib/cors");
-const { readJson } = require("../../lib/body");
 const { signToken } = require("../../lib/jwt");
 
 module.exports = async (req, res) => {
-  if (setCors(req, res)) return;
+    try {
+        if (req.method !== "POST") return res.status(405).json({ success: false, message: "Method not allowed" });
 
-  try {
-    if (req.method !== "POST") {
-      res.statusCode = 405;
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ success: false, message: "Method not allowed" }));
+        const { login, password } = req.body || {};
+        if (!login || !password) return res.status(400).json({ success: false, message: "Некорректные данные" });
+
+        const [rows] = await db.execute("SELECT * FROM users WHERE login = ?", [login]);
+        const user = rows[0];
+
+        if (!user) return res.status(401).json({ success: false, message: "Неверный логин или пароль" });
+
+        const ok = await bcrypt.compare(password, user.password);
+        if (!ok) return res.status(401).json({ success: false, message: "Неверный логин или пароль" });
+
+        const role = user.role || "user";
+        const token = signToken({ id: user.id, login: user.login, role });
+
+        return res.json({
+            success: true,
+            token,
+            user: { id: user.id, login: user.login, role }
+        });
+    } catch (err) {
+        console.error("login error:", err);
+        return res.status(500).json({ success: false, message: "Ошибка сервера" });
     }
-
-    const { login, password } = await readJson(req);
-
-    const [rows] = await db.execute(
-      "SELECT id, login, password, role FROM users WHERE login = ?",
-      [login]
-    );
-    const user = rows[0];
-
-    if (!user) {
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ success: false, message: "Неверный логин или пароль" }));
-    }
-
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-      res.setHeader("Content-Type", "application/json; charset=utf-8");
-      return res.end(JSON.stringify({ success: false, message: "Неверный логин или пароль" }));
-    }
-
-    const token = signToken({ id: user.id, login: user.login, role: user.role });
-
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ success: true, message: "Вход выполнен", token }));
-  } catch (err) {
-    console.error(err);
-    res.statusCode = 500;
-    res.setHeader("Content-Type", "application/json; charset=utf-8");
-    res.end(JSON.stringify({ success: false }));
-  }
 };

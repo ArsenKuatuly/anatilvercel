@@ -1,13 +1,20 @@
-require("dotenv").config({ path: ".env.local" });
-
 const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env.local") });
+console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY ? "OK" : "MISSING");
+
 const express = require("express");
 
 const app = express();
 app.use(express.json());
 
+app.use((req, res, next) => {
+    console.log("REQ:", req.method, req.url);
+    next();
+});
+
 // статика
 app.use(express.static(path.join(__dirname, "public")));
+
 
 // API роутер через RegExp (без проблем с *)
 app.all(/^\/api\/(.+)$/, async (req, res) => {

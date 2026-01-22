@@ -1,19 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById("loginBtn");
     const message = document.getElementById("message");
-
     const loginInput = document.getElementById("login");
     const passwordInput = document.querySelector(".js-password");
 
-    if (!loginBtn || !message || !loginInput || !passwordInput) {
-        console.error("Поля авторизации не найдены", {
-            loginBtn: !!loginBtn,
-            message: !!message,
-            loginInput: !!loginInput,
-            passwordInput: !!passwordInput
-        });
-        return;
-    }
+    if (!loginBtn || !message || !loginInput || !passwordInput) return;
 
     function setMsg(text, ok) {
         message.textContent = text || "";
@@ -31,7 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
         inputs.forEach(i => i.classList.add("auth__input--error"));
     }
 
-    async function doLogin() {
+    async function doLogin(e) {
+        if (e) e.preventDefault();
+
         clearErrors();
         setMsg("", false);
 
@@ -47,11 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
         loginBtn.disabled = true;
 
         try {
-            const res = await fetch("/login", {
+            const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                // ВАЖНО для сессии-cookie, если фронт на другом origin (63342)
-                credentials: "include",
                 body: JSON.stringify({ login, password })
             });
 
@@ -62,15 +53,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            setMsg(result.message || (result.success ? "Вход выполнен" : "Ошибка"), !!result.success);
-
-            if (result.success) {
-                // можно редиректить на dashboard, у тебя он защищен auth middleware
-                setTimeout(() => {
-                    window.location.href = "/dashboard";
-                }, 400);
+            if (!res.ok || !result.success || !result.token) {
+                setMsg(result.message || "Ошибка входа", false);
+                return;
             }
-        } catch (e) {
+
+            localStorage.setItem("token", result.token);
+
+            setMsg("Вход выполнен", true);
+
+            setTimeout(() => {
+                window.location.href = "/dashboard.html";
+            }, 200);
+
+        } catch {
             setMsg("Ошибка соединения с сервером", false);
         } finally {
             loginBtn.disabled = false;
@@ -79,14 +75,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loginBtn.addEventListener("click", doLogin);
 
-    // Enter в любом поле
     [loginInput, passwordInput].forEach(el => {
         el.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") doLogin();
+            if (e.key === "Enter") doLogin(e);
         });
     });
 
-    // "Забыли пароль?" (пока заглушка, чтобы не было мёртвой кнопки)
     const forgotBtn = document.getElementById("forgotBtn");
     if (forgotBtn) {
         forgotBtn.addEventListener("click", () => {

@@ -7,6 +7,10 @@
   <link rel="stylesheet" href="css/profile.css" />
 </head>
 <body>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/logout.js"></script>
+
 
 <div class="profile-app" id="app">
   <!-- ===== SIDEBAR (desktop/tablet) ===== -->
@@ -49,7 +53,7 @@
     </nav>
 
     <div class="profile-sidebar__bottom">
-      <button class="profile-sidebar__logout-btn" id="logoutBtn" type="button">
+      <button data-logout class="profile-sidebar__logout-btn" id="logoutBtn" type="button">
         Выйти из аккаунта
       </button>
     </div>
@@ -269,8 +273,9 @@
                   </div>
               </div>
           </section>
-
+      </section>
     </main>
+
   </div>
 </div>
 
