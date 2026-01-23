@@ -1,24 +1,41 @@
 console.log("coursemodul.js загружен");
 
+function getCourseSlug() {
+    const qs = new URLSearchParams(window.location.search);
+    const slugFromQuery = qs.get("slug") || qs.get("course") || qs.get("courseSlug");
+    if (slugFromQuery) return slugFromQuery;
+
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    const idx = parts.indexOf("courses");
+    if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+
+    return null;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-
-
-    console.log("DOM полностью загружен");
-    console.log("finalTaskEl =", document.getElementById("finalTask"));
-    console.log("startTaskBtn =", document.getElementById("startTaskBtn"));
-    console.log("taskDescription =", document.getElementById("taskDescription"));
-
     const modulesEl = document.getElementById("modules");
     const courseTitleEl = document.getElementById("courseTitle");
+
     let finalTaskEl = document.getElementById("finalTask");
     let startTaskBtn = document.getElementById("startTaskBtn");
     let taskDescEl = document.getElementById("taskDescription");
+
+    if (!modulesEl) {
+        console.error("❌ #modules не найден");
+        return;
+    }
+
+    const slug = getCourseSlug();
+    if (!slug) {
+        modulesEl.innerHTML = "<p>Нет slug курса (открой страницу как /coursemodul?slug=...)</p>";
+        return;
+    }
 
     if (!finalTaskEl) {
         finalTaskEl = document.createElement("div");
         finalTaskEl.id = "finalTask";
         finalTaskEl.className = "final-task";
-        document.querySelector(".course").appendChild(finalTaskEl);
+        document.querySelector(".course")?.appendChild(finalTaskEl);
     }
 
     if (!taskDescEl) {
@@ -34,20 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
         finalTaskEl.appendChild(startTaskBtn);
     }
 
-
-    if (!modulesEl) {
-        console.error("❌ #modules не найден");
-        return;
-    }
-
-    const slug = window.location.pathname.split("/").pop();
-
     loadCourse();
 
-    /* ================== ЗАГРУЗКА КУРСА ================== */
     async function loadCourse() {
         try {
-            const res = await authFetch(`/api/course/${slug}`);
+            const res = await authFetch(`/api/course/${encodeURIComponent(slug)}`);
             const data = await res.json();
 
             if (!data.success) {
@@ -65,62 +73,48 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             renderModules(data.modules);
-
-            // 🔥 после отрисовки — проверяем прогресс
             checkCourseProgress(data.course, data.modules);
-
-
-
         } catch (err) {
             console.error("❌ ошибка загрузки курса", err);
             modulesEl.innerHTML = "<p>Ошибка загрузки курса</p>";
         }
     }
 
-    /* ================== РЕНДЕР МОДУЛЕЙ ================== */
     function renderModules(modules) {
         modulesEl.innerHTML = "";
 
-        modules.forEach(m => {
-
+        modules.forEach((m) => {
             if (!Array.isArray(m.lessons)) return;
 
             const moduleEl = document.createElement("section");
             moduleEl.className = "module";
 
             moduleEl.innerHTML = `
-                <div class="module-header">
-                    <h2>${m.title}</h2>
-                </div>
-                <div class="lessons"></div>
-            `;
+        <div class="module-header">
+          <h2>${m.title}</h2>
+        </div>
+        <div class="lessons"></div>
+      `;
 
             const lessonsEl = moduleEl.querySelector(".lessons");
 
-            const firstUncompletedIndex =
-                m.lessons.findIndex(l => !Number(l.completed));
+            const firstUncompletedIndex = m.lessons.findIndex((l) => !Number(l.completed));
 
             m.lessons.forEach((lesson, index) => {
                 const completed = Number(lesson.completed) === 1;
 
                 const canOpen =
                     !Number(m.locked) &&
-                    (
-                        completed ||
-                        index === firstUncompletedIndex ||
-                        firstUncompletedIndex === -1
-                    );
+                    (completed || index === firstUncompletedIndex || firstUncompletedIndex === -1);
 
                 const lessonEl = document.createElement("div");
                 lessonEl.className =
-                    "lesson" +
-                    (completed ? " completed" : "") +
-                    (!canOpen ? " locked" : "");
+                    "lesson" + (completed ? " completed" : "") + (!canOpen ? " locked" : "");
 
                 lessonEl.innerHTML = `
-                    <span>${lesson.title}</span>
-                    ${completed ? `<span>✔</span>` : ``}
-                `;
+          <span>${lesson.title}</span>
+          ${completed ? `<span>✔</span>` : ``}
+        `;
 
                 if (canOpen) {
                     lessonEl.addEventListener("click", () => {
@@ -135,10 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     function allLessonsCompleted(modules) {
         if (!modules) return false;
-        return modules.every(m => Array.isArray(m.lessons) && m.lessons.every(l => Number(l.completed) === 1));
+        return modules.every(
+            (m) => Array.isArray(m.lessons) && m.lessons.every((l) => Number(l.completed) === 1)
+        );
     }
 
     async function checkCourseProgress(course, modules) {
@@ -146,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         finalTaskEl.style.display = "block";
 
-        const courseIsCompleted = course.completed || allLessonsCompleted(modules);
+        const courseIsCompleted = !!course.completed || allLessonsCompleted(modules);
 
         if (!courseIsCompleted) {
             startTaskBtn.disabled = true;
@@ -168,9 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadFinalTask(course.id);
     }
 
-
-
-
     async function loadFinalTask(courseId) {
         if (!finalTaskEl || !startTaskBtn || !taskDescEl) return;
 
@@ -180,8 +172,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!data.success || !data.task) return;
 
-            // Подставляем описание итогового задания
-            taskDescEl.textContent = data.task.description || "Пройдите задание, чтобы получить результат";
+            taskDescEl.textContent =
+                data.task.description || "Пройдите задание, чтобы получить результат";
 
             startTaskBtn.disabled = false;
             startTaskBtn.textContent = "Пройти итоговое задание";
@@ -189,37 +181,8 @@ document.addEventListener("DOMContentLoaded", () => {
             startTaskBtn.onclick = () => {
                 window.location.href = `/finallytask.html?taskId=${data.task.id}`;
             };
-
         } catch (err) {
             console.error("❌ ошибка загрузки задания", err);
         }
     }
-
-    function updateFinalTaskButton(course) {
-        const startTaskBtn = document.getElementById("startTaskBtn");
-        const taskDescription = document.getElementById("taskDescription");
-
-        if (!startTaskBtn || !taskDescription) return;
-
-        // Если курс завершён — активируем кнопку
-        if (course.completed) {
-            startTaskBtn.disabled = false;
-            startTaskBtn.textContent = "Пройти итоговое задание";
-            taskDescription.textContent = "Поздравляем! Курс завершён, можете пройти итоговое задание.";
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 });

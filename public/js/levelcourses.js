@@ -2,96 +2,29 @@ const courseCard = document.getElementById("courseCard");
 const goProfile = document.getElementById("goProfile");
 const goHome = document.getElementById("goHome");
 
-/* ================= ЗАГРУЗКА КУРСА ================= */
-
-async function loadMyCourse() {
-    try {
-        const res = await fetch("/api/my-course", {
-            credentials: "include"
-        });
-
-        // ❌ не авторизован
-        if (res.status === 401) {
-            courseCard.innerHTML = `
-                <div class="course course--empty">
-                    <p>Войдите, чтобы увидеть рекомендованный курс</p>
-                </div>
-            `;
-            return;
-        }
-
-        const data = await res.json();
-
-        if (!data.success) {
-            courseCard.innerHTML = `
-                <div class="course course--empty">
-                    <p>${data.message || "Сначала пройдите тест"}</p>
-                </div>
-            `;
-            return;
-        }
-
-        const course = data.course;
-
-        courseCard.innerHTML = `
-            <div class="course__card">
-                <h2 class="course__title">${course.title}</h2>
-                <p class="course__level">
-                    Уровень: ${translateLevel(course.level)}
-                </p>
-
-                <button class="btn btn--primary" id="openCourse">
-                    Перейти к курсу
-                </button>
-            </div>
-        `;
-
-        document
-            .getElementById("openCourse")
-            .addEventListener("click", () => {
-                window.location.href = `/courses/${course.slug}`;
-            });
-
-    } catch (err) {
-        console.error(err);
-        courseCard.innerHTML = `
-            <div class="course course--error">
-                <p>Ошибка загрузки курса</p>
-            </div>
-        `;
-    }
+function getToken() {
+    return localStorage.getItem("token");
 }
 
-loadMyCourse();
+function authHeaders() {
+    const token = getToken();
+    return token ? { Authorization: "Bearer " + token } : {};
+}
 
-/* ================= КНОПКИ ================= */
+function goToCourse(slug) {
+    window.location.href = `/coursemodul.html?slug=${encodeURIComponent(slug)}`;
+}
 
-goProfile.addEventListener("click", () => {
-    window.location.href = "/profile.html";
-});
-
-/**
- * 🧠 УМНАЯ КНОПКА "НА ГЛАВНУЮ"
- * авторизован → dashboard.html
- * гость → index.html
- */
-goHome.addEventListener("click", async () => {
-    try {
-        const res = await fetch("/api/my-course", {
-            credentials: "include"
-        });
-
-        if (res.status === 401) {
-            window.location.href = "/index.html";
-        } else {
-            window.location.href = "/dashboard.html";
-        }
-    } catch {
-        window.location.href = "/index.html";
-    }
-});
-
-/* ================= ПЕРЕВОД УРОВНЕЙ ================= */
+function renderMessage(text) {
+    courseCard.innerHTML = `
+    <div class="course__card">
+      <h2 class="course__title">Мои курсы</h2>
+      <p class="course__level">${text}</p>
+      <button class="btn btn--primary" id="goAuth">Войти</button>
+    </div>
+  `;
+    document.getElementById("goAuth").onclick = () => (window.location.href = "/auth.html");
+}
 
 function translateLevel(level) {
     const map = {
@@ -100,14 +33,93 @@ function translateLevel(level) {
         intermediate: "Средний",
         upper: "Выше среднего",
         advanced: "Высокий",
-
-        // если приходит из БД
         A1: "Элементарный",
         A2: "Базовый",
         B1: "Средний",
         B2: "Выше среднего",
         C1: "Высокий"
     };
-
     return map[level] || level;
 }
+
+async function fetchJson(url) {
+    const res = await fetch(url, { headers: authHeaders() });
+    return { res, data: await res.json().catch(() => ({})) };
+}
+
+async function loadMyCoursesSmart() {
+    // 0) нет токена -> на вход
+    if (!getToken()) {
+        renderMessage("Войдите, чтобы увидеть ваш курс.");
+        return;
+    }
+
+    try {
+        // 1) активный курс
+        const active = await fetchJson("/api/my-active-course");
+
+        if (active.res.status === 401) {
+            localStorage.removeItem("token");
+            renderMessage("Сессия истекла. Войдите снова.");
+            return;
+        }
+
+        if (active.data && active.data.success && active.data.slug) {
+            // сразу открываем активный курс
+            goToCourse(active.data.slug);
+            return;
+        }
+
+        // 2) курс по уровню (рекомендованный)
+        const rec = await fetchJson("/api/my-course");
+
+        if (rec.res.status === 401) {
+            localStorage.removeItem("token");
+            renderMessage("Сессия истекла. Войдите снова.");
+            return;
+        }
+
+        if (!rec.data.success || !rec.data.course) {
+            courseCard.innerHTML = `
+        <div class="course__card">
+          <h2 class="course__title">Мои курсы</h2>
+          <p class="course__level">${rec.data.message || "Курс не найден. Пройдите тест уровня."}</p>
+          <button class="btn btn--primary" id="goTest">Пройти тест</button>
+        </div>
+      `;
+            document.getElementById("goTest").onclick = () => (window.location.href = "/test.html");
+            return;
+        }
+
+        const course = rec.data.course;
+
+        // показываем карточку и кнопку
+        courseCard.innerHTML = `
+      <div class="course__card">
+        <h2 class="course__title">${course.title}</h2>
+        <p class="course__level">Уровень: ${translateLevel(course.level)}</p>
+
+        <button class="btn btn--primary" id="openCourse">Продолжить</button>
+      </div>
+    `;
+
+        document.getElementById("openCourse").onclick = () => goToCourse(course.slug);
+
+    } catch (err) {
+        console.error(err);
+        courseCard.innerHTML = `
+      <div class="course__card">
+        <h2 class="course__title">Мои курсы</h2>
+        <p class="course__level">Ошибка загрузки. Попробуйте ещё раз.</p>
+        <button class="btn btn--primary" id="reload">Обновить</button>
+      </div>
+    `;
+        document.getElementById("reload").onclick = () => location.reload();
+    }
+}
+
+// кнопки
+goProfile?.addEventListener("click", () => (window.location.href = "/profile.html"));
+goHome?.addEventListener("click", () => (window.location.href = "/dashboard.html"));
+
+loadMyCoursesSmart();

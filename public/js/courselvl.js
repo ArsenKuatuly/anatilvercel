@@ -1,18 +1,34 @@
 document.addEventListener("DOMContentLoaded", loadCourse);
 
+function getSlug() {
+    const qs = new URLSearchParams(window.location.search);
+    const s = qs.get("slug") || qs.get("course") || qs.get("courseSlug");
+    if (s) return s;
+
+    // fallback: /courses/<slug>
+    const parts = window.location.pathname.split("/").filter(Boolean);
+    const idx = parts.indexOf("courses");
+    if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+
+    return null;
+}
+
 async function loadCourse() {
-    const slug = window.location.pathname.split("/").pop();
+    const slug = getSlug();
+    if (!slug) {
+        alert("Нет slug курса. Открой страницу как courselvl.html?slug=...");
+        return;
+    }
 
     try {
-        const res = await authFetch(`/api/course/${slug}`);
+        const res = await authFetch(`/api/course/${encodeURIComponent(slug)}`);
         const data = await res.json();
-        renderModules(data.modules);
+        renderModules(data.modules || []);
     } catch (err) {
         console.error("Ошибка загрузки курса:", err);
         alert("Не удалось загрузить курс");
     }
 }
-
 
 function renderModules(modules) {
     const container = document.getElementById("modules");
@@ -25,45 +41,40 @@ function renderModules(modules) {
         const locked = module.locked;
 
         section.innerHTML = `
-            <div class="module-header ${locked ? "locked" : ""}">
-                <span class="lock">${locked ? "🔒" : "🔓"}</span>
-                <div>
-                    <h2>Модуль #${index + 1}: ${module.title}</h2>
-                    <span class="status ${locked ? "locked" : ""}">
-                        ${locked ? "Модуль заблокирован" : "Модуль доступен"}
-                    </span>
-                </div>
+      <div class="module-header ${locked ? "locked" : ""}">
+        <span class="lock">${locked ? "🔒" : "🔓"}</span>
+        <div>
+          <h2>Модуль #${index + 1}: ${module.title}</h2>
+          <span class="status ${locked ? "locked" : ""}">
+            ${locked ? "Модуль заблокирован" : "Модуль доступен"}
+          </span>
+        </div>
+      </div>
+
+      <div class="lessons ${locked ? "" : "active"}">
+        ${(module.lessons || []).map(lesson => `
+          <div class="lesson ${lesson.completed ? "completed" : ""} ${locked ? "locked" : ""}">
+            <div>
+              <strong>${lesson.title}</strong>
+              <p>${lesson.completed ? "Урок пройден" : "Урок не пройден"}</p>
             </div>
 
-            <div class="lessons ${locked ? "" : "active"}">
-                ${module.lessons.map(lesson => `
-                    <div class="lesson
-                        ${lesson.completed ? "completed" : ""}
-                        ${locked ? "locked" : ""}">
-                        <div>
-                            <strong>${lesson.title}</strong>
-                            <p>${lesson.completed ? "Урок пройден" : "Урок не пройден"}</p>
-                        </div>
-
-                        ${
+            ${
             lesson.completed
                 ? `<span class="progress">✔</span>`
                 : locked
                     ? `<span class="progress">🔒</span>`
-                    : `<button onclick="openLesson(${lesson.id})">
-                                            Открыть
-                                       </button>`
+                    : `<button onclick="openLesson(${lesson.id})">Открыть</button>`
         }
-                    </div>
-                `).join("")}
-            </div>
-        `;
+          </div>
+        `).join("")}
+      </div>
+    `;
 
         container.appendChild(section);
     });
 }
 
-/* ================== OPEN LESSON ================== */
 function openLesson(lessonId) {
     window.location.href = `/lesson.html?id=${lessonId}`;
 }

@@ -25,6 +25,8 @@ const courseTaskByCourseId = require("../server/routes/[courseId]/task");
 const taskQuestions = require("../server/routes/task/[taskId]/questions");
 const taskSubmit = require("../server/routes/task/[taskId]/submit");
 const myCourses = require("../server/routes/my-courses");
+const myCourse = require("../server/routes/my-course");
+const myActiveCourse = require("../server/routes/my-active-course");
 
 
 function matchPath(pathname, pattern) {
@@ -69,6 +71,8 @@ module.exports = async (req, res) => {
 
 
         if (path === "/api/my-courses" && method === "GET") return myCourses(req, res);
+        if (path === "/api/my-course" && method === "GET") return myCourse(req, res);
+        if (path === "/api/my-active-course" && method === "GET") return myActiveCourse(req, res);
 
         // --- LEARNING FLOW ---
         // GET /api/course/:slug
