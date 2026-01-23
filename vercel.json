@@ -6,7 +6,7 @@
     { "source": "/dashboard", "destination": "/public/dashboard.html" },
 
     { "source": "/courses", "destination": "/public/levelcourses.html" },
-    { "source": "/courses/(.*)", "destination": "/public/coursemodul.html" },
+    { "source": "/courses/(.*)", "destination": "/public/course.html" },
 
     { "source": "/lesson", "destination": "/public/lesson.html" },
     { "source": "/lesson/(.*)", "destination": "/public/lesson.html" },
