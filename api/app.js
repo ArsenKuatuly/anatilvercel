@@ -24,6 +24,7 @@ const courseTaskByCourseId = require("../server/routes/[courseId]/task");
 
 const taskQuestions = require("../server/routes/task/[taskId]/questions");
 const taskSubmit = require("../server/routes/task/[taskId]/submit");
+const myCourses = require("../server/routes/my-courses");
 
 
 function matchPath(pathname, pattern) {
@@ -64,6 +65,10 @@ module.exports = async (req, res) => {
 
         // --- AI ---
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
+
+
+
+        if (path === "/api/my-courses" && method === "GET") return myCourses(req, res);
 
         // --- LEARNING FLOW ---
         // GET /api/course/:slug
