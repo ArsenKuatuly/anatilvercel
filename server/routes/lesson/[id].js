@@ -1,5 +1,5 @@
-const { requireUser } = require("../../lib/jwt");
-const db = require("../../lib/db");
+const { requireUser } = require("../../../lib/jwt");
+const db = require("../../../lib/db");
 
 module.exports = async (req, res) => {
     let user;

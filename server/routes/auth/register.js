@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
-const db = require("../../lib/db");
-const { signToken } = require("../../lib/jwt");
+const db = require("../../../lib/db");
+const { signToken } = require("../../../lib/jwt");
 
 // Check column existence in Postgres (Supabase)
 async function hasColumn(tableName, columnName, schema = "public") {

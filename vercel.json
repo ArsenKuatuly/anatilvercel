@@ -1,11 +1,20 @@
 {
   "rewrites": [
-    { "source": "/auth", "destination": "/public/auth.html" },
-    { "source": "/register", "destination": "/public/register.html" },
-    { "source": "/dashboard", "destination": "/public/dashboard.html" },
-    { "source": "/profile", "destination": "/public/profile.html" },
+    { "source": "/api/(.*)", "destination": "/api/app" },
 
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/auth", "destination": "/public/auth.html" },
+    { "source": "/dashboard", "destination": "/public/dashboard.html" },
+    { "source": "/courses", "destination": "/public/courses.html" },
+
+    { "source": "/courses/(.*)", "destination": "/public/course.html" },
+
+    { "source": "/lesson", "destination": "/public/lesson.html" },
+    { "source": "/lesson/(.*)", "destination": "/public/lesson.html" },
+
+    { "source": "/course-test", "destination": "/public/course-test.html" },
+    { "source": "/finallytask", "destination": "/public/finallytask.html" },
+    { "source": "/admin", "destination": "/public/admin.html" },
+
     { "source": "/(.*)", "destination": "/public/$1" }
   ]
 }

@@ -1,4 +1,4 @@
-const { requireUser } = require("../../lib/jwt");
+const { requireUser } = require("../../../lib/jwt");
 
 module.exports = async (req, res) => {
     try {

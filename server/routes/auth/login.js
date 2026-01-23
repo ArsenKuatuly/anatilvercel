@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
-const db = require("../../lib/db");
-const { signToken } = require("../../lib/jwt");
+const db = require("../../../lib/db");
+const { signToken } = require("../../../lib/jwt");
 
 module.exports = async (req, res) => {
     try {

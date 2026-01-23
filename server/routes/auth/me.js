@@ -1,4 +1,4 @@
-const { verifyToken } = require("../../lib/jwt");
+const { verifyToken } = require("../../../lib/jwt");
 
 module.exports = async (req, res) => {
     if (req.method !== "GET") {
