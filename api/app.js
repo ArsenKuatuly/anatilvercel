@@ -22,6 +22,10 @@ const continueLesson = require("../server/routes/continue-lesson");
 
 const courseTaskByCourseId = require("../server/routes/[courseId]/task");
 
+const taskQuestions = require("../server/routes/task/[taskId]/questions");
+const taskSubmit = require("../server/routes/task/[taskId]/submit");
+
+
 function matchPath(pathname, pattern) {
 
     const pParts = pattern.split("/").filter(Boolean);
@@ -97,6 +101,27 @@ module.exports = async (req, res) => {
                 return courseTaskByCourseId(req, res);
             }
         }
+
+        // GET /api/task/:taskId/questions
+        {
+            const params = matchPath(path, "/api/task/:taskId/questions");
+            if (params && method === "GET") {
+                req.query = req.query || {};
+                req.query.taskId = params.taskId;
+                return taskQuestions(req, res);
+            }
+        }
+
+// POST /api/task/:taskId/submit
+        {
+            const params = matchPath(path, "/api/task/:taskId/submit");
+            if (params && method === "POST") {
+                req.query = req.query || {};
+                req.query.taskId = params.taskId;
+                return taskSubmit(req, res);
+            }
+        }
+
 
         return res.status(404).json({ success: false, message: "Not found" });
     } catch (e) {
