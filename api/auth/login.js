@@ -9,8 +9,9 @@ module.exports = async (req, res) => {
         const { login, password } = req.body || {};
         if (!login || !password) return res.status(400).json({ success: false, message: "Некорректные данные" });
 
-        const [rows] = await db.execute("SELECT * FROM users WHERE login = ?", [login]);
-        const user = rows[0];
+        const result = await db.query("SELECT * FROM users WHERE login = $1", [login]);
+        const user = result.rows[0];
+
 
         if (!user) return res.status(401).json({ success: false, message: "Неверный логин или пароль" });
 

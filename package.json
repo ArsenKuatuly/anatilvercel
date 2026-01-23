@@ -5,14 +5,15 @@
   "scripts": {
     "dev": "node -e \"console.log('Use: npm run vercel:dev')\"",
     "vercel:dev": "vercel dev",
-    "local": "node local-dev.js"
+    "local": "set NODE_OPTIONS=--dns-result-order=ipv4first && node local-dev.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.0",
     "mysql2": "^3.0.0",
-    "openai": "^4.0.0"
+    "openai": "^4.0.0",
+    "pg": "^8.17.2"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",
