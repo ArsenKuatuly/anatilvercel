@@ -1,26 +1,35 @@
-(async () => {
+(() => {
+    const p = location.pathname;
+
+    const open = [
+        "/auth",
+        "/auth.html",
+        "/register",
+        "/register.html",
+        "/public/auth.html",
+        "/public/register.html",
+    ];
+
+    if (open.includes(p)) return;
+
     const token = localStorage.getItem("token");
     if (!token) {
-        window.location.replace("/auth.html");
+        location.replace("/auth.html");
         return;
     }
 
-    try {
-        const res = await fetch("/api/auth/me", {
-            headers: { Authorization: "Bearer " + token }
-        });
-
-        const data = await res.json().catch(() => null);
-
-        if (!res.ok || !data || !data.success) {
+    fetch("/api/auth/me", {
+        headers: { Authorization: "Bearer " + token }
+    })
+        .then(r => r.json().catch(() => null))
+        .then(data => {
+            if (!data || !data.success) {
+                localStorage.removeItem("token");
+                location.replace("/auth.html");
+            }
+        })
+        .catch(() => {
             localStorage.removeItem("token");
-            window.location.replace("/auth.html");
-            return;
-        }
-
-        window.__me = data.user;
-    } catch {
-        localStorage.removeItem("token");
-        window.location.replace("/auth.html");
-    }
+            location.replace("/auth.html");
+        });
 })();

@@ -1,10 +1,21 @@
-// js/profile.js
+// public/js/profile.js
 (() => {
     "use strict";
 
-    // ===== helpers =====
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+    const TOKEN_KEY = "token";
+
+
+
+    function getToken() {
+        try {
+            return localStorage.getItem(TOKEN_KEY) || "";
+        } catch {
+            return "";
+        }
+    }
 
     async function safeJson(res) {
         try {
@@ -12,6 +23,17 @@
         } catch {
             return {};
         }
+    }
+
+    async function apiFetch(url, options = {}) {
+        const token = getToken();
+        const headers = new Headers(options.headers || {});
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+
+        return fetch(url, {
+            ...options,
+            headers,
+        });
     }
 
     function formatDate(value) {
@@ -27,7 +49,6 @@
         });
     }
 
-    // ===== toast =====
     const toastEl = $("#toast");
     const toastText = $("#toastText");
     const toastClose = $("#toastClose");
@@ -51,7 +72,6 @@
         });
     }
 
-    // ===== page switcher (one-page app) =====
     const pageProfile = $("#pageProfile");
     const pageCourses = $("#pageCourses");
 
@@ -68,7 +88,6 @@
         });
     }
 
-    // ===== mobile drawer =====
     const mobileMenuBtn = $("#mobileMenuBtn");
     const mobileOverlay = $("#mobileOverlay");
     const mobileDrawer = $("#mobileDrawer");
@@ -139,7 +158,6 @@
         });
     });
 
-    // ===== buttons: home/back/logout =====
     const backBtn = $("#backBtn");
     const logoutBtn = $("#logoutBtn");
     const mobileHomeBtn = $("#mobileHomeBtn");
@@ -148,10 +166,9 @@
     if (backBtn) backBtn.addEventListener("click", () => (window.location.href = "/dashboard.html"));
     if (mobileHomeBtn) mobileHomeBtn.addEventListener("click", () => (window.location.href = "/"));
 
-    async function doLogout() {
+    function doLogout() {
         try {
-            const res = await fetch("/logout", { method: "POST", credentials: "include" });
-            if (res.ok) return (window.location.href = "/");
+            localStorage.removeItem(TOKEN_KEY);
         } catch {}
         window.location.href = "/";
     }
@@ -159,7 +176,6 @@
     if (logoutBtn) logoutBtn.addEventListener("click", doLogout);
     if (mobileLogoutBtn) mobileLogoutBtn.addEventListener("click", doLogout);
 
-    // ===== profile load/save/avatar =====
     const form = $("#profileForm");
     const avatarInput = $("#avatarInput");
     const avatarImg = $("#avatarImg");
@@ -187,7 +203,7 @@
         if (!form) return;
 
         try {
-            const res = await fetch("/api/profile", { credentials: "include" });
+            const res = await apiFetch("/api/profile");
             const data = await safeJson(res);
 
             if (data && data.profile) {
@@ -212,10 +228,9 @@
     }
 
     async function saveProfile(payload) {
-        const res = await fetch("/api/profile", {
+        const res = await apiFetch("/api/profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "include",
             body: JSON.stringify(payload),
         });
         return safeJson(res);
@@ -234,7 +249,7 @@
                     showToast("Профиль сохранён");
                     applyNameFromProfile({ first_name: payload.first_name, last_name: payload.last_name });
                 } else {
-                    showToast("Ошибка сохранения", "error");
+                    showToast(result?.message || "Ошибка сохранения", "error");
                 }
             } catch (err) {
                 console.error(err);
@@ -252,9 +267,8 @@
             avatarData.append("avatar", file);
 
             try {
-                const res = await fetch("/api/profile/avatar", {
+                const res = await apiFetch("/api/profile/avatar", {
                     method: "POST",
-                    credentials: "include",
                     body: avatarData,
                 });
 
@@ -265,7 +279,7 @@
                     applyAvatar(newAvatar);
                     showToast("Аватар обновлён");
                 } else {
-                    showToast("Ошибка загрузки аватара", "error");
+                    showToast(result?.message || "Ошибка загрузки аватара", "error");
                 }
             } catch (e) {
                 console.error(e);
@@ -276,7 +290,6 @@
         });
     }
 
-    // ===== your level block (my-result + history) =====
     const testResultBlock = $("#testResultBlock");
     const testActions = $("#testActions");
     const historyBlock = $("#historyBlock");
@@ -288,7 +301,7 @@
         if (!testResultBlock) return;
 
         try {
-            const res = await fetch("/api/my-result", { credentials: "include" });
+            const res = await apiFetch("/api/my-result");
             if (!res.ok) return;
 
             const data = await safeJson(res);
@@ -355,7 +368,7 @@
             if (!isHidden) return;
 
             try {
-                const res = await fetch("/api/test-history", { credentials: "include" });
+                const res = await apiFetch("/api/test-history");
                 const data = await safeJson(res);
 
                 if (!data || !data.success) {
@@ -398,7 +411,6 @@
         });
     }
 
-    // ===== courses: everything from DB =====
     async function loadCourseBlocks() {
         const courseTitle = document.getElementById("courseTitle");
         const courseLevel = document.getElementById("courseLevel");
@@ -421,11 +433,10 @@
         const progressTitle = document.getElementById("progressTitle");
         const progressText = document.getElementById("progressText");
 
-        // если ты где-то убрал элементы — просто выходим без ошибок
         if (!courseTitle && !courseLessonsTotal && !courseProgressBar) return;
 
         try {
-            const res = await fetch("/api/lessons/progress/current", { credentials: "include" });
+            const res = await apiFetch("/api/lessons/progress/current");
             if (!res.ok) return;
 
             const data = await safeJson(res);
@@ -438,45 +449,33 @@
             const modulesCount = Number(data.modulesCount || 0);
             const percent = Number(data.percent || 0);
 
-            // ===== Заголовок курса =====
             if (courseTitle) courseTitle.textContent = course.title || "—";
             if (courseLevel) courseLevel.textContent = (course.level || "—").toUpperCase();
 
-            // description у тебя в ответе сейчас нет (в courses таблице тоже не видно),
-            // поэтому не ломаемся:
             if (courseDesc) courseDesc.textContent = courseDesc.textContent === "—" ? "—" : courseDesc.textContent;
 
-            // ===== Статы карточки =====
             if (courseLessonsTotal) courseLessonsTotal.textContent = totalLessons ? String(totalLessons) : "0";
             if (courseDuration) courseDuration.textContent = modulesCount ? `${modulesCount} модулей` : "0 модулей";
             if (courseCompleted) courseCompleted.textContent = `${completedLessons}/${totalLessons || 0}`;
 
-            // ===== Прогресс =====
             if (coursePercent) coursePercent.textContent = `${percent}%`;
             if (courseProgressBar) courseProgressBar.style.width = `${percent}%`;
             if (courseProgress) courseProgress.setAttribute("aria-valuenow", String(percent));
 
-            // ===== Следующий урок =====
             if (courseNextLesson) {
-                courseNextLesson.textContent = data.nextLesson
-                    ? data.nextLesson.title
-                    : "Курс завершён 🎉";
+                courseNextLesson.textContent = data.nextLesson ? data.nextLesson.title : "Курс завершён 🎉";
             }
 
-            // ===== Тайлы "Ваш прогресс" =====
             if (tileDone) tileDone.textContent = String(completedLessons);
             if (tileLeft) tileLeft.textContent = String(Math.max(0, totalLessons - completedLessons));
 
-            if (progressTitle) {
-                progressTitle.textContent = totalLessons ? "Отличная работа!" : "Начните обучение";
-            }
+            if (progressTitle) progressTitle.textContent = totalLessons ? "Отличная работа!" : "Начните обучение";
             if (progressText) {
                 progressText.textContent = totalLessons
                     ? `Вы завершили ${completedLessons} уроков. Продолжайте в том же духе!`
                     : "Пройдите первый урок, чтобы увидеть прогресс.";
             }
 
-            // ===== Кнопка перехода =====
             if (goCourseBtn && course.slug) {
                 goCourseBtn.onclick = () => (window.location.href = `/courses/${course.slug}`);
             }
@@ -485,8 +484,6 @@
         }
     }
 
-
-    // ===== init =====
     document.addEventListener("DOMContentLoaded", async () => {
         openPage(initialPageFromHash());
         await loadProfile();
