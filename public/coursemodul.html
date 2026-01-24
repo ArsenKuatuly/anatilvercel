@@ -1,139 +1,96 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Курс — AnaTil</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Курс</title>
 
-  <link rel="stylesheet" href="/css/headerdash.css" />
-  <link rel="stylesheet" href="/css/course.css" />
-  <link rel="stylesheet" href="/css/chat.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/header.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
 </head>
+
 <body>
-  <!-- если у тебя эти файлы уже есть в проекте — оставь, если нет — убери -->
-  <script src="/js/auth-guard.js"></script>
-  <script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/api.js"></script>
 
-  <header class="header" id="header">
+<header class="header" id="header">
     <div class="header__container">
-      <a class="header__logo" href="/index.html">AnaTil</a>
+        <a class="header__logo" href="index.html">AnaTil</a>
 
-      <nav class="header__nav nav nav--desktop">
-        <a class="nav__link" href="#promo" data-key="about">О нас</a>
-        <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-        <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-        <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
-      </nav>
-
-      <div class="header__actions header__actions--desktop">
-        <a href="/admin" class="header__admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
-        <a href="/profile.html" class="btn btn--primary" data-key="check_level">Ваш профиль</a>
-      </div>
-
-      <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
-        ☰
-      </button>
-    </div>
-
-    <div class="header__mobile" hidden>
-      <div class="header__container header__container--mobile">
-        <nav class="header__nav nav nav--mobile">
-          <a class="nav__link" href="#promo" data-key="about">О нас</a>
-          <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-          <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-          <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+        <!-- DESKTOP NAV -->
+        <nav class="header__nav nav nav--desktop">
+            <a class="nav__link" href="#promo" data-key="about">О нас</a>
+            <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
+            <a class="nav__link" href="#important" data-key="important">Преимущества</a>
+            <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
         </nav>
 
-        <div class="header__actions header__actions--mobile">
-          <a href="/admin" class="header__admin" id="adminBtnMobile" style="display:none">⚙ Админ панель</a>
-          <a href="/profile.html" class="btn btn--primary" data-key="check_level">Ваш профиль</a>
+        <div class="header__actions header__actions--desktop">
+            <a href="/admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
+            <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
         </div>
-      </div>
+
+        <!-- BURGER (mobile) -->
+        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button>
     </div>
-  </header>
 
-  <main class="page">
-    <div class="container">
+    <!-- MOBILE MENU -->
+    <div class="header__mobile" hidden>
+        <div class="header__container header__container--mobile">
+            <nav class="header__nav nav nav--mobile">
+                <a class="nav__link" href="#promo" data-key="about">О нас</a>
+                <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
+                <a class="nav__link" href="#important" data-key="important">Преимущества</a>
+                <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+            </nav>
 
-      <!-- HERO / SUMMARY -->
-      <section class="course-hero" aria-labelledby="courseTitle">
-        <div class="course-hero__top">
-          <div class="course-hero__title-wrap">
-            <h1 class="course-hero__title" id="courseTitle">Курс</h1>
-            <p class="course-hero__desc" id="courseDesc">Загрузка...</p>
-          </div>
-
-          <div class="course-hero__actions">
-            <button class="btn btn--primary" id="continueBtn" type="button">Продолжить</button>
-            <button class="btn btn--ghost" id="restartBtn" type="button" hidden>Пройти заново</button>
-          </div>
+            <div class="header__actions header__actions--mobile">
+                <a href="/admin" class="adminBtn" style="display:none">⚙ Админ панель</a>
+                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
+            </div>
         </div>
-
-        <div class="course-hero__stats">
-          <div class="stat">
-            <div class="stat__label">Модулей</div>
-            <div class="stat__value" id="moduleCount">—</div>
-          </div>
-          <div class="stat">
-            <div class="stat__label">Уроков</div>
-            <div class="stat__value" id="lessonCount">—</div>
-          </div>
-          <div class="stat">
-            <div class="stat__label">Прогресс</div>
-            <div class="stat__value"><span id="progressValue">0</span>%</div>
-          </div>
-        </div>
-
-        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
-          <div class="progress__bar" id="progressBar" style="width:0%"></div>
-        </div>
-
-        <div class="course-hero__note" id="courseNote" hidden>
-          <span class="badge badge--success">Курс завершён</span>
-          <span class="course-hero__note-text">Отличная работа! Можешь пройти финальное задание или повторить уроки.</span>
-        </div>
-      </section>
-
-      <!-- STATES (loading / empty / error) -->
-      <section class="state" id="state" hidden>
-        <div class="state__card" id="stateCard">
-          <h2 class="state__title" id="stateTitle">...</h2>
-          <p class="state__desc" id="stateDesc">...</p>
-          <button class="btn btn--primary" id="stateAction" type="button">Ок</button>
-        </div>
-      </section>
-
-      <!-- MODULES LIST -->
-      <section class="modules" aria-label="Модули курса">
-        <div class="modules__list" id="modules"></div>
-      </section>
-
-      <!-- FINAL TASK -->
-      <section class="final" id="finalTask" hidden>
-        <div class="final__card">
-          <div class="final__left">
-            <span class="badge badge--amber">Финальное задание</span>
-            <h2 class="final__title">Проверка уровня</h2>
-            <p class="final__desc">Пройди итоговый тест, чтобы закрепить знания и получить результат.</p>
-          </div>
-          <div class="final__right">
-            <button class="btn btn--primary" id="finalBtn" type="button">Начать тест</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- LESSON CONTENT (если нужно показывать справа/ниже) -->
-      <section class="lesson" id="lessonContent" hidden></section>
-
     </div>
-  </main>
+</header>
 
-  <!-- scripts -->
-  <script src="/js/headerdash.js"></script>
-  <script src="/js/courses.js"></script>
+<main class="course-page">
+    <section class="course">
+        <!-- Верх курса (как в “красивом” дизайне, но классами по-твоему) -->
+        <div class="course__top">
+            <div class="course__info">
+                <h1 class="course__title" id="courseTitle">Курс</h1>
+                <p class="course__desc" id="courseDesc" style="display:none"></p>
 
-  <!-- если у тебя есть authFetch/chat — оставь -->
-  <script src="/js/authFetch.js"></script>
-  <script src="/js/chat.js"></script>
+                <div class="course__meta" id="courseMeta" style="display:none"></div>
+            </div>
+
+            <div class="course__progress" id="courseProgress" style="display:none">
+                <div class="progress__row">
+                    <div class="progress__label">Прогресс</div>
+                    <div class="progress__value" id="progressValue">0%</div>
+                </div>
+                <div class="progress__bar">
+                    <div class="progress__fill" id="progressFill" style="width:0%"></div>
+                </div>
+                <div class="progress__hint" id="progressHint">0/0</div>
+            </div>
+        </div>
+
+        <!-- сюда JS вставит модули -->
+        <div class="modules" id="modules"></div>
+
+        <!-- итоговое задание (твой js создаёт, но пусть будет сразу) -->
+        <div class="final-task" id="finalTask" style="display:none;">
+            <p class="final-task__text" id="taskDescription"></p>
+            <button class="final-task__btn" id="startTaskBtn" type="button" disabled>Завершите курс</button>
+        </div>
+    </section>
+
+    <section class="lesson-view" id="lessonContent"></section>
+</main>
+
+<script src="/js/authFetch.js"></script>
+<script src="/js/coursemodul.js"></script>
+<script src="/js/chat.js"></script>
 </body>
 </html>

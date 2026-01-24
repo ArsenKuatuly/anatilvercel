@@ -93,18 +93,62 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!Array.isArray(m.lessons)) return;
 
             const moduleEl = document.createElement("section");
-            moduleEl.className = "module";
+            moduleEl.className = "module" + (Number(m.locked) ? " module--locked" : "");
 
             moduleEl.innerHTML = `
-        <div class="module-header">
-          <h2>${escapeHtml(m.title || "")}</h2>
+      <div class="module__head" role="button" tabindex="0" aria-expanded="false">
+        <div class="module__title">
+          <h2 class="module__name">${escapeHtml(m.title || "")}</h2>
+          <div class="module__meta">
+            <span class="module__meta-item">
+              ${m.lessons.length} урок(ов)
+            </span>
+            ${
+                Number(m.locked)
+                    ? `<span class="module__badge module__badge--locked">Закрыто</span>`
+                    : `<span class="module__badge module__badge--open">Открыто</span>`
+            }
+          </div>
         </div>
-        <div class="lessons"></div>
-      `;
 
+        <div class="module__toggle" aria-hidden="true">
+          <span class="module__chev">⌄</span>
+        </div>
+      </div>
+
+      <div class="module__body" hidden>
+        <div class="lessons"></div>
+      </div>
+    `;
+
+            const headEl = moduleEl.querySelector(".module__head");
+            const bodyEl = moduleEl.querySelector(".module__body");
             const lessonsEl = moduleEl.querySelector(".lessons");
 
-            // первый незавершённый урок в модуле
+            // Раскрытие/сворачивание модуля
+            const toggle = () => {
+                const isOpen = !bodyEl.hidden;
+                bodyEl.hidden = isOpen;
+                headEl.setAttribute("aria-expanded", String(!isOpen));
+                moduleEl.classList.toggle("module--open", !isOpen);
+            };
+
+            headEl.addEventListener("click", toggle);
+            headEl.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+
+            // первый модуль открыт
+            if (!Number(m.locked)) {
+                bodyEl.hidden = false;
+                headEl.setAttribute("aria-expanded", "true");
+                moduleEl.classList.add("module--open");
+            }
+
+            // первый незавершённый урок
             const firstUncompletedIndex = m.lessons.findIndex((l) => !Number(l.completed));
 
             m.lessons.forEach((lesson, index) => {
@@ -116,17 +160,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const lessonEl = document.createElement("div");
                 lessonEl.className =
-                    "lesson" + (completed ? " completed" : "") + (!canOpen ? " locked" : "");
+                    "lesson" +
+                    (completed ? " lesson--done" : "") +
+                    (!canOpen ? " lesson--locked" : " lesson--open");
 
                 lessonEl.innerHTML = `
-          <span>${escapeHtml(lesson.title || "")}</span>
-          ${completed ? `<span>✔</span>` : ``}
-        `;
+        <div class="lesson__left">
+          <div class="lesson__icon">
+            ${
+                    completed
+                        ? "✔"
+                        : canOpen
+                            ? "▶"
+                            : "🔒"
+                }
+          </div>
+          <div class="lesson__info">
+            <div class="lesson__title">${escapeHtml(lesson.title || "")}</div>
+            <div class="lesson__sub">
+              ${
+                    completed
+                        ? "Завершено"
+                        : canOpen
+                            ? "Доступно"
+                            : "Сначала пройдите предыдущие"
+                }
+            </div>
+          </div>
+        </div>
+
+        <button class="lesson__btn" type="button" ${canOpen ? "" : "disabled"}>
+          ${completed ? "Повторить" : canOpen ? "Открыть" : "Закрыто"}
+        </button>
+      `;
 
                 if (canOpen) {
-                    lessonEl.addEventListener("click", () => {
-                        window.location.href = `/lesson/${lesson.id}`;
+                    const go = () => (window.location.href = `/lesson/${lesson.id}`);
+                    lessonEl.addEventListener("click", (e) => {
+                        // чтобы кнопка тоже работала
+                        if (e.target.closest(".lesson__btn")) return;
+                        go();
                     });
+                    lessonEl.querySelector(".lesson__btn").addEventListener("click", go);
                 }
 
                 lessonsEl.appendChild(lessonEl);
@@ -135,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
             modulesEl.appendChild(moduleEl);
         });
     }
+
 
     function allLessonsCompleted(modules) {
         if (!Array.isArray(modules)) return false;
