@@ -1,121 +1,139 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Курс</title>
-    <link rel="stylesheet" href="/courselvl.css">
-    <link rel="stylesheet" href="/css/header.css">
-    <link rel="stylesheet" href="/css/chat.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Курс — AnaTil</title>
+
+  <link rel="stylesheet" href="/css/headerdash.css" />
+  <link rel="stylesheet" href="/css/course.css" />
+  <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body>
-<script src="/js/auth-guard.js"></script>
-<script src="/js/api.js"></script>
+  <!-- если у тебя эти файлы уже есть в проекте — оставь, если нет — убери -->
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
 
-<header class="header" id="header">
+  <header class="header" id="header">
     <div class="header__container">
-        <a class="header__logo" href="index.html">AnaTil</a>
+      <a class="header__logo" href="/index.html">AnaTil</a>
 
-        <!-- DESKTOP NAV -->
-        <nav class="header__nav nav nav--desktop">
-            <a class="nav__link" href="#promo" data-key="about">О нас</a>
-            <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-            <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-            <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+      <nav class="header__nav nav nav--desktop">
+        <a class="nav__link" href="#promo" data-key="about">О нас</a>
+        <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
+        <a class="nav__link" href="#important" data-key="important">Преимущества</a>
+        <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+      </nav>
+
+      <div class="header__actions header__actions--desktop">
+        <a href="/admin" class="header__admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
+        <a href="/profile.html" class="btn btn--primary" data-key="check_level">Ваш профиль</a>
+      </div>
+
+      <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
+        ☰
+      </button>
+    </div>
+
+    <div class="header__mobile" hidden>
+      <div class="header__container header__container--mobile">
+        <nav class="header__nav nav nav--mobile">
+          <a class="nav__link" href="#promo" data-key="about">О нас</a>
+          <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
+          <a class="nav__link" href="#important" data-key="important">Преимущества</a>
+          <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
         </nav>
 
-        <div class="header__actions header__actions--desktop">
-            <div class="header__actions header__actions--mobile">
-
-                <a href="/admin" id="adminBtn" style="display:none">
-                    ⚙ Админ панель
-                </a>
-
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
+        <div class="header__actions header__actions--mobile">
+          <a href="/admin" class="header__admin" id="adminBtnMobile" style="display:none">⚙ Админ панель</a>
+          <a href="/profile.html" class="btn btn--primary" data-key="check_level">Ваш профиль</a>
         </div>
-
-        <!-- BURGER (mobile) -->
-        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
-            ☰
-        </button>
+      </div>
     </div>
+  </header>
 
-    <!-- MOBILE MENU (добавили, но классы старые не меняли) -->
-    <div class="header__mobile" hidden>
-        <div class="header__container header__container--mobile">
-            <nav class="header__nav nav nav--mobile">
-                <a class="nav__link" href="#promo" data-key="about">О нас</a>
-                <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-                <a class="nav__link" href="#important" data-key="important">Преимущества</a>
+  <main class="page">
+    <div class="container">
 
-                <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
-            </nav>
+      <!-- HERO / SUMMARY -->
+      <section class="course-hero" aria-labelledby="courseTitle">
+        <div class="course-hero__top">
+          <div class="course-hero__title-wrap">
+            <h1 class="course-hero__title" id="courseTitle">Курс</h1>
+            <p class="course-hero__desc" id="courseDesc">Загрузка...</p>
+          </div>
 
-            <div class="header__actions header__actions--mobile">
-
-                <a href="/admin" class="adminBtn" style="display:none">
-                    ⚙ Админ панель
-                </a>
-
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
+          <div class="course-hero__actions">
+            <button class="btn btn--primary" id="continueBtn" type="button">Продолжить</button>
+            <button class="btn btn--ghost" id="restartBtn" type="button" hidden>Пройти заново</button>
+          </div>
         </div>
+
+        <div class="course-hero__stats">
+          <div class="stat">
+            <div class="stat__label">Модулей</div>
+            <div class="stat__value" id="moduleCount">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Уроков</div>
+            <div class="stat__value" id="lessonCount">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">Прогресс</div>
+            <div class="stat__value"><span id="progressValue">0</span>%</div>
+          </div>
+        </div>
+
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress">
+          <div class="progress__bar" id="progressBar" style="width:0%"></div>
+        </div>
+
+        <div class="course-hero__note" id="courseNote" hidden>
+          <span class="badge badge--success">Курс завершён</span>
+          <span class="course-hero__note-text">Отличная работа! Можешь пройти финальное задание или повторить уроки.</span>
+        </div>
+      </section>
+
+      <!-- STATES (loading / empty / error) -->
+      <section class="state" id="state" hidden>
+        <div class="state__card" id="stateCard">
+          <h2 class="state__title" id="stateTitle">...</h2>
+          <p class="state__desc" id="stateDesc">...</p>
+          <button class="btn btn--primary" id="stateAction" type="button">Ок</button>
+        </div>
+      </section>
+
+      <!-- MODULES LIST -->
+      <section class="modules" aria-label="Модули курса">
+        <div class="modules__list" id="modules"></div>
+      </section>
+
+      <!-- FINAL TASK -->
+      <section class="final" id="finalTask" hidden>
+        <div class="final__card">
+          <div class="final__left">
+            <span class="badge badge--amber">Финальное задание</span>
+            <h2 class="final__title">Проверка уровня</h2>
+            <p class="final__desc">Пройди итоговый тест, чтобы закрепить знания и получить результат.</p>
+          </div>
+          <div class="final__right">
+            <button class="btn btn--primary" id="finalBtn" type="button">Начать тест</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- LESSON CONTENT (если нужно показывать справа/ниже) -->
+      <section class="lesson" id="lessonContent" hidden></section>
+
     </div>
+  </main>
 
+  <!-- scripts -->
+  <script src="/js/headerdash.js"></script>
+  <script src="/js/courses.js"></script>
 
-</header>
-
-<div class="course">
-    <h1 id="courseTitle">Курс</h1>
-
-    <!-- сюда JS вставит модули -->
-    <div id="modules"></div>
-</div>
-<div id="lessonContent"></div>
-<div class="chat" id="chat" hidden>
-    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-        <div class="chat-head">
-            <div class="chat-avatar">
-                <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                </svg>
-            </div>
-
-            <div class="chat-head-text">
-                <div class="chat-title">AI Ассистент</div>
-                <div class="chat-subtitle">Онлайн • Ответим быстро</div>
-            </div>
-
-            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                ✕
-            </button>
-        </div>
-
-        <div class="chat-body" id="chatBody"></div>
-
-        <div class="chat-input">
-            <div>
-                <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                <button class="chat-send" id="chatSend" type="button">➤</button>
-            </div>
-            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
-        </div>
-    </div>
-</div>
-
-
-
-
-<script src="/js/authFetch.js"></script>
-
-
-
-<script src="/js/coursemodul.js"></script>
-
-
-<script src="/js/chat.js"></script>
-
-
+  <!-- если у тебя есть authFetch/chat — оставь -->
+  <script src="/js/authFetch.js"></script>
+  <script src="/js/chat.js"></script>
 </body>
 </html>
