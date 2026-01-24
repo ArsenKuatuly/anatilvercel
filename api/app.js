@@ -10,6 +10,7 @@ const profileAvatar = require("../server/routes/profile/avatar");
 
 const myResult = require("../server/routes/my-result");
 const testHistory = require("../server/routes/test-history");
+const saveResult = require("../server/routes/save-result");
 
 const progressCurrent = require("../server/routes/lessons/progress/current");
 
@@ -71,6 +72,7 @@ module.exports = async (req, res) => {
         // ===== RESULTS =====
         if (path === "/api/my-result" && method === "GET") return myResult(req, res);
         if (path === "/api/test-history" && method === "GET") return testHistory(req, res);
+        if (path === "/api/save-result" && method === "POST") return saveResult(req, res);
 
         // ===== LESSONS =====
         if (path === "/api/lessons/progress/current" && method === "GET") return progressCurrent(req, res);
@@ -90,7 +92,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== COURSE =====
+
         {
             const p = matchPath(path, "/api/course/:slug");
             if (p && method === "GET") {
@@ -109,9 +111,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== TODO: my-course, my-active-course, task/questions/submit =====
-        // if (path === "/api/my-course" && method === "GET") return myCourse(req, res);
-        // if (path === "/api/my-active-course" && method === "GET") return myActiveCourse(req, res);
+
 
         return res.status(404).json({ success: false, message: "Not found" });
     } catch (e) {
