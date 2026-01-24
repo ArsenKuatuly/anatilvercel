@@ -58,8 +58,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadCourse() {
         try {
-            const res = await authFetch(`/api/course/${encodeURIComponent(slug)}`);
-            const data = await res.json();
+            const out = await authFetch(`/api/course/${encodeURIComponent(slug)}`);
+            if (!out) return; // если был 401, authFetch уже редиректнул
+
+            const data = out.data;
 
             if (!data?.success) {
                 modulesEl.innerHTML = "<p>Курс не найден или недоступен</p>";
@@ -79,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
             checkCourseProgress(data.course, data.modules);
         } catch (err) {
             console.error("❌ ошибка загрузки курса", err);
+            if (err?.data) console.error("❌ server payload:", err.data);
             modulesEl.innerHTML = "<p>Ошибка загрузки курса</p>";
         }
     }
@@ -122,7 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (canOpen) {
                     lessonEl.addEventListener("click", () => {
-                        // ✅ под твой vercel.json
                         window.location.href = `/lesson/${lesson.id}`;
                     });
                 }
@@ -174,8 +176,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadFinalTask(courseId) {
         try {
-            const res = await authFetch(`/api/course/${courseId}/task`);
-            const data = await res.json();
+            const out = await authFetch(`/api/course/${courseId}/task`);
+            if (!out) return;
+
+            const data = out.data;
 
             if (!data?.success || !data?.task) return;
 
@@ -190,6 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         } catch (err) {
             console.error("❌ ошибка загрузки задания", err);
+            if (err?.data) console.error("❌ server payload:", err.data);
         }
     }
 
