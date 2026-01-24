@@ -2,18 +2,18 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/app" },
 
-    { "source": "/auth", "destination": "/public/auth.html" },
-    { "source": "/dashboard", "destination": "/public/dashboard.html" },
+    { "source": "/auth", "destination": "/auth.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
 
-    { "source": "/courses", "destination": "/public/levelcourses.html" },
-    { "source": "/courses/(.*)", "destination": "/public/course.html" },
+    { "source": "/courses", "destination": "/levelcourses.html" },
+    { "source": "/courses/(.*)", "destination": "/coursemodul.html" },
 
-    { "source": "/lesson", "destination": "/public/lesson.html" },
-    { "source": "/lesson/(.*)", "destination": "/public/lesson.html" },
+    { "source": "/lesson", "destination": "/lesson.html" },
+    { "source": "/lesson/(.*)", "destination": "/lesson.html" },
 
-    { "source": "/finallytask", "destination": "/public/finallytask.html" },
-    { "source": "/admin", "destination": "/public/admin.html" },
+    { "source": "/finallytask", "destination": "/finallytask.html" },
+    { "source": "/admin", "destination": "/admin.html" },
 
-    { "source": "/(.*)", "destination": "/public/$1" }
+    { "source": "/(.*)", "destination": "/$1" }
   ]
 }
