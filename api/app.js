@@ -1,69 +1,42 @@
 const { setCors } = require("../lib/cors");
 const { readJson } = require("../lib/body");
 
-// ================= SAFE REQUIRE (чтобы деплой не падал) =================
-function safeRequire(path) {
-    try {
-        return require(path);
-    } catch (e) {
-        // важно: не ломаем деплой из-за отсутствующего файла
-        console.warn("safeRequire missing:", path);
-        return null;
-    }
-}
+// ===== STATIC REQUIRES (ВАЖНО ДЛЯ VERCEL) =====
+const authLogin = require("../server/routes/auth/login.js");
+const authRegister = require("../server/routes/auth/register.js");
+const authMe = require("../server/routes/auth/me.js");
 
-function notImplemented(name) {
-    return (req, res) => res.status(501).json({ success: false, message: `Route not implemented: ${name}` });
-}
+const aiChat = require("../server/routes/ai/chat.js");
 
-// ================= ROUTES =================
+const profile = require("../server/routes/profile.js");
+const profileAvatar = require("../server/routes/profile/avatar.js");
 
-// AUTH
-const authLogin = safeRequire("../server/routes/auth/login") || notImplemented("auth/login");
-const authRegister = safeRequire("../server/routes/auth/register") || notImplemented("auth/register");
-const authMe = safeRequire("../server/routes/auth/me") || notImplemented("auth/me");
+const myResult = require("../server/routes/my-result.js");
+const testHistory = require("../server/routes/test-history.js");
+const saveResult = require("../server/routes/save-result.js");
 
-// AI
-const aiChat = safeRequire("../server/routes/ai/chat") || notImplemented("ai/chat");
+const myCourse = require("../server/routes/my-course.js");
+const myActiveCourse = require("../server/routes/my-active-course.js");
+const myCourses = require("../server/routes/my-courses.js"); // если файла нет — удали 1 строку и роут ниже
 
-// PROFILE
-const profile = safeRequire("../server/routes/profile") || notImplemented("profile");
-const profileAvatar = safeRequire("../server/routes/profile/avatar") || notImplemented("profile/avatar");
+const progressCurrent = require("../server/routes/lessons/progress/current.js");
 
-// RESULTS / TESTS
-const myResult = safeRequire("../server/routes/my-result") || notImplemented("my-result");
-const testHistory = safeRequire("../server/routes/test-history") || notImplemented("test-history");
-const saveResult = safeRequire("../server/routes/save-result") || notImplemented("save-result");
+const courseBySlug = require("../server/routes/course/[slug].js");
 
-// COURSES (верхние)
-const myCourse = safeRequire("../server/routes/my-course") || notImplemented("my-course");
-const myActiveCourse = safeRequire("../server/routes/my-active-course") || notImplemented("my-active-course");
-const myCourses = safeRequire("../server/routes/my-courses") || notImplemented("my-courses");
+const lessonById = require("../server/routes/lesson/[id].js");
+const lessonComplete = require("../server/routes/lesson/complete.js");
+const continueLesson = require("../server/routes/continue-lesson.js");
 
-// PROGRESS
-const progressCurrent =
-    safeRequire("../server/routes/lessons/progress/current") || notImplemented("lessons/progress/current");
+const courseTask = require("../server/routes/[courseId]/task.js");
 
-// COURSE BY SLUG
-const courseBySlug = safeRequire("../server/routes/course/[slug]") || notImplemented("course/[slug]");
+const taskGet = require("../server/routes/task/[taskId].js");
+const taskQuestions = require("../server/routes/task/[taskId]/questions.js");
+const taskSubmit = require("../server/routes/task/[taskId]/submit.js");
 
-// LESSON
-const lessonById = safeRequire("../server/routes/lesson/[id]") || notImplemented("lesson/[id]");
-const lessonComplete = safeRequire("../server/routes/lesson/complete") || notImplemented("lesson/complete");
-const continueLesson = safeRequire("../server/routes/continue-lesson") || notImplemented("continue-lesson");
-
-// FINAL TASK for COURSE (у тебя это в routes/[courseId]/task.js)
-const courseTask = safeRequire("../server/routes/[courseId]/task") || notImplemented("[courseId]/task");
-
-// TASK
-const taskGet = safeRequire("../server/routes/task/[taskId]") || notImplemented("task/[taskId]");
-const taskQuestions = safeRequire("../server/routes/task/[taskId]/questions") || notImplemented("task/[taskId]/questions");
-const taskSubmit = safeRequire("../server/routes/task/[taskId]/submit") || notImplemented("task/[taskId]/submit");
-
-// ================= HELPERS =================
+// ===== tiny router =====
 function matchPath(pathname, pattern) {
-    const a = pathname.split("/").filter(Boolean);
-    const b = pattern.split("/").filter(Boolean);
+    const a = String(pathname).split("/").filter(Boolean);
+    const b = String(pattern).split("/").filter(Boolean);
     if (a.length !== b.length) return null;
 
     const params = {};
@@ -75,12 +48,12 @@ function matchPath(pathname, pattern) {
     return params;
 }
 
-// ================= MAIN HANDLER =================
 module.exports = async (req, res) => {
     try {
+        // CORS + preflight
         if (setCors(req, res)) return;
 
-        // body
+        // parse JSON body once
         if (["POST", "PATCH", "PUT"].includes(req.method)) {
             const ct = String(req.headers["content-type"] || "");
             if (ct.includes("application/json")) {
@@ -117,18 +90,17 @@ module.exports = async (req, res) => {
         if (path === "/api/test-history" && method === "GET") return testHistory(req, res);
         if (path === "/api/save-result" && method === "POST") return saveResult(req, res);
 
-        // ===== COURSES (user) =====
+        // ===== COURSES =====
         if (path === "/api/my-course" && method === "GET") return myCourse(req, res);
         if (path === "/api/my-active-course" && method === "GET") return myActiveCourse(req, res);
         if (path === "/api/my-courses" && method === "GET") return myCourses(req, res);
 
-        // ===== PROGRESS =====
+        // ===== LESSONS =====
         if (path === "/api/lessons/progress/current" && method === "GET") return progressCurrent(req, res);
-
-        // ===== CONTINUE LESSON =====
+        if (path === "/api/lesson/complete" && method === "POST") return lessonComplete(req, res);
         if (path === "/api/continue-lesson" && method === "GET") return continueLesson(req, res);
 
-        // ===== LESSON BY ID =====
+        // /api/lesson/:id
         {
             const p = matchPath(path, "/api/lesson/:id");
             if (p && method === "GET") {
@@ -138,10 +110,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== LESSON COMPLETE =====
-        if (path === "/api/lesson/complete" && method === "POST") return lessonComplete(req, res);
-
-        // ===== COURSE BY SLUG =====
+        // /api/course/:slug
         {
             const p = matchPath(path, "/api/course/:slug");
             if (p && method === "GET") {
@@ -151,7 +120,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== COURSE TASK =====
+        // /api/course/:courseId/task
         {
             const p = matchPath(path, "/api/course/:courseId/task");
             if (p && method === "GET") {
@@ -161,7 +130,7 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== TASK GET =====
+        // ===== TASK =====
         {
             const p = matchPath(path, "/api/task/:taskId");
             if (p && method === "GET") {
@@ -171,7 +140,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== TASK QUESTIONS =====
         {
             const p = matchPath(path, "/api/task/:taskId/questions");
             if (p && method === "GET") {
@@ -181,7 +149,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== TASK SUBMIT =====
         {
             const p = matchPath(path, "/api/task/:taskId/submit");
             if (p && method === "POST") {
@@ -192,7 +159,6 @@ module.exports = async (req, res) => {
         }
 
         return res.status(404).json({ success: false, message: "Not found" });
-
     } catch (e) {
         console.error("api/app error:", e);
         return res.status(500).json({ success: false, message: "Server error" });
