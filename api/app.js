@@ -21,6 +21,10 @@ const continueLesson = require("../server/routes/continue-lesson");
 
 const courseTask = require("../server/routes/[courseId]/task");
 
+const taskGet = require("../server/routes/task/[taskId]");
+const taskQuestions = require("../server/routes/task/[taskId]/questions");
+const taskSubmit = require("../server/routes/task/[taskId]/submit");
+
 const myCourse = require("../server/routes/my-course");
 const myActiveCourse = require("../server/routes/my-active-course");
 
@@ -92,7 +96,7 @@ module.exports = async (req, res) => {
             }
         }
 
-
+        // ===== COURSE =====
         {
             const p = matchPath(path, "/api/course/:slug");
             if (p && method === "GET") {
@@ -111,7 +115,35 @@ module.exports = async (req, res) => {
             }
         }
 
+        // ===== TASK =====
+        {
+            const p = matchPath(path, "/api/task/:taskId");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.taskId = p.taskId;
+                return taskGet(req, res);
+            }
+        }
 
+        {
+            const p = matchPath(path, "/api/task/:taskId/questions");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.taskId = p.taskId;
+                return taskQuestions(req, res);
+            }
+        }
+
+        {
+            const p = matchPath(path, "/api/task/:taskId/submit");
+            if (p && method === "POST") {
+                req.query = req.query || {};
+                req.query.taskId = p.taskId;
+                return taskSubmit(req, res);
+            }
+        }
+
+        // ===== TODO: admin routes =====
 
         return res.status(404).json({ success: false, message: "Not found" });
     } catch (e) {

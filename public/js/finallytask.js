@@ -116,7 +116,7 @@ submitBtn.addEventListener("click", async () => {
         const res = await authFetch(`/api/task/${taskId}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ score: 100 }) // или { answers } если хочешь реальные ответы
+            body: JSON.stringify({ answers })
         });
 
         const data = await res.json();

@@ -24,11 +24,12 @@ module.exports = async (req, res) => {
         );
 
         // ВАЖНО: correct_option на фронт лучше не отдавать
+        // Фронт (public/js/finallytask.js) ожидает поле `question`
         const questions = rows.map((q) => ({
             id: q.id,
             task_id: q.task_id,
-            question_text: q.question_text,
-            options: q.options, // json array
+            question: q.question_text,
+            options: q.options, // json array или строка
         }));
 
         return res.status(200).json({ success: true, questions });
