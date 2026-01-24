@@ -1,4 +1,4 @@
-/* /css/header.css */
+/* /css/headerdash.css */
 :root{
     --bg:#F8FAFC;
     --white:#fff;
@@ -10,7 +10,8 @@
     --radius:16px;
 }
 
-.header{
+/* Header */
+.dash-header{
     position: sticky;
     top: 0;
     z-index: 50;
@@ -18,7 +19,7 @@
     border-bottom: 1px solid var(--border);
 }
 
-.header__container{
+.dash-header__container{
     max-width: 1280px;
     margin: 0 auto;
     padding: 0 16px;
@@ -29,7 +30,7 @@
     gap: 12px;
 }
 
-.header__logo{
+.dash-header__logo{
     font-size: 24px;
     font-weight: 800;
     color: var(--blue);
@@ -37,69 +38,50 @@
     letter-spacing: -0.02em;
 }
 
-.nav{
+/* Desktop nav */
+.dash-header__nav{
     display: flex;
     align-items: center;
-}
-
-.nav--desktop{
     gap: 32px;
 }
 
-.nav__link{
+.dash-header__link{
     color: var(--text);
     text-decoration: none;
     font-weight: 500;
     transition: color .15s ease;
 }
 
-.nav__link:hover{
+.dash-header__link:hover{
     color: var(--blue);
-}
-
-.nav__link--admin{
-    color: var(--blue);
-    font-weight: 600;
 }
 
 /* Actions */
-.header__actions{
+.dash-header__actions{
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.header__profile{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    background: #F3F4F6;
-    text-decoration: none;
-    transition: background .15s ease;
-}
-
-.header__profile:hover{
-    background: #E5E7EB;
-}
-
-.header__icon{
-    width: 20px;
-    height: 20px;
-    color: var(--muted);
+.dash-header__btn{
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #F3F4F6;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background .15s ease;
 }
 
-.header__profile-text{
-    color: var(--text);
-    font-weight: 500;
+.dash-header__btn:hover{
+    background: #E5E7EB;
 }
 
 /* Burger */
-.header__burger{
+.dash-header__burger{
     display: none; /* включим на мобиле */
     border: none;
     background: transparent;
@@ -108,85 +90,50 @@
     cursor: pointer;
 }
 
-.header__burger:hover{
+.dash-header__burger:hover{
     background: #F3F4F6;
 }
 
-/* бургер-иконка как в дизайне */
-.header__burger-icon{
+.dash-header__burger span{
+    display: block;
     width: 22px;
-    height: 14px;
-    display: inline-block;
-    position: relative;
-}
-
-.header__burger-icon::before,
-.header__burger-icon::after{
-    content:"";
-    position:absolute;
-    left:0;
-    right:0;
-    height:2px;
+    height: 2px;
     background: var(--text);
     border-radius: 999px;
 }
 
-.header__burger-icon::before{ top:0; }
-.header__burger-icon::after{ bottom:0; }
-.header__burger-icon{
-    background: var(--text);
-    height:2px;
-    border-radius:999px;
-    top: 6px;
+.dash-header__burger span + span{
+    margin-top: 4px;
 }
 
 /* Mobile menu panel */
-.header__mobile{
+.dash-header__mobile{
     border-top: 1px solid var(--border);
     background: var(--white);
-}
-
-.header__container--mobile{
-    height: auto;
     padding: 14px 16px 16px;
-    align-items: stretch;
-}
-
-.nav--mobile{
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
     gap: 10px;
 }
 
-.nav--mobile .nav__link{
+.dash-header__m-link{
     display: block;
     padding: 12px 14px;
     border-radius: 14px;
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
     transition: background .15s ease, color .15s ease;
 }
 
-.nav--mobile .nav__link:hover{
+.dash-header__m-link:hover{
     background: #F3F4F6;
     color: var(--text);
 }
 
-.nav--mobile .nav__link--admin:hover{
-    background: rgba(37,99,235,.08);
-    color: var(--blue);
-}
-
-.header__actions--mobile{
-    margin-top: 10px;
-}
-
-.header__profile--mobile{
-    width: 100%;
-    justify-content: center;
-}
-
 /* Responsive */
 @media (max-width: 768px){
-    .nav--desktop{ display:none; }
-    .header__actions--desktop{ display:none; }
-    .header__burger{ display:inline-flex; }
+    .dash-header__nav{ display:none; }
+    .dash-header__btn{ display:none; } /* на мобиле профиль в меню */
+    .dash-header__burger{ display:inline-flex; }
 }
