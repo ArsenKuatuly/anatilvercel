@@ -1,46 +1,211 @@
-/* /css/index.css */
+
 :root{
-    --bg:#F8FAFC;
-    --text:#0F172A;
-    --muted:#6B7280;
-    --border:#E5E7EB;
-    --white:#fff;
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --text: #0F172A;
+    --muted: #6B7280;
+
+    --border: #E5E7EB;
+    --blue: #2563EB;
+    --blue-2: #1D4ED8;
+
+    --green-bg: #ECFDF5;
+    --green-border: #BBF7D0;
+
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+    --shadow-md: 0 8px 30px rgba(15,23,42,.10);
+
+    --radius: 16px;
+    --radius-sm: 12px;
+
+    --container: 1280px;
 }
 
+
 *{ box-sizing: border-box; }
-html, body{ height:100%; }
+html, body{ height: 100%; }
 body{
-    margin:0;
+    margin: 0;
     background: var(--bg);
     color: var(--text);
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-a{ color: inherit; }
+a{ color: inherit; text-decoration: none; }
+img{ max-width: 100%; display: block; }
 
-/* необязательное: аккуратный контейнер для страниц */
-.page{
-    max-width: 1280px;
-    margin: 0 auto;
+
+.course{
+    max-width: 1100px;
+    margin: 26px auto 70px;
     padding: 0 16px;
 }
 
-/* если у тебя есть общие кнопки */
-.btn{
+
+#courseTitle{
+    margin: 0 0 14px;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+
+#modules{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+.module{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.module-header{
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(37,99,235,.06), rgba(255,255,255,0));
+}
+
+.module-header h2{
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+
+.lessons{
+    padding: 12px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+.lesson{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 12px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.lesson:hover{
+    border-color: rgba(37,99,235,.35);
+    box-shadow: 0 10px 26px rgba(37,99,235,.10);
+    transform: translateY(-1px);
+    background: rgba(37,99,235,.03);
+}
+
+
+.lesson span:first-child{
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-weight: 700;
+    color: var(--text);
+}
+
+.lesson span:last-child{
+    font-weight: 900;
+    color: var(--blue);
+}
+
+
+.lesson.completed{
+    border-color: var(--green-border);
+    background: var(--green-bg);
+}
+.lesson.completed span:last-child{
+    color: #16A34A;
+}
+
+
+.lesson.locked{
+    opacity: .65;
+    cursor: not-allowed;
+    background: #F3F4F6;
+}
+.lesson.locked:hover{
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border);
+    background: #F3F4F6;
+}
+
+
+.final-task{
+    margin-top: 14px;
+    border-radius: var(--radius);
+    padding: 16px;
+    background: linear-gradient(135deg, #0F172A, #111827);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+}
+
+.final-task p{
+    margin: 0;
+    color: rgba(255,255,255,.86);
+    font-weight: 600;
+}
+
+/* твой JS создаёт кнопку без класса — стилями по id */
+#startTaskBtn{
+    margin-top: 12px;
+    width: 100%;
     border: none;
     border-radius: 14px;
-    padding: 10px 14px;
-    font-weight: 700;
+    padding: 12px 14px;
+    font-weight: 900;
     cursor: pointer;
-}
-
-.btn.cta{
     background: #2563EB;
     color: #fff;
+    transition: background .15s ease;
 }
 
-.btn.cta:hover{
+#startTaskBtn:hover{
     background: #1D4ED8;
+}
+
+#startTaskBtn:disabled{
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+
+#lessonContent{
+    max-width: 1100px;
+    margin: 16px auto 70px;
+    padding: 0 16px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px){
+    #courseTitle{ font-size: 26px; }
+}
+
+@media (max-width: 520px){
+    .module-header{ padding: 12px 12px; }
+    .lessons{ padding: 10px 12px 12px; }
+    .lesson{ padding: 11px 11px; }
 }
