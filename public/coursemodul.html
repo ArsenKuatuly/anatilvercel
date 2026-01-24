@@ -3,67 +3,134 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AnaTil — Курс</title>
+  <title>Курс — AnaTil</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-  <!-- если у тебя есть header.css / chat.css — можешь оставить -->
-  <link rel="stylesheet" href="/css/header.css">
-  <link rel="stylesheet" href="/css/chat.css">
-
-  <!-- курс (дизайн как в демо anatil_html_css_js.zip) -->
-  <link rel="stylesheet" href="/css/course-page.css" />
+  <link rel="stylesheet" href="/css/courselvl.css" />
+  <link rel="stylesheet" href="/css/headerdash.css" />
 </head>
 <body>
 
-<script src="/js/auth-guard.js"></script>
-<script src="/js/api.js"></script>
+  <!-- если у тебя есть guard/api как на других страницах — оставь эти подключения -->
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
 
-<header class="header" id="header">
-  <div class="container header__row">
-    <a class="logo" href="/">AnaTil</a>
+  <!-- Header -->
+  <header class="dash-header" id="header">
+    <div class="dash-header__container">
+      <a class="dash-header__logo" href="/">AnaTil</a>
 
-    <nav class="nav" id="nav">
-      <a class="nav__link" href="/#promo">О нас</a>
-      <a class="nav__link" href="/#reasons">Преимущества</a>
-      <a class="nav__link" href="/#courses">Курсы</a>
-      <a class="nav__link" href="/profile.html">Профиль</a>
-      <a class="nav__link nav__link--admin" href="/admin.html" id="adminLink" hidden>Админ</a>
-    </nav>
+      <nav class="dash-header__nav" aria-label="Навигация">
+        <a class="dash-header__link" href="/courses">Курсы</a>
+        <a class="dash-header__link" href="/progress">Мой прогресс</a>
+        <a class="dash-header__link" href="/library">Библиотека</a>
+      </nav>
 
-    <div class="header__actions">
-      <a class="user" href="/profile.html" aria-label="Профиль">
-        <span class="user__icon" aria-hidden="true">👤</span>
-        <span class="user__text">Профиль</span>
-      </a>
+      <div class="dash-header__actions">
+        <a class="dash-header__btn" href="/profile.html">Профиль</a>
 
-      <button class="burger" id="burger" type="button" aria-label="Меню" aria-expanded="false">
-        <span class="burger__bar"></span>
-        <span class="burger__bar"></span>
-        <span class="burger__bar"></span>
-      </button>
+        <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
-  </div>
 
-  <div class="mobile" id="mobileMenu" hidden>
-    <div class="container mobile__panel">
-      <a class="mobile__link" href="/#promo">О нас</a>
-      <a class="mobile__link" href="/#reasons">Преимущества</a>
-      <a class="mobile__link" href="/#courses">Курсы</a>
-      <a class="mobile__link" href="/profile.html">Профиль</a>
-      <a class="mobile__link mobile__link--admin" href="/admin.html" id="adminLinkMobile" hidden>Админ</a>
+    <!-- Mobile menu -->
+    <div class="dash-header__mobile" data-mobile hidden>
+      <a class="dash-header__m-link" href="/courses">Курсы</a>
+      <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+      <a class="dash-header__m-link" href="/library">Библиотека</a>
+      <a class="dash-header__m-link" href="/profile.html">Профиль</a>
     </div>
-  </div>
-</header>
+  </header>
 
-<main class="page">
-  <div class="container">
-    <div id="app"></div>
-  </div>
-</main>
+  <main class="page">
+    <div class="container">
+      <div class="course">
+        <!-- Hero -->
+        <section class="course-hero">
+          <div class="course-hero__top">
+            <div class="course-hero__text">
+              <h1 class="course-hero__title" id="courseTitle">Курс</h1>
+              <p class="course-hero__desc">
+                Пройдите модули по порядку. Первый незавершённый урок будет доступен для продолжения.
+              </p>
+            </div>
 
-<script src="/js/coursemodul.js"></script>
+            <div class="course-hero__stats">
+              <div class="stat">
+                <div class="stat__label">Модулей</div>
+                <div class="stat__value" id="moduleCount">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Уроков</div>
+                <div class="stat__value" id="lessonCount">—</div>
+              </div>
+              <div class="stat">
+                <div class="stat__label">Прогресс</div>
+                <div class="stat__value"><span id="courseProgress">0</span>%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="course-hero__progress">
+            <div class="progress">
+              <div class="progress__bar" id="progressBar" style="width: 0%"></div>
+            </div>
+
+            <a class="course-hero__next" id="nextLessonBtn" href="#" aria-disabled="true">
+              Продолжить
+            </a>
+          </div>
+        </section>
+
+        <!-- Modules (ВАЖНО: сюда подставляются модули) -->
+        <div id="modules"></div>
+
+        <!-- Final task (будет создан/заполнен скриптом; можно оставить пустым) -->
+        <div id="finalTask" class="final-task" style="display:none;">
+          <div class="final-task__head">
+            <div class="final-task__icon" aria-hidden="true">🏆</div>
+            <div class="final-task__title-wrap">
+              <div class="final-task__title">Итоговое задание</div>
+              <div class="final-task__badge" id="finalTaskBadge">—</div>
+            </div>
+          </div>
+
+          <p class="final-task__desc" id="taskDescription"></p>
+
+          <button class="final-task__btn" id="startTaskBtn" type="button" disabled>
+            Загрузка...
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/coursemodul.js"></script>
+
+  <!-- маленький JS только для бургера (не мешает coursemodul.js) -->
+  <script>
+    (function () {
+      const btn = document.querySelector("[data-burger]");
+      const mobile = document.querySelector("[data-mobile]");
+      if (!btn || !mobile) return;
+
+      const toggle = () => {
+        const isHidden = mobile.hasAttribute("hidden");
+        if (isHidden) mobile.removeAttribute("hidden");
+        else mobile.setAttribute("hidden", "");
+        btn.setAttribute("aria-expanded", String(isHidden));
+      };
+
+      btn.addEventListener("click", toggle);
+
+      document.addEventListener("click", (e) => {
+        if (mobile.hasAttribute("hidden")) return;
+        if (e.target.closest("[data-burger]") || e.target.closest("[data-mobile]")) return;
+        mobile.setAttribute("hidden", "");
+        btn.setAttribute("aria-expanded", "false");
+      });
+    })();
+  </script>
 </body>
 </html>
