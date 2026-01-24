@@ -1,40 +1,29 @@
-const { requireUser } = require("../../../../lib/jwt");
 const db = require("../../../../lib/db");
+const { requireAuth } = require("../../../../lib/auth");
 
 module.exports = async (req, res) => {
-    let user;
     try {
-        user = requireUser(req);
-    } catch {
-        return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
+        const user = await requireAuth(req, res);
+        if (!user) return;
 
-    try {
-        const taskId = Number(req.query.taskId);
-        if (!taskId) return res.status(400).json({ success: false, message: "Invalid taskId" });
+        const taskId = Number(req.query?.taskId || req.params?.taskId);
+        if (!taskId) {
+            return res.status(400).json({ success: false, message: "taskId is required" });
+        }
 
-        const { rows } = await db.query(
+        const result = await db.query(
             `
-      SELECT id, task_id, question_text, options, correct_option
+      SELECT id, question, options
       FROM task_questions
       WHERE task_id = $1
-      ORDER BY id ASC
+      ORDER BY id
       `,
             [taskId]
         );
 
-        // ВАЖНО: correct_option на фронт лучше не отдавать
-        // Фронт (public/js/finallytask.js) ожидает поле `question`
-        const questions = rows.map((q) => ({
-            id: q.id,
-            task_id: q.task_id,
-            question: q.question_text,
-            options: q.options, // json array или строка
-        }));
-
-        return res.status(200).json({ success: true, questions });
+        res.json({ success: true, questions: result.rows });
     } catch (err) {
         console.error("task/questions error:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
