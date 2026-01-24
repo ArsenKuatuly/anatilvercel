@@ -6,11 +6,15 @@
     { "source": "/dashboard", "destination": "/public/dashboard.html" },
 
     { "source": "/courses", "destination": "/public/levelcourses.html" },
-
     { "source": "/courses/:slug", "destination": "/public/coursemodul.html" },
+    { "source": "/courses/:slug/", "destination": "/public/coursemodul.html" },
 
     { "source": "/lesson", "destination": "/public/lesson.html" },
     { "source": "/lesson/:id", "destination": "/public/lesson.html" },
+    { "source": "/lesson/:id/", "destination": "/public/lesson.html" },
+
+    { "source": "/coursemodul", "destination": "/public/coursemodul.html" },
+    { "source": "/coursemodul.html", "destination": "/public/coursemodul.html" },
 
     { "source": "/finallytask", "destination": "/public/finallytask.html" },
     { "source": "/admin", "destination": "/public/admin.html" },

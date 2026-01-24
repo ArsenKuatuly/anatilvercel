@@ -12,8 +12,9 @@ function authHeaders() {
 }
 
 function goToCourse(slug) {
-    window.location.href = `/coursemodul.html?slug=${encodeURIComponent(slug)}`;
+    window.location.href = `/courses/${encodeURIComponent(slug)}`;
 }
+
 
 function renderMessage(text) {
     courseCard.innerHTML = `

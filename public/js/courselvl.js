@@ -76,5 +76,6 @@ function renderModules(modules) {
 }
 
 function openLesson(lessonId) {
-    window.location.href = `/lesson.html?id=${lessonId}`;
+    window.location.href = `/lesson/${lessonId}`;
 }
+

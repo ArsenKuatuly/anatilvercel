@@ -17,9 +17,9 @@ function getCourseSlug() {
 const courseSlug = getCourseSlug();
 
 if (!courseSlug) {
-    alert("Не удалось определить курс");
-    throw new Error("Course slug not found");
+    console.warn("Course slug not found");
 }
+
 
 console.log("COURSE SLUG:", courseSlug);
 
@@ -59,6 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
         startTaskBtn.disabled = true;
         finalTaskEl.appendChild(startTaskBtn);
     }
+    if (!slug) {
+        modulesEl.innerHTML = `<p>Нет slug курса.<br>Открой курс как <b>/courses/&lt;slug&gt;</b> или <b>/coursemodul.html?slug=...</b></p>`;
+        return;
+    }
+
 
     loadCourse();
 
