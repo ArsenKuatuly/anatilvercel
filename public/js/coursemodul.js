@@ -1,16 +1,27 @@
 console.log("coursemodul.js загружен");
 
 function getCourseSlug() {
-    const qs = new URLSearchParams(window.location.search);
-    const slugFromQuery = qs.get("slug") || qs.get("course") || qs.get("courseSlug");
-    if (slugFromQuery) return slugFromQuery;
+    // 1) ?slug=
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get("slug");
+    if (fromQuery) return fromQuery;
 
+    // 2) /courses/<slug>
     const parts = window.location.pathname.split("/").filter(Boolean);
     const idx = parts.indexOf("courses");
     if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
 
     return null;
 }
+
+const courseSlug = getCourseSlug();
+
+if (!courseSlug) {
+    alert("Не удалось определить курс");
+    throw new Error("Course slug not found");
+}
+
+console.log("COURSE SLUG:", courseSlug);
 
 document.addEventListener("DOMContentLoaded", () => {
     const modulesEl = document.getElementById("modules");
@@ -25,12 +36,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const slug = getCourseSlug();
-    if (!slug) {
-        modulesEl.innerHTML = "<p>Нет slug курса (открой страницу как /coursemodul?slug=...)</p>";
-        return;
-    }
+    // slug берём один раз
+    const slug = courseSlug;
 
+    // создаём блок итогового задания, если его нет в HTML
     if (!finalTaskEl) {
         finalTaskEl = document.createElement("div");
         finalTaskEl.id = "finalTask";
@@ -58,12 +67,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await authFetch(`/api/course/${encodeURIComponent(slug)}`);
             const data = await res.json();
 
-            if (!data.success) {
+            if (!data?.success) {
                 modulesEl.innerHTML = "<p>Курс не найден</p>";
                 return;
             }
 
-            if (data.course && courseTitleEl) {
+            if (data.course?.title && courseTitleEl) {
                 courseTitleEl.textContent = data.course.title;
             }
 
@@ -91,18 +100,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             moduleEl.innerHTML = `
         <div class="module-header">
-          <h2>${m.title}</h2>
+          <h2>${escapeHtml(m.title || "")}</h2>
         </div>
         <div class="lessons"></div>
       `;
 
             const lessonsEl = moduleEl.querySelector(".lessons");
 
+            // первый незавершённый урок в модуле
             const firstUncompletedIndex = m.lessons.findIndex((l) => !Number(l.completed));
 
             m.lessons.forEach((lesson, index) => {
                 const completed = Number(lesson.completed) === 1;
 
+                // если модуль залочен — уроки залочены тоже
                 const canOpen =
                     !Number(m.locked) &&
                     (completed || index === firstUncompletedIndex || firstUncompletedIndex === -1);
@@ -112,13 +123,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     "lesson" + (completed ? " completed" : "") + (!canOpen ? " locked" : "");
 
                 lessonEl.innerHTML = `
-          <span>${lesson.title}</span>
+          <span>${escapeHtml(lesson.title || "")}</span>
           ${completed ? `<span>✔</span>` : ``}
         `;
 
                 if (canOpen) {
                     lessonEl.addEventListener("click", () => {
-                        window.location.href = `/lesson.html?id=${lesson.id}`;
+                        // ✅ красивый URL под твой vercel.json
+                        window.location.href = `/lesson/${lesson.id}`;
                     });
                 }
 
@@ -130,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function allLessonsCompleted(modules) {
-        if (!modules) return false;
+        if (!Array.isArray(modules)) return false;
         return modules.every(
             (m) => Array.isArray(m.lessons) && m.lessons.every((l) => Number(l.completed) === 1)
         );
@@ -141,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         finalTaskEl.style.display = "block";
 
-        const courseIsCompleted = !!course.completed || allLessonsCompleted(modules);
+        const courseIsCompleted = !!course?.completed || allLessonsCompleted(modules);
 
         if (!courseIsCompleted) {
             startTaskBtn.disabled = true;
@@ -150,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (course.final_passed) {
+        if (course?.final_passed) {
             startTaskBtn.disabled = true;
             startTaskBtn.textContent = "Задание пройдено";
             taskDescEl.textContent = "Вы уже прошли итоговое задание";
@@ -160,7 +172,12 @@ document.addEventListener("DOMContentLoaded", () => {
         startTaskBtn.disabled = false;
         startTaskBtn.textContent = "Пройти итоговое задание";
 
-        await loadFinalTask(course.id);
+        // course.id нужен для /api/course/:courseId/task
+        if (course?.id) {
+            await loadFinalTask(course.id);
+        } else {
+            taskDescEl.textContent = "Не удалось определить courseId для задания";
+        }
     }
 
     async function loadFinalTask(courseId) {
@@ -170,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await authFetch(`/api/course/${courseId}/task`);
             const data = await res.json();
 
-            if (!data.success || !data.task) return;
+            if (!data?.success || !data?.task) return;
 
             taskDescEl.textContent =
                 data.task.description || "Пройдите задание, чтобы получить результат";
@@ -184,5 +201,15 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (err) {
             console.error("❌ ошибка загрузки задания", err);
         }
+    }
+
+    // простая защита от XSS в title
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 });
