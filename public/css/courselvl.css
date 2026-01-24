@@ -171,7 +171,7 @@ body{
 .module__name{
   margin:0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .module__meta{
@@ -183,7 +183,7 @@ body{
 
 .module__meta-item{
   color: var(--muted);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
 }
 
@@ -193,7 +193,7 @@ body{
   height: 24px;
   padding: 0 10px;
   border-radius: 999px;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 12px;
   border: 1px solid transparent;
 }
@@ -306,7 +306,7 @@ body{
 }
 
 .lesson__title{
-  font-weight: 700;
+  font-weight: 600;
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
@@ -317,7 +317,7 @@ body{
 .lesson__sub{
   margin-top: 2px;
   color: var(--muted);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
 }
 
@@ -327,7 +327,7 @@ body{
   border-radius: 14px;
   border: 1px solid rgba(229,231,235,.9);
   background: #fff;
-  font-weight: 700;
+  font-weight: 600;
   cursor:pointer;
 }
 
@@ -372,7 +372,7 @@ body{
 }
 
 .final-task__title{
-  font-weight: 950;
+  font-weight: 700;
   font-size: 18px;
 }
 
@@ -384,7 +384,7 @@ body{
   border-radius: 999px;
   border: 1px solid rgba(245,158,11,.4);
   background: rgba(245,158,11,.12);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 12px;
   color: #92400E;
 }
@@ -392,7 +392,7 @@ body{
 .final-task__desc{
   margin: 10px 0 14px 0;
   color: #475569;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.45;
 }
 
@@ -402,7 +402,7 @@ body{
   border-radius: 16px;
   border: 1px solid rgba(245,158,11,.5);
   background: #fff;
-  font-weight: 950;
+  font-weight: 700;
   cursor:pointer;
 }
 
