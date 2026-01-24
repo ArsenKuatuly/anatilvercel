@@ -90,7 +90,7 @@ function renderCourse(course, modules) {
             if (!module.locked) {
                 li.style.cursor = "pointer";
                 li.addEventListener("click", () => {
-                    window.location.href = `/lesson.html?id=${lesson.id}`;
+                    window.location.href = `/lesson/${lesson.id}`;
                 });
             } else {
                 li.classList.add("locked");
