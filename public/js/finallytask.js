@@ -9,6 +9,19 @@ const submitBtn = document.getElementById("submitTaskBtn");
 const backBtn = document.getElementById("backBtn");
 const resultMessage = document.getElementById("resultMessage");
 
+function pickPayload(x) {
+    // authFetch может вернуть Response или {res,data}
+    if (!x) return { ok: false, data: null };
+    if (x.data !== undefined) return { ok: !!x.res?.ok, data: x.data };
+    return { ok: !!x.ok, data: null };
+}
+
+async function toJson(x) {
+    if (!x) return {};
+    if (x.data !== undefined) return x.data || {};
+    return await x.json().catch(() => ({}));
+}
+
 if (!taskId) {
     taskDescriptionEl.textContent = "Задание не найдено";
     submitBtn.disabled = true;
@@ -16,40 +29,18 @@ if (!taskId) {
     loadTask();
 }
 
-// ✅ универсальный парсер для authFetch/apiFetch
-async function unwrapJson(result) {
-    // 1) Response (у него есть .json())
-    if (result && typeof result.json === "function") {
-        return await result.json();
-    }
-
-    // 2) { res, data } (как apiFetch)
-    if (result && result.data !== undefined) {
-        return result.data;
-    }
-
-    // 3) { res: Response, data? }
-    if (result && result.res && typeof result.res.json === "function") {
-        return await result.res.json();
-    }
-
-    return null;
-}
-
 async function loadTask() {
     try {
-        const out = await authFetch(`/api/task/${encodeURIComponent(taskId)}`);
-        const data = await unwrapJson(out);
+        const raw = await authFetch(`/api/task/${encodeURIComponent(taskId)}`);
+        const data = await toJson(raw);
 
-        if (!data || !data.success || !data.task) {
+        if (!data.success || !data.task) {
             taskDescriptionEl.textContent = "Задание не найдено";
             submitBtn.disabled = true;
             return;
         }
 
-        taskDescriptionEl.textContent =
-            data.task.description || "Описание задания отсутствует";
-
+        taskDescriptionEl.textContent = data.task.description || "Описание задания отсутствует";
         await loadQuestions(taskId);
     } catch (err) {
         console.error("Ошибка загрузки задания:", err);
@@ -60,10 +51,10 @@ async function loadTask() {
 
 async function loadQuestions(taskId) {
     try {
-        const out = await authFetch(`/api/task/${encodeURIComponent(taskId)}/questions`);
-        const data = await unwrapJson(out);
+        const raw = await authFetch(`/api/task/${encodeURIComponent(taskId)}/questions`);
+        const data = await toJson(raw);
 
-        if (!data || !data.success || !Array.isArray(data.questions) || data.questions.length === 0) {
+        if (!data.success || !Array.isArray(data.questions) || data.questions.length === 0) {
             questionsContainer.innerHTML = "<p>Вопросы не найдены</p>";
             submitBtn.disabled = true;
             return;
@@ -76,10 +67,8 @@ async function loadQuestions(taskId) {
             div.className = "question";
 
             let options = [];
-
-            if (Array.isArray(q.options)) {
-                options = q.options;
-            } else if (typeof q.options === "string") {
+            if (Array.isArray(q.options)) options = q.options;
+            else if (typeof q.options === "string") {
                 try {
                     const parsed = JSON.parse(q.options);
                     options = Array.isArray(parsed) ? parsed : q.options.split(",");
@@ -91,13 +80,13 @@ async function loadQuestions(taskId) {
             options = options.map((o) => String(o).trim()).filter(Boolean);
 
             div.innerHTML = `
-        <p>${i + 1}. ${escapeHtml(q.question || "")}</p>
+        <p>${i + 1}. ${q.question}</p>
         ${options
                 .map(
                     (o) => `
           <label>
-            <input type="radio" name="q${q.id}" value="${escapeHtml(o)}">
-            ${escapeHtml(o)}
+            <input type="radio" name="q${q.id}" value="${o}">
+            ${o}
           </label>
         `
                 )
@@ -122,7 +111,7 @@ submitBtn.addEventListener("click", async () => {
         const input = qEl.querySelector("input:checked");
         if (input) {
             answers.push({
-                questionId: input.name.slice(1), // "q123" -> "123"
+                questionId: input.name.slice(1),
                 answer: input.value
             });
         }
@@ -134,47 +123,34 @@ submitBtn.addEventListener("click", async () => {
     }
 
     try {
-        submitBtn.disabled = true;
-
-        const out = await authFetch(`/api/task/${encodeURIComponent(taskId)}/submit`, {
+        const raw = await authFetch(`/api/task/${encodeURIComponent(taskId)}/submit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ answers })
         });
 
-        const data = await unwrapJson(out);
+        const data = await toJson(raw);
 
         resultMessage.classList.remove("hidden");
 
-        if (data && data.success && data.passed) {
+        if (data.success && data.passed) {
             resultMessage.textContent = "Поздравляем! Вы прошли задание 🎉";
             resultMessage.style.color = "green";
+            submitBtn.disabled = true;
 
             setTimeout(() => {
                 window.location.href = "/profile.html";
-            }, 1500);
+            }, 1200);
         } else {
             resultMessage.textContent = "Задание не пройдено. Попробуйте снова.";
             resultMessage.style.color = "red";
-            submitBtn.disabled = false;
         }
     } catch (err) {
         console.error("Ошибка отправки задания:", err);
         resultMessage.classList.remove("hidden");
         resultMessage.textContent = "Ошибка отправки задания";
         resultMessage.style.color = "red";
-        submitBtn.disabled = false;
     }
 });
 
 backBtn.addEventListener("click", () => window.history.back());
-
-// защита от XSS
-function escapeHtml(str) {
-    return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
