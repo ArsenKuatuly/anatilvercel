@@ -3,7 +3,7 @@ console.log("coursemodul.js загружен");
 function getCourseSlug() {
     // 1) ?slug=
     const params = new URLSearchParams(window.location.search);
-    const fromQuery = params.get("slug");
+    const fromQuery = params.get("slug") || params.get("course") || params.get("courseSlug");
     if (fromQuery) return fromQuery;
 
     // 2) /courses/<slug>
@@ -13,15 +13,6 @@ function getCourseSlug() {
 
     return null;
 }
-
-const courseSlug = getCourseSlug();
-
-if (!courseSlug) {
-    console.warn("Course slug not found");
-}
-
-
-console.log("COURSE SLUG:", courseSlug);
 
 document.addEventListener("DOMContentLoaded", () => {
     const modulesEl = document.getElementById("modules");
@@ -36,8 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // slug берём один раз
-    const slug = courseSlug;
+    const slug = getCourseSlug();
+    if (!slug) {
+        modulesEl.innerHTML = "<p>Не удалось определить slug курса (открой /courses/<slug>)</p>";
+        return;
+    }
 
     // создаём блок итогового задания, если его нет в HTML
     if (!finalTaskEl) {
@@ -59,11 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
         startTaskBtn.disabled = true;
         finalTaskEl.appendChild(startTaskBtn);
     }
-    if (!slug) {
-        modulesEl.innerHTML = `<p>Нет slug курса.<br>Открой курс как <b>/courses/&lt;slug&gt;</b> или <b>/coursemodul.html?slug=...</b></p>`;
-        return;
-    }
-
 
     loadCourse();
 
@@ -73,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const data = await res.json();
 
             if (!data?.success) {
-                modulesEl.innerHTML = "<p>Курс не найден</p>";
+                modulesEl.innerHTML = "<p>Курс не найден или недоступен</p>";
                 return;
             }
 
@@ -118,7 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
             m.lessons.forEach((lesson, index) => {
                 const completed = Number(lesson.completed) === 1;
 
-                // если модуль залочен — уроки залочены тоже
                 const canOpen =
                     !Number(m.locked) &&
                     (completed || index === firstUncompletedIndex || firstUncompletedIndex === -1);
@@ -134,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (canOpen) {
                     lessonEl.addEventListener("click", () => {
-                        // ✅ красивый URL под твой vercel.json
+                        // ✅ под твой vercel.json
                         window.location.href = `/lesson/${lesson.id}`;
                     });
                 }
@@ -177,7 +165,6 @@ document.addEventListener("DOMContentLoaded", () => {
         startTaskBtn.disabled = false;
         startTaskBtn.textContent = "Пройти итоговое задание";
 
-        // course.id нужен для /api/course/:courseId/task
         if (course?.id) {
             await loadFinalTask(course.id);
         } else {
@@ -186,8 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function loadFinalTask(courseId) {
-        if (!finalTaskEl || !startTaskBtn || !taskDescEl) return;
-
         try {
             const res = await authFetch(`/api/course/${courseId}/task`);
             const data = await res.json();
@@ -208,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // простая защита от XSS в title
     function escapeHtml(str) {
         return String(str)
             .replaceAll("&", "&amp;")
