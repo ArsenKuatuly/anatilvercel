@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Курс</title>
 
     <link rel="stylesheet" href="/css/index.css" />
-    <link rel="stylesheet" href="/css/header.css" />
+    <link rel="stylesheet" href="/css/headerdash.css" />
     <link rel="stylesheet" href="/css/chat.css" />
 </head>
 
@@ -16,81 +16,80 @@
 
 <header class="header" id="header">
     <div class="header__container">
-        <a class="header__logo" href="index.html">AnaTil</a>
+        <a class="header__logo" href="/">AnaTil</a>
 
-        <!-- DESKTOP NAV -->
+
         <nav class="header__nav nav nav--desktop">
-            <a class="nav__link" href="#promo" data-key="about">О нас</a>
-            <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-            <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-            <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+            <a class="nav__link" href="/courses">Курсы</a>
+            <a class="nav__link" href="/progress">Мой прогресс</a>
+            <a class="nav__link" href="/library">Библиотека</a>
+
+
+            <a class="nav__link nav__link--admin" href="/admin" id="adminBtn" style="display:none">
+                Админ панель
+            </a>
         </nav>
 
+
         <div class="header__actions header__actions--desktop">
-            <a href="/admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
-            <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
+            <a class="header__profile" href="/profile.html">
+          <span class="header__icon" aria-hidden="true">
+
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.4 0-8 2-8 4.5V21h16v-2.5c0-2.5-3.6-4.5-8-4.5Z"/>
+            </svg>
+          </span>
+                <span class="header__profile-text">Профиль</span>
+            </a>
         </div>
 
         <!-- BURGER (mobile) -->
-        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button>
+        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
+            <!-- "☰" можно оставить, но так ближе к дизайну -->
+            <span class="header__burger-icon" aria-hidden="true"></span>
+        </button>
     </div>
 
     <!-- MOBILE MENU -->
     <div class="header__mobile" hidden>
         <div class="header__container header__container--mobile">
             <nav class="header__nav nav nav--mobile">
-                <a class="nav__link" href="#promo" data-key="about">О нас</a>
-                <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-                <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-                <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+                <a class="nav__link" href="/courses">Курсы</a>
+                <a class="nav__link" href="/progress">Мой прогресс</a>
+                <a class="nav__link" href="/library">Библиотека</a>
+
+                <a class="nav__link nav__link--admin" href="/admin" class="adminBtn" style="display:none">
+                    Админ панель
+                </a>
             </nav>
 
             <div class="header__actions header__actions--mobile">
-                <a href="/admin" class="adminBtn" style="display:none">⚙ Админ панель</a>
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
+                <a class="header__profile header__profile--mobile" href="/profile.html">
+            <span class="header__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="20" height="20">
+                <path fill="currentColor" d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.4 0-8 2-8 4.5V21h16v-2.5c0-2.5-3.6-4.5-8-4.5Z"/>
+              </svg>
+            </span>
+                    <span class="header__profile-text">Профиль</span>
+                </a>
             </div>
         </div>
     </div>
 </header>
 
-<main class="course-page">
-    <section class="course">
-        <!-- Верх курса (как в “красивом” дизайне, но классами по-твоему) -->
-        <div class="course__top">
-            <div class="course__info">
-                <h1 class="course__title" id="courseTitle">Курс</h1>
-                <p class="course__desc" id="courseDesc" style="display:none"></p>
 
-                <div class="course__meta" id="courseMeta" style="display:none"></div>
-            </div>
+<div class="course">
+    <h1 id="courseTitle">Курс</h1>
+    <div id="modules"></div>
+</div>
 
-            <div class="course__progress" id="courseProgress" style="display:none">
-                <div class="progress__row">
-                    <div class="progress__label">Прогресс</div>
-                    <div class="progress__value" id="progressValue">0%</div>
-                </div>
-                <div class="progress__bar">
-                    <div class="progress__fill" id="progressFill" style="width:0%"></div>
-                </div>
-                <div class="progress__hint" id="progressHint">0/0</div>
-            </div>
-        </div>
-
-        <!-- сюда JS вставит модули -->
-        <div class="modules" id="modules"></div>
-
-        <!-- итоговое задание (твой js создаёт, но пусть будет сразу) -->
-        <div class="final-task" id="finalTask" style="display:none;">
-            <p class="final-task__text" id="taskDescription"></p>
-            <button class="final-task__btn" id="startTaskBtn" type="button" disabled>Завершите курс</button>
-        </div>
-    </section>
-
-    <section class="lesson-view" id="lessonContent"></section>
-</main>
+<div id="lessonContent"></div>
 
 <script src="/js/authFetch.js"></script>
 <script src="/js/coursemodul.js"></script>
 <script src="/js/chat.js"></script>
+
+
+<script src="/js/header.js"></script>
 </body>
 </html>
