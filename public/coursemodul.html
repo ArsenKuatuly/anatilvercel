@@ -1,66 +1,69 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Курс</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnaTil — Курс</title>
 
-    <link rel="stylesheet" href="/css/headerdash.css">
-    <link rel="stylesheet" href="/css/courselvl.css">
-    <link rel="stylesheet" href="/css/chat.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- если у тебя есть header.css / chat.css — можешь оставить -->
+  <link rel="stylesheet" href="/css/header.css">
+  <link rel="stylesheet" href="/css/chat.css">
+
+  <!-- курс (дизайн как в демо anatil_html_css_js.zip) -->
+  <link rel="stylesheet" href="/css/course-page.css" />
 </head>
 <body>
+
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
 
-<!-- ТВОЙ HEADER (без изменений) -->
 <header class="header" id="header">
-    <div class="header__container">
-        <a class="header__logo" href="index.html">AnaTil</a>
+  <div class="container header__row">
+    <a class="logo" href="/">AnaTil</a>
 
-        <nav class="header__nav nav nav--desktop">
-            <a class="nav__link" href="#promo" data-key="about">О нас</a>
-            <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-            <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-            <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
-        </nav>
+    <nav class="nav" id="nav">
+      <a class="nav__link" href="/#promo">О нас</a>
+      <a class="nav__link" href="/#reasons">Преимущества</a>
+      <a class="nav__link" href="/#courses">Курсы</a>
+      <a class="nav__link" href="/profile.html">Профиль</a>
+      <a class="nav__link nav__link--admin" href="/admin.html" id="adminLink" hidden>Админ</a>
+    </nav>
 
-        <div class="header__actions header__actions--desktop">
-            <div class="header__actions header__actions--mobile">
-                <a href="/admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
-        </div>
+    <div class="header__actions">
+      <a class="user" href="/profile.html" aria-label="Профиль">
+        <span class="user__icon" aria-hidden="true">👤</span>
+        <span class="user__text">Профиль</span>
+      </a>
 
-        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">☰</button>
+      <button class="burger" id="burger" type="button" aria-label="Меню" aria-expanded="false">
+        <span class="burger__bar"></span>
+        <span class="burger__bar"></span>
+        <span class="burger__bar"></span>
+      </button>
     </div>
+  </div>
 
-    <div class="header__mobile" hidden>
-        <div class="header__container header__container--mobile">
-            <nav class="header__nav nav nav--mobile">
-                <a class="nav__link" href="#promo" data-key="about">О нас</a>
-                <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-                <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-                <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
-            </nav>
-
-            <div class="header__actions header__actions--mobile">
-                <a href="/admin" class="adminBtn" style="display:none">⚙ Админ панель</a>
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
-        </div>
+  <div class="mobile" id="mobileMenu" hidden>
+    <div class="container mobile__panel">
+      <a class="mobile__link" href="/#promo">О нас</a>
+      <a class="mobile__link" href="/#reasons">Преимущества</a>
+      <a class="mobile__link" href="/#courses">Курсы</a>
+      <a class="mobile__link" href="/profile.html">Профиль</a>
+      <a class="mobile__link mobile__link--admin" href="/admin.html" id="adminLinkMobile" hidden>Админ</a>
     </div>
+  </div>
 </header>
 
-<!-- ТВОЁ тело страницы -->
-<div class="course">
-    <h1 id="courseTitle">Курс</h1>
-    <div id="modules"></div>
-</div>
+<main class="page">
+  <div class="container">
+    <div id="app"></div>
+  </div>
+</main>
 
-<div id="lessonContent"></div>
-
-<script src="/js/authFetch.js"></script>
-<script src="/js/coursemodul.js"></script>
-<script src="/js/chat.js"></script>
+<script src="/js/course-page.js"></script>
 </body>
 </html>
