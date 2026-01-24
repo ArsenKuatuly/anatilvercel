@@ -108,13 +108,19 @@
 
 /* Mobile menu panel */
 .dash-header__mobile{
+    display: none;             /* ВАЖНО: скрыто на десктопе и вообще по умолчанию */
     border-top: 1px solid var(--border);
     background: var(--white);
     padding: 14px 16px 16px;
-    display: flex;
     flex-direction: column;
     gap: 10px;
 }
+
+/* когда JS убрал hidden — показываем */
+.dash-header__mobile:not([hidden]){
+    display: flex;
+}
+
 
 .dash-header__m-link{
     display: block;
