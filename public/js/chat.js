@@ -2,7 +2,7 @@
 
 (() => {
     const fab = document.querySelector(".chat-fab");
-    const overlay = document.getElementById("chat");     // <div class="chat" id="chat" hidden>
+    const overlay = document.getElementById("chat");
     const windowEl = overlay?.querySelector(".chat-window");
     const closeBtn = overlay?.querySelector(".chat-close");
 
@@ -15,6 +15,16 @@
         return;
     }
 
+    const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
+
+    const setFabHidden = (hidden) => {
+        if (!isMobile()) {
+            fab.style.display = "";
+            return;
+        }
+        fab.style.display = hidden ? "none" : "";
+    };
+
     const lockScroll = (locked) => {
         document.documentElement.style.overflow = locked ? "hidden" : "";
         document.body.style.overflow = locked ? "hidden" : "";
@@ -23,10 +33,11 @@
     const openChat = () => {
         overlay.hidden = false;
         fab.setAttribute("aria-expanded", "true");
+        document.body.classList.add("chat-open");
+        setFabHidden(true);
         lockScroll(true);
         setTimeout(() => input.focus(), 0);
 
-        // приветствие один раз
         if (!body.dataset.inited) {
             body.dataset.inited = "1";
             addMessage("Здравствуйте! Я AI-ассистент AnaTil. Чем могу помочь?", "assistant");
@@ -36,6 +47,8 @@
     const closeChat = () => {
         overlay.hidden = true;
         fab.setAttribute("aria-expanded", "false");
+        document.body.classList.remove("chat-open");
+        setFabHidden(false);
         lockScroll(false);
     };
 
@@ -46,17 +59,19 @@
 
     closeBtn?.addEventListener("click", closeChat);
 
-    // ESC закрывает
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && !overlay.hidden) closeChat();
     });
 
-    // клик по затемнению — закрыть (но не при клике внутри окна)
     overlay.addEventListener("click", (e) => {
         if (e.target === overlay) closeChat();
     });
 
-    // Enter отправляет (Shift+Enter не используем — у тебя input, не textarea)
+    window.addEventListener("resize", () => {
+        if (!overlay.hidden) setFabHidden(true);
+        else setFabHidden(false);
+    });
+
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -80,7 +95,6 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text })
             });
-
 
             removeTyping(typingEl);
 

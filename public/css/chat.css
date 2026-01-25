@@ -293,4 +293,9 @@ border-radius: var(--radius-2xl);
     display: none !important;
 }
 
+@media (max-width: 768px){
+    body.chat-open .chat-button{
+        display: none;
+    }
+}
 
