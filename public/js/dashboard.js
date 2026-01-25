@@ -1,13 +1,25 @@
 document.addEventListener("DOMContentLoaded", async () => {
 
+    const dash = document.getElementById("dash");
+
+    function setState(name) {
+        if (!dash) return;
+        dash.querySelectorAll(".dash__state").forEach((s) => {
+            s.classList.toggle("is-active", s.dataset.state === name);
+        });
+    }
+
+
+    setState("loading");
+
+
     const logoBtn = document.getElementById("logoBtn");
     if (logoBtn) {
         logoBtn.addEventListener("click", async () => {
             const r = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
-            window.location.href = r && r.res.ok ? "/dashboard.html" : "/index.html";
+            window.location.href = r && r.res && r.res.ok ? "/dashboard.html" : "/index.html";
         });
     }
-
 
     const logoutBtn = document.getElementById("logout");
     if (logoutBtn) {
@@ -19,19 +31,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     let user = null;
-    const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
-    if (me && me.data && me.data.success) user = me.data.user;
+    try {
+        const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
+        if (me && me.data && me.data.success) user = me.data.user;
 
-    if (user?.role === "admin") {
-        const adminBtn = document.getElementById("adminBtn");
-        if (adminBtn) adminBtn.style.display = "inline-block";
+        if (user?.role === "admin") {
+            const adminBtn = document.getElementById("adminBtn");
+            if (adminBtn) adminBtn.style.display = "inline-block";
+        }
+    } catch (e) {
+
+        setState("empty");
+        return;
     }
 
 
-    await loadCourseProgress();
+    const hasData = await loadCourseProgress(setState);
+
+
+    setState(hasData ? "data" : "empty");
 });
 
-async function loadCourseProgress() {
+async function loadCourseProgress(setState) {
     const percentEl = document.getElementById("lessonPercent");
     const courseTitleEl = document.getElementById("courseTitle");
     const courseDescEl = document.getElementById("courseDesc");
@@ -41,14 +62,14 @@ async function loadCourseProgress() {
     const btn = document.getElementById("goToCourseBtn");
 
 
-    if (!percentEl && !courseTitleEl && !btn) return;
+    if (!percentEl && !courseTitleEl && !btn) return false;
 
     try {
         const out = await apiFetch("/api/lessons/progress/current", { method: "GET" });
-        if (!out) return;
+        if (!out) return false;
 
         const { data } = out;
-        if (!data?.success) return;
+        if (!data?.success) return false;
 
 
         if (!data.course) {
@@ -62,8 +83,9 @@ async function loadCourseProgress() {
                 btn.style.pointerEvents = "none";
                 btn.style.opacity = "0.6";
             }
-            return;
+            return false;
         }
+
 
         const percent = Number(data.percent || 0);
         const completed = Number(data.completedLessons || 0);
@@ -73,13 +95,13 @@ async function loadCourseProgress() {
         if (courseTitleEl) courseTitleEl.textContent = data.course.title || "Ваш текущий курс";
 
         if (courseDescEl) {
-            courseDescEl.textContent = total > 0
-                ? `Пройдено уроков: ${completed} из ${total}`
-                : "Продолжайте обучение";
+            courseDescEl.textContent =
+                total > 0 ? `Пройдено уроков: ${completed} из ${total}` : "Продолжайте обучение";
         }
 
         if (lastLessonEl) lastLessonEl.textContent = data.lastLesson ? data.lastLesson.title : "—";
-        if (nextLessonEl) nextLessonEl.textContent = data.nextLesson ? data.nextLesson.title : "Все уроки пройдены";
+        if (nextLessonEl)
+            nextLessonEl.textContent = data.nextLesson ? data.nextLesson.title : "Все уроки пройдены";
 
 
         if (circleEl) {
@@ -102,17 +124,28 @@ async function loadCourseProgress() {
             }
         }
 
+
         if (btn) {
             const href = `/courses/${data.course.slug}`;
             btn.setAttribute("href", href);
-            btn.addEventListener("click", (e) => {
-                if (btn.getAttribute("href") === "#") {
+            btn.style.pointerEvents = "";
+            btn.style.opacity = "";
+
+            // заменяем обработчик безопасно
+            btn.onclick = (e) => {
+                const h = btn.getAttribute("href");
+                if (!h || h === "#") {
                     e.preventDefault();
-                    window.location.href = href;
+                    return;
                 }
-            });
+
+            };
         }
+
+        return true;
     } catch (err) {
         console.error("Ошибка загрузки прогресса", err);
+        if (typeof setState === "function") setState("empty");
+        return false;
     }
 }
