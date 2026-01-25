@@ -7,6 +7,41 @@
 
     const TOKEN_KEY = "token";
 
+    const LEVEL_MAP = {
+        elementary: { cefr: "A1", idx: 1 },
+        basic: { cefr: "A2", idx: 2 },
+        intermediate: { cefr: "B1", idx: 3 },
+        upper: { cefr: "B2", idx: 4 },
+        advanced: { cefr: "C1", idx: 5 },
+    };
+
+    function normalizeLevel(v) {
+        return String(v || "").trim().toLowerCase();
+    }
+
+    function applyLevelUI(levelRaw) {
+        const key = normalizeLevel(levelRaw);
+        const meta = LEVEL_MAP[key] || LEVEL_MAP.elementary;
+
+        const labels = document.querySelectorAll("[data-cefr-label]");
+        labels.forEach((el) => (el.textContent = meta.cefr));
+
+        const icons = document.querySelectorAll(".course__icon, .course__achieve-icon");
+        icons.forEach((icon) => {
+            icon.setAttribute("data-cefr", meta.cefr);
+            icon.setAttribute("data-level-idx", String(meta.idx));
+
+            const dots = Array.from(icon.querySelectorAll(".dot, .course__dot, [data-dot]"));
+            if (!dots.length) return;
+
+            dots.forEach((d, i) => {
+                const n = i + 1;
+                d.classList.toggle("dot--active", n <= meta.idx);
+                d.classList.toggle("dot--inactive", n > meta.idx);
+            });
+        });
+    }
+
     function getToken() {
         try {
             return localStorage.getItem(TOKEN_KEY) || "";
@@ -448,10 +483,15 @@
             const completedLessons = Number(data.completedLessons || 0);
             const modulesCount = Number(data.modulesCount || 0);
             const percent = Number(data.percent || 0);
-            const modulesLeft = Number(data.modulesLeft ?? Math.max(0, modulesCount - Number(data.completedModules || 0)));
+            const modulesLeft = Number(
+                data.modulesLeft ??
+                Math.max(0, modulesCount - Number(data.completedModules || 0))
+            );
 
             if (courseTitle) courseTitle.textContent = course.title || "—";
             if (courseLevel) courseLevel.textContent = (course.level || "—").toUpperCase();
+
+            applyLevelUI(course.level);
 
             if (courseDesc) courseDesc.textContent = courseDesc.textContent === "—" ? "—" : courseDesc.textContent;
 
