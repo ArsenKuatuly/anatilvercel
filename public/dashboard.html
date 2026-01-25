@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AnaTil</title>
     <link rel="stylesheet" href="/css/headerdash.css" />
-    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/dashboard.css" />
     <link rel="stylesheet" href="/css/chat.css" />
     <link rel="stylesheet" href="/css/admin.css" />
 </head>
@@ -45,162 +45,84 @@
     </div>
 </header>
 
-<section class="tests">
-    <div class="tests__container">
-        <h2 class="tests__title">Виды тестирования</h2>
+<main class="dash">
+    <div class="dash__container">
 
-        <div class="tests__list">
+        <section class="dash__grid">
 
-            <!-- Card 1 -->
-            <div class="test-card">
-                <div class="test-card__header">
-                    <div class="test-card__icon">
-                        <img src="/assets/imgs/thirdexam.jpg" alt="LVL">
-                    </div>
-                    <h3 class="test-card__title">Проверить свой уровень</h3>
+            <!-- Progress card -->
+            <article class="card card--progress">
+                <div class="card__head">
+                    <h1 class="card__title">Ваш прогресс</h1>
+                    <p class="card__subtitle">Продолжайте обучение — всё сохраняется автоматически</p>
                 </div>
 
-                <ul class="test-card__info">
-                    <li class="test-card__item">30 Вопросов</li>
-                    <li class="test-card__item">Перевод слов</li>
-                    <li class="test-card__item">Грамотность</li>
-                    <li class="test-card__item">Слушание</li>
-                    <li class="test-card__item">40 минут</li>
-
-                </ul>
-
-                <a href="test.html" class="test-card__btn" id="startTestBtn">
-                    Начать тест
-                    <span class="test-card__arrow">→</span>
-                </a>
-
-
-
-            </div>
-
-            <!-- Card 2 -->
-            <div class="test-card">
-                <div class="test-card__header">
-                    <div class="test-card__icon">
-                        <img src="/assets/imgs/secondexam.png" alt="Prod">
-                    </div>
-                    <h3 class="test-card__title">Продвинутый тест</h3>
-                </div>
-
-                <ul class="test-card__info">
-                    <li class="test-card__item">50 Вопросов</li>
-                    <li class="test-card__item">Чтение</li>
-                    <li class="test-card__item">Слушание</li>
-                    <li class="test-card__item">Грамматика</li>
-                    <li class="test-card__item">100 Баллов</li>
-                </ul>
-
-                <button class="test-card__btn test-card__btn--disabled" disabled>
-                    Скоро
-                </button>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="test-card">
-                <div class="test-card__header">
-                    <div class="test-card__icon">
-                        <img src="/assets/imgs/firstexam.png" alt="Exam">
-                    </div>
-                    <h3 class="test-card__title">
-                        Экзаменационный тест
-                    </h3>
-                </div>
-
-                <ul class="test-card__info">
-                    <li class="test-card__item">80 Вопросов</li>
-                    <li class="test-card__item">240 минут</li>
-                    <li class="test-card__item">140 баллов</li>
-                    <li class="test-card__item">Чтение</li>
-                    <li class="test-card__item">Слушание</li>
-                    <li class="test-card__item">Грамматика</li>
-                </ul>
-
-                <button class="test-card__btn test-card__btn--disabled" disabled>
-                    Скоро
-                </button>
-            </div>
-
-        </div>
-        <div class="course-progress">
-
-            <div class="course-progress__header">
-                <div class="course-progress__circle">
-                    <span id="lessonPercent">0%</span>
-                </div>
-
-                <div class="course-progress__info">
-                    <h3 id="courseTitle">Ваш текущий курс</h3>
-                    <p id="courseDesc">Продолжайте обучение</p>
-                </div>
-            </div>
-
-            <div class="course-progress__lessons">
-
-                <div class="lesson-item lesson-item--done">
-                    <div class="lesson-status"></div>
-                    <div class="lesson-content">
-                        <div class="lesson-title" id="lastLesson">
-                            —
+                <div class="course-progress">
+                    <div class="course-progress__left">
+                        <!-- IMPORTANT: class + span внутри нужны для твоего JS -->
+                        <div class="course-progress__circle" aria-label="Прогресс курса">
+              <span>
+                <b id="lessonPercent">0%</b>
+                <small>выполнено</small>
+              </span>
                         </div>
-                        <div class="lesson-sub">
-                            Урок пройден
+                    </div>
+
+                    <div class="course-progress__right">
+                        <h2 class="course-progress__title" id="courseTitle">Ваш текущий курс</h2>
+                        <p class="course-progress__desc" id="courseDesc">Продолжайте обучение</p>
+
+                        <div class="course-progress__meta">
+                            <div class="meta">
+                                <div class="meta__label">Последний урок</div>
+                                <div class="meta__value" id="lastLesson">—</div>
+                            </div>
+
+                            <div class="meta">
+                                <div class="meta__label">Следующий урок</div>
+                                <div class="meta__value" id="nextLesson">—</div>
+                            </div>
+                        </div>
+
+                        <div class="course-progress__actions">
+                            <!-- IMPORTANT: id нужен твоему JS -->
+                            <a class="btn btn--primary" id="goToCourseBtn" href="#">
+                                Перейти к курсу
+                            </a>
+                            <a class="btn btn--ghost" href="/tests.html">
+                                Пройти тест
+                            </a>
                         </div>
                     </div>
                 </div>
+            </article>
 
-                <div class="lesson-item lesson-item--next">
-                    <div class="lesson-status"></div>
-                    <div class="lesson-content">
-                        <div class="lesson-title" id="nextLesson">
-                            —
-                        </div>
-                        <div class="lesson-sub">
-                            Урок не пройден
-                        </div>
-                    </div>
+            <!-- Quick actions -->
+            <aside class="card card--actions">
+                <h3 class="card__title card__title--sm">Быстрые действия</h3>
+
+                <div class="actions">
+                    <a class="action" href="/profile.html">
+                        <div class="action__title">Профиль</div>
+                        <div class="action__text">Настройки аккаунта и уровень</div>
+                    </a>
+
+                    <a class="action" href="/courses.html">
+                        <div class="action__title">Все курсы</div>
+                        <div class="action__text">Посмотреть доступные программы</div>
+                    </a>
+
+                    <a class="action" href="/support.html">
+                        <div class="action__title">Поддержка</div>
+                        <div class="action__text">Вопросы и помощь</div>
+                    </a>
                 </div>
+            </aside>
 
-            </div>
-
-            <a href="#" id="goToCourseBtn" class="course-progress__link">
-                Перейти к курсу →
-            </a>
-
-        </div>
-
+        </section>
 
     </div>
-
-
-</section>
-
-
-
-
-
-<div class="modal" id="confirmModal">
-    <div class="modal__content">
-        <h3 class="modal__title">Начать тест?</h3>
-        <p class="modal__text">
-            После начала теста таймер запустится.
-            Вы уверены, что хотите продолжить?
-        </p>
-
-        <div class="modal__actions">
-            <button class="modal__btn modal__btn--cancel" id="cancelBtn">
-                Отмена
-            </button>
-            <button class="modal__btn modal__btn--confirm" id="confirmBtn">
-                Да, начать
-            </button>
-        </div>
-    </div>
-</div>
+</main>
 
 
 
