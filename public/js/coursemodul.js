@@ -78,7 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             renderModules(data.modules);
+            updateCourseHero(data.course, data.modules);
             checkCourseProgress(data.course, data.modules);
+
         } catch (err) {
             console.error("❌ ошибка загрузки курса", err);
             if (err?.data) console.error("❌ server payload:", err.data);
@@ -209,6 +211,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
             modulesEl.appendChild(moduleEl);
         });
+    }
+
+
+    function updateCourseHero(course, modules) {
+        const moduleCountEl = document.getElementById("moduleCount");
+        const lessonCountEl = document.getElementById("lessonCount");
+        const courseProgressEl = document.getElementById("courseProgress");
+        const progressBarEl = document.getElementById("progressBar");
+        const nextLessonBtn = document.getElementById("nextLessonBtn");
+
+        const moduleCount = Array.isArray(modules) ? modules.length : 0;
+
+        let totalLessons = 0;
+        let completedLessons = 0;
+
+
+        let nextLesson = null;
+
+        (modules || []).forEach((m) => {
+            const lessons = Array.isArray(m.lessons) ? m.lessons : [];
+            totalLessons += lessons.length;
+            completedLessons += lessons.filter((l) => Number(l.completed) === 1).length;
+
+            if (nextLesson) return;
+
+
+            if (!Number(m.locked)) {
+                const firstUncompletedIndex = lessons.findIndex((l) => !Number(l.completed));
+                if (firstUncompletedIndex !== -1) {
+                    nextLesson = lessons[firstUncompletedIndex];
+                } else if (lessons.length) {
+
+                }
+            }
+        });
+
+
+        let percent = 0;
+        if (typeof course?.percent === "number") percent = course.percent;
+        else if (totalLessons > 0) percent = Math.round((completedLessons / totalLessons) * 100);
+
+        if (moduleCountEl) moduleCountEl.textContent = String(moduleCount);
+        if (lessonCountEl) lessonCountEl.textContent = String(totalLessons);
+        if (courseProgressEl) courseProgressEl.textContent = String(percent);
+
+        if (progressBarEl) progressBarEl.style.width = `${percent}%`;
+
+
+        if (nextLessonBtn) {
+            if (nextLesson?.id) {
+                nextLessonBtn.href = `/lesson/${nextLesson.id}`;
+                nextLessonBtn.setAttribute("aria-disabled", "false");
+                nextLessonBtn.style.pointerEvents = "auto";
+                nextLessonBtn.style.opacity = "1";
+            } else {
+                nextLessonBtn.href = "#";
+                nextLessonBtn.setAttribute("aria-disabled", "true");
+                nextLessonBtn.style.pointerEvents = "none";
+                nextLessonBtn.style.opacity = "0.6";
+                nextLessonBtn.textContent = "Все уроки пройдены";
+            }
+        }
     }
 
 
