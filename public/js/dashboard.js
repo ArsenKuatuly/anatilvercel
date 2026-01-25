@@ -1,17 +1,6 @@
+// dashboard.js
 document.addEventListener("DOMContentLoaded", async () => {
-    const dash = document.getElementById("dash");
-
-    function setState(name) {
-        if (!dash) return;
-        dash.querySelectorAll(".dash__state").forEach((s) => {
-            s.classList.toggle("is-active", s.dataset.state === name);
-        });
-    }
-
-    // ====== DEFAULT ======
-    setState("loading");
-
-    // ====== HEADER ACTIONS ======
+    // ====== header логотип ======
     const logoBtn = document.getElementById("logoBtn");
     if (logoBtn) {
         logoBtn.addEventListener("click", async (e) => {
@@ -21,48 +10,41 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // ====== logout (если кнопка есть в DOM) ======
     const logoutBtn = document.getElementById("logout");
     if (logoutBtn) {
-        logoutBtn.addEventListener("click", async () => {
+        logoutBtn.addEventListener("click", () => {
             localStorage.removeItem("token");
             window.location.href = "/index.html";
         });
     }
 
-    // ====== USER / ROLE / AVATAR ======
+    // ====== user/me ======
     let user = null;
-    try {
-        const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
-        if (me && me.data && me.data.success) user = me.data.user;
+    const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
+    if (me && me.data && me.data.success) user = me.data.user;
 
-        // admin
-        if (user?.role === "admin") {
-            const adminBtn = document.getElementById("adminBtn");
-            if (adminBtn) adminBtn.style.display = "inline-block";
-        }
-
-        // avatar letter
-        const initialEl = document.getElementById("userInitial");
-        if (initialEl) {
-            const base =
-                (user?.name && String(user.name).trim()) ||
-                (user?.login && String(user.login).trim()) ||
-                "A";
-            initialEl.textContent = base.slice(0, 1).toUpperCase();
-        }
-    } catch (e) {
-        setState("empty");
-        return;
+    // инициалы в аватарке
+    const userInitial = document.getElementById("userInitial");
+    if (userInitial) {
+        const src = (user?.name || user?.login || user?.email || "A").trim();
+        userInitial.textContent = (src[0] || "A").toUpperCase();
     }
 
-    // ====== MODAL (TEST) ======
+    // админ кнопка (если когда-нибудь добавишь в html)
+    if (user?.role === "admin") {
+        const adminBtn = document.getElementById("adminBtn");
+        if (adminBtn) adminBtn.style.display = "inline-block";
+    }
+
+    // ====== модалка теста ======
     setupTestModal();
 
-    // ====== COURSE PROGRESS ======
-    const hasData = await loadCourseProgress(setState);
-    setState(hasData ? "data" : "empty");
+    // ====== прогресс курса ======
+    await loadCourseProgress();
 });
 
+/* ================== MODAL ================== */
 function setupTestModal() {
     const openBtn = document.getElementById("takeTestBtn");
     const modal = document.getElementById("testModal");
@@ -70,79 +52,69 @@ function setupTestModal() {
 
     if (!modal) return;
 
-    const close = () => {
-        modal.hidden = true;
-        document.documentElement.style.overflow = "";
-        document.body.style.overflow = "";
-    };
+    const close = () => (modal.hidden = true);
+    const open = () => (modal.hidden = false);
 
-    const open = () => {
-        modal.hidden = false;
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
-    };
+    // открыть по кнопке "Пройти тест"
+    if (openBtn) openBtn.addEventListener("click", open);
 
-    // open
-    if (openBtn) {
-        openBtn.addEventListener("click", () => open());
-    }
-
-    // close by elements with data-close="1"
+    // закрыть по любому [data-close]
     modal.addEventListener("click", (e) => {
         const t = e.target;
-        if (!(t instanceof HTMLElement)) return;
-        if (t.closest('[data-close="1"]')) close();
+        if (t && t.closest && t.closest("[data-close='1']")) close();
     });
 
-    // close by Esc
+    // ESC
     document.addEventListener("keydown", (e) => {
         if (!modal.hidden && e.key === "Escape") close();
     });
 
-    // confirm
+    // "Да, начать" — поставь сюда свой роут теста
     if (confirmBtn) {
         confirmBtn.addEventListener("click", () => {
-            // TODO: поставь нужный переход
-            // например: window.location.href = "/tests";
+            // пример: window.location.href = "/test.html";
             close();
         });
     }
 }
 
-async function loadCourseProgress(setState) {
+/* ================== COURSE PROGRESS ================== */
+async function loadCourseProgress() {
+    const wrap = document.getElementById("courseWrap");
+    if (!wrap) return;
+
+    // сначала рендерим каркас (чтобы ids точно существовали)
+    renderCourseSkeleton(wrap);
+
     const percentEl = document.getElementById("lessonPercent");
     const courseTitleEl = document.getElementById("courseTitle");
     const courseDescEl = document.getElementById("courseDesc");
     const lastLessonEl = document.getElementById("lastLesson");
     const nextLessonEl = document.getElementById("nextLesson");
-    const circleEl = document.querySelector(".course-progress__circle");
+    const circleEl = document.querySelector(".course__circle");
     const btn = document.getElementById("goToCourseBtn");
-
-    if (!percentEl && !courseTitleEl && !btn) return false;
 
     try {
         const out = await apiFetch("/api/lessons/progress/current", { method: "GET" });
-        if (!out) return false;
+        if (!out) return;
 
         const { data } = out;
-        if (!data?.success) return false;
+        if (!data?.success) return;
 
-        // ====== EMPTY ======
+        // если курс не назначен
         if (!data.course) {
-            if (percentEl) percentEl.textContent = "0%";
-            if (courseTitleEl) courseTitleEl.textContent = "Курс пока не назначен";
-            if (courseDescEl) courseDescEl.textContent = "";
-            if (lastLessonEl) lastLessonEl.textContent = "—";
-            if (nextLessonEl) nextLessonEl.textContent = "—";
-            if (btn) {
-                btn.setAttribute("href", "#");
-                btn.style.pointerEvents = "none";
-                btn.style.opacity = "0.6";
-            }
-            return false;
+            setCourseEmptyState({
+                percentEl,
+                courseTitleEl,
+                courseDescEl,
+                lastLessonEl,
+                nextLessonEl,
+                circleEl,
+                btn,
+            });
+            return;
         }
 
-        // ====== DATA ======
         const percent = Number(data.percent || 0);
         const completed = Number(data.completedLessons || 0);
         const total = Number(data.totalLessons || 0);
@@ -156,48 +128,89 @@ async function loadCourseProgress(setState) {
         }
 
         if (lastLessonEl) lastLessonEl.textContent = data.lastLesson ? data.lastLesson.title : "—";
-        if (nextLessonEl) {
-            nextLessonEl.textContent = data.nextLesson
-                ? data.nextLesson.title
-                : "Все уроки пройдены";
-        }
+        if (nextLessonEl)
+            nextLessonEl.textContent = data.nextLesson ? data.nextLesson.title : "Все уроки пройдены";
 
-        // circle
+        // круг прогресса (под твой CSS .course__circle / .course__percent)
         if (circleEl) {
-            const deg = Math.max(0, Math.min(100, percent)) * 3.6;
+            const clamped = Math.max(0, Math.min(100, percent));
+            const deg = clamped * 3.6;
             circleEl.style.background = `conic-gradient(#2563eb ${deg}deg, #e6e8ee 0deg)`;
-
-            // подстраховка для внутреннего span
-            const span = circleEl.querySelector("span");
-            if (span) {
-                span.style.background = "#fff";
-                span.style.borderRadius = "999px";
-                span.style.width = "100%";
-                span.style.height = "100%";
-                span.style.display = "grid";
-                span.style.placeItems = "center";
-            }
+            circleEl.style.borderRadius = "999px";
+            circleEl.style.padding = "6px";
+            circleEl.style.boxSizing = "border-box";
         }
 
-        // button to course
+        // кнопка перехода
         if (btn) {
             const href = `/courses/${data.course.slug}`;
             btn.setAttribute("href", href);
             btn.style.pointerEvents = "";
             btn.style.opacity = "";
-
-            btn.onclick = (e) => {
-                const h = btn.getAttribute("href");
-                if (!h || h === "#") {
-                    e.preventDefault();
-                }
-            };
         }
-
-        return true;
     } catch (err) {
         console.error("Ошибка загрузки прогресса", err);
-        if (typeof setState === "function") setState("empty");
-        return false;
+    }
+}
+
+function renderCourseSkeleton(wrap) {
+    wrap.innerHTML = `
+    <section class="course" aria-label="Course progress">
+      <h2 class="course__title">Ваш курс</h2>
+
+      <div class="course__grid">
+        <div class="course__left">
+          <div class="course__circle" aria-label="Прогресс курса">
+            <div class="course__percent" id="lessonPercent">0%</div>
+          </div>
+
+          <div class="course__info">
+            <h3 class="course__name" id="courseTitle">Загрузка…</h3>
+            <p class="course__desc" id="courseDesc">Пожалуйста, подождите</p>
+          </div>
+        </div>
+
+        <div class="course__right">
+          <div class="lesson lesson--last">
+            <div class="lesson__body">
+              <p class="lesson__cap">Последний урок</p>
+              <p class="lesson__txt" id="lastLesson">—</p>
+            </div>
+          </div>
+
+          <div class="lesson lesson--next">
+            <div class="lesson__body">
+              <p class="lesson__cap">Следующий урок</p>
+              <p class="lesson__txt" id="nextLesson">—</p>
+            </div>
+          </div>
+
+          <a class="course__go" id="goToCourseBtn" href="#">
+            Перейти к курсу
+          </a>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function setCourseEmptyState({ percentEl, courseTitleEl, courseDescEl, lastLessonEl, nextLessonEl, circleEl, btn }) {
+    if (percentEl) percentEl.textContent = "0%";
+    if (courseTitleEl) courseTitleEl.textContent = "Курс пока не назначен";
+    if (courseDescEl) courseDescEl.textContent = "";
+    if (lastLessonEl) lastLessonEl.textContent = "—";
+    if (nextLessonEl) nextLessonEl.textContent = "—";
+
+    if (circleEl) {
+        circleEl.style.background = `conic-gradient(#e6e8ee 0deg, #e6e8ee 360deg)`;
+        circleEl.style.borderRadius = "999px";
+        circleEl.style.padding = "6px";
+        circleEl.style.boxSizing = "border-box";
+    }
+
+    if (btn) {
+        btn.setAttribute("href", "#");
+        btn.style.pointerEvents = "none";
+        btn.style.opacity = "0.6";
     }
 }
