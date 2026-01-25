@@ -7,8 +7,6 @@
 
     const TOKEN_KEY = "token";
 
-
-
     function getToken() {
         try {
             return localStorage.getItem(TOKEN_KEY) || "";
@@ -429,6 +427,8 @@
 
         const tileDone = document.getElementById("tileDone");
         const tileLeft = document.getElementById("tileLeft");
+        const tileAvg = document.getElementById("tileAvg");
+        const tileTime = document.getElementById("tileTime");
 
         const progressTitle = document.getElementById("progressTitle");
         const progressText = document.getElementById("progressText");
@@ -448,6 +448,7 @@
             const completedLessons = Number(data.completedLessons || 0);
             const modulesCount = Number(data.modulesCount || 0);
             const percent = Number(data.percent || 0);
+            const modulesLeft = Number(data.modulesLeft ?? Math.max(0, modulesCount - Number(data.completedModules || 0)));
 
             if (courseTitle) courseTitle.textContent = course.title || "—";
             if (courseLevel) courseLevel.textContent = (course.level || "—").toUpperCase();
@@ -468,6 +469,8 @@
 
             if (tileDone) tileDone.textContent = String(completedLessons);
             if (tileLeft) tileLeft.textContent = String(Math.max(0, totalLessons - completedLessons));
+            if (tileAvg) tileAvg.textContent = String(modulesLeft);
+            if (tileTime) tileTime.textContent = `${percent}%`;
 
             if (progressTitle) progressTitle.textContent = totalLessons ? "Отличная работа!" : "Начните обучение";
             if (progressText) {
