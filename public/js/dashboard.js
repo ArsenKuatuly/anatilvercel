@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", async () => {
-
     const dash = document.getElementById("dash");
 
     function setState(name) {
@@ -9,13 +8,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-
+    // ====== DEFAULT ======
     setState("loading");
 
-
+    // ====== HEADER ACTIONS ======
     const logoBtn = document.getElementById("logoBtn");
     if (logoBtn) {
-        logoBtn.addEventListener("click", async () => {
+        logoBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
             const r = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
             window.location.href = r && r.res && r.res.ok ? "/dashboard.html" : "/index.html";
         });
@@ -29,28 +29,85 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-
+    // ====== USER / ROLE / AVATAR ======
     let user = null;
     try {
         const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
         if (me && me.data && me.data.success) user = me.data.user;
 
+        // admin
         if (user?.role === "admin") {
             const adminBtn = document.getElementById("adminBtn");
             if (adminBtn) adminBtn.style.display = "inline-block";
         }
-    } catch (e) {
 
+        // avatar letter
+        const initialEl = document.getElementById("userInitial");
+        if (initialEl) {
+            const base =
+                (user?.name && String(user.name).trim()) ||
+                (user?.login && String(user.login).trim()) ||
+                "A";
+            initialEl.textContent = base.slice(0, 1).toUpperCase();
+        }
+    } catch (e) {
         setState("empty");
         return;
     }
 
+    // ====== MODAL (TEST) ======
+    setupTestModal();
 
+    // ====== COURSE PROGRESS ======
     const hasData = await loadCourseProgress(setState);
-
-
     setState(hasData ? "data" : "empty");
 });
+
+function setupTestModal() {
+    const openBtn = document.getElementById("takeTestBtn");
+    const modal = document.getElementById("testModal");
+    const confirmBtn = document.getElementById("confirmTestBtn");
+
+    if (!modal) return;
+
+    const close = () => {
+        modal.hidden = true;
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+    };
+
+    const open = () => {
+        modal.hidden = false;
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+    };
+
+    // open
+    if (openBtn) {
+        openBtn.addEventListener("click", () => open());
+    }
+
+    // close by elements with data-close="1"
+    modal.addEventListener("click", (e) => {
+        const t = e.target;
+        if (!(t instanceof HTMLElement)) return;
+        if (t.closest('[data-close="1"]')) close();
+    });
+
+    // close by Esc
+    document.addEventListener("keydown", (e) => {
+        if (!modal.hidden && e.key === "Escape") close();
+    });
+
+    // confirm
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", () => {
+            // TODO: поставь нужный переход
+            // например: window.location.href = "/tests";
+            close();
+        });
+    }
+}
 
 async function loadCourseProgress(setState) {
     const percentEl = document.getElementById("lessonPercent");
@@ -61,7 +118,6 @@ async function loadCourseProgress(setState) {
     const circleEl = document.querySelector(".course-progress__circle");
     const btn = document.getElementById("goToCourseBtn");
 
-
     if (!percentEl && !courseTitleEl && !btn) return false;
 
     try {
@@ -71,7 +127,7 @@ async function loadCourseProgress(setState) {
         const { data } = out;
         if (!data?.success) return false;
 
-
+        // ====== EMPTY ======
         if (!data.course) {
             if (percentEl) percentEl.textContent = "0%";
             if (courseTitleEl) courseTitleEl.textContent = "Курс пока не назначен";
@@ -86,7 +142,7 @@ async function loadCourseProgress(setState) {
             return false;
         }
 
-
+        // ====== DATA ======
         const percent = Number(data.percent || 0);
         const completed = Number(data.completedLessons || 0);
         const total = Number(data.totalLessons || 0);
@@ -100,19 +156,18 @@ async function loadCourseProgress(setState) {
         }
 
         if (lastLessonEl) lastLessonEl.textContent = data.lastLesson ? data.lastLesson.title : "—";
-        if (nextLessonEl)
-            nextLessonEl.textContent = data.nextLesson ? data.nextLesson.title : "Все уроки пройдены";
+        if (nextLessonEl) {
+            nextLessonEl.textContent = data.nextLesson
+                ? data.nextLesson.title
+                : "Все уроки пройдены";
+        }
 
-
+        // circle
         if (circleEl) {
             const deg = Math.max(0, Math.min(100, percent)) * 3.6;
             circleEl.style.background = `conic-gradient(#2563eb ${deg}deg, #e6e8ee 0deg)`;
-            circleEl.style.border = "none";
-            circleEl.style.padding = "6px";
-            circleEl.style.boxSizing = "border-box";
-            circleEl.style.position = "relative";
-            circleEl.style.overflow = "hidden";
 
+            // подстраховка для внутреннего span
             const span = circleEl.querySelector("span");
             if (span) {
                 span.style.background = "#fff";
@@ -124,21 +179,18 @@ async function loadCourseProgress(setState) {
             }
         }
 
-
+        // button to course
         if (btn) {
             const href = `/courses/${data.course.slug}`;
             btn.setAttribute("href", href);
             btn.style.pointerEvents = "";
             btn.style.opacity = "";
 
-            // заменяем обработчик безопасно
             btn.onclick = (e) => {
                 const h = btn.getAttribute("href");
                 if (!h || h === "#") {
                     e.preventDefault();
-                    return;
                 }
-
             };
         }
 
