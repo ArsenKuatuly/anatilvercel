@@ -4,38 +4,46 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AnaTil — Dashboard</title>
-  <link rel="stylesheet" href="/dashboard.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+    <link rel="stylesheet" href="/css/headerdash.css" />
 </head>
 <body>
-  <!-- Optional: protect page -->
+
   <script src="/js/auth-guard.js"></script>
   <script src="/js/api.js"></script>
 
-  <header class="topbar">
-    <div class="topbar__container">
-      <button class="topbar__brand" id="logoBtn" type="button" aria-label="AnaTil">
-        <span class="topbar__mark" aria-hidden="true">A</span>
-        <span class="topbar__name">AnaTil</span>
-      </button>
+  <header class="dash-header" id="header">
+      <div class="dash-header__container">
+          <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
 
-      <nav class="topbar__nav" aria-label="Навигация">
-        <a class="topbar__link" href="/dashboard.html">Главная</a>
-        <a class="topbar__link" href="/courses.html">Курсы</a>
-        <a class="topbar__link" href="/tests.html">Тесты</a>
-      </nav>
+          <nav class="dash-header__nav" aria-label="Навигация">
+              <a class="dash-header__link" href="/courses">Курсы</a>
+              <a class="dash-header__link" href="/progress">Мой прогресс</a>
+              <a class="dash-header__link" href="/library.html">Библиотека</a>
+          </nav>
 
-      <div class="topbar__actions">
-        <a class="topbar__btn topbar__btn--ghost" id="adminBtn" href="/admin.html" style="display:none;">Админ</a>
-        <a class="topbar__btn topbar__btn--primary" id="goToCourseBtn" href="#">Перейти к курсу</a>
-        <button class="topbar__btn topbar__btn--ghost" id="logout" type="button">Выйти</button>
+          <div class="dash-header__actions">
+              <a class="dash-header__btn" href="/profile.html">Профиль</a>
+
+              <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                  <span></span><span></span><span></span>
+              </button>
+          </div>
       </div>
-    </div>
+
+
+      <div class="dash-header__mobile" data-mobile hidden>
+          <a class="dash-header__m-link" href="/courses">Курсы</a>
+          <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+          <a class="dash-header__m-link" href="/library">Библиотека</a>
+          <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+      </div>
   </header>
 
   <main class="page">
     <div class="page__container">
       <div class="grid">
-        <!-- Course Progress -->
+
         <section class="card course-progress" aria-labelledby="courseProgressTitle">
           <div class="course-progress__head">
             <h2 class="card__title" id="courseProgressTitle">Ваш текущий курс</h2>
