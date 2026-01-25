@@ -206,7 +206,7 @@ function showResult(score, level) {
 
   document.getElementById("goHome").onclick = () => (window.location.href = "/dashboard.html");
   document.getElementById("goProfile").onclick = () => (window.location.href = "/profile.html");
-  document.getElementById("goCourses").onclick = () => (window.location.href = "/coursemodul.html");
+  document.getElementById("goCourses").onclick = () => (window.location.href = "/profile.html#courses");
 }
 
 async function saveResult(score, level) {
