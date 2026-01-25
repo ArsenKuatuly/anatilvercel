@@ -406,7 +406,7 @@ img{max-width:100%;display:block}
     background:#fff;
 }
 .course__next-label{color:var(--muted); font-size:12px; margin:0 0 4px}
-.course__next-value{margin:0; font-weight:800}
+.course__next-value{margin:0; font-weight:700}
 
 .course__achieve{
     display:flex;
@@ -434,7 +434,7 @@ img{max-width:100%;display:block}
     background:rgba(22,163,74,.35);
 }
 .course__achieve-icon .dot--active{background:var(--success)}
-.course__achieve-icon .course__cefr{font-size:10px; opacity:.9}
+.course__achieve-icon .course__cefr{font-size:14px; opacity:.9}
 
 .course__achieve-title{margin:0 0 4px; font-weight:900}
 .course__achieve-text{margin:0; color:var(--muted); font-size:13px}
@@ -462,7 +462,7 @@ img{max-width:100%;display:block}
 .course__tile-label{
     font-size:11px;
     color:var(--muted);
-    font-weight:800
+    font-weight:700;
 }
 
 .toast{

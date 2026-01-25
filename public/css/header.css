@@ -97,13 +97,7 @@
 }
 .header__burger:hover{ background: rgba(15,23,42,.08); }
 
-/* ===== Overlay (below menu, above page) ===== */
-.header__overlay{
-    position: fixed;
-    inset: 0;
-    z-index: 10001;
-    background: rgba(15,23,42,.35);
-}
+
 
 /* ===== Mobile menu (always above overlay) ===== */
 .header__mobile{
