@@ -7,14 +7,15 @@
 
   <link rel="stylesheet" href="/css/courselvl.css" />
   <link rel="stylesheet" href="/css/headerdash.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body>
 
-  <!-- если у тебя есть guard/api как на других страницах — оставь эти подключения -->
+
   <script src="/js/auth-guard.js"></script>
   <script src="/js/api.js"></script>
 
-  <!-- Header -->
+
   <header class="dash-header" id="header">
     <div class="dash-header__container">
       <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
@@ -34,7 +35,7 @@
       </div>
     </div>
 
-    <!-- Mobile menu -->
+
     <div class="dash-header__mobile" data-mobile hidden>
       <a class="dash-header__m-link" href="/courses">Курсы</a>
       <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
@@ -46,7 +47,7 @@
   <main class="page">
     <div class="container">
       <div class="course">
-        <!-- Hero -->
+
         <section class="course-hero">
           <div class="course-hero__top">
             <div class="course-hero__text">
@@ -83,10 +84,10 @@
           </div>
         </section>
 
-        <!-- Modules (ВАЖНО: сюда подставляются модули) -->
+
         <div id="modules"></div>
 
-        <!-- Final task (будет создан/заполнен скриптом; можно оставить пустым) -->
+
         <div id="finalTask" class="final-task" style="display:none;">
           <div class="final-task__head">
             <div class="final-task__icon" aria-hidden="true">🏆</div>
@@ -103,13 +104,46 @@
           </button>
         </div>
       </div>
+
+        <div class="chat" id="chat" hidden>
+            <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+                <div class="chat-head">
+                    <div class="chat-avatar">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <div class="chat-head-text">
+                        <div class="chat-title">AI Ассистент</div>
+                        <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+                    </div>
+
+                    <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                        ✕
+                    </button>
+                </div>
+
+                <div class="chat-body" id="chatBody"></div>
+
+                <div class="chat-input">
+                    <div>
+                        <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                        <button class="chat-send" id="chatSend" type="button">➤</button>
+                    </div>
+                    <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+                </div>
+            </div>
+        </div>
     </div>
   </main>
 
   <script src="/js/authFetch.js"></script>
   <script src="/js/coursemodul.js"></script>
+  <script src="/js/chat.js"></script>
 
-  <!-- маленький JS только для бургера (не мешает coursemodul.js) -->
+
   <script>
     (function () {
       const btn = document.querySelector("[data-burger]");

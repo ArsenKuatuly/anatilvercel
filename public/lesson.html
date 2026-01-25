@@ -5,27 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Урок</title>
 
-    <!-- Inter (как в дизайне) -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/lesson.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body class="lesson-page">
 
-<!-- Top reading progress -->
+
 <div class="lesson-progress" aria-hidden="true">
     <div class="lesson-progress__bar" id="readingProgressBar"></div>
 </div>
 
-<!-- Header -->
+
 <header class="lesson-header" id="lessonHeader">
     <div class="lesson-header__container">
         <div class="lesson-header__row">
             <button class="lesson-header__back" id="backBtn" type="button" aria-label="Назад к курсу">
           <span class="lesson-header__back-icon" aria-hidden="true">
-            <!-- arrow-left -->
+
             <svg viewBox="0 0 24 24" width="20" height="20">
               <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
@@ -40,7 +41,7 @@
     </div>
 </header>
 
-<!-- Main -->
+
 <main class="lesson-main">
     <div class="lesson-main__container">
         <div class="lesson-card">
@@ -51,17 +52,17 @@
     </div>
 </main>
 
-<!-- Sticky footer -->
+
 <footer class="lesson-footer">
     <div class="lesson-footer__container">
         <div class="lesson-footer__inner">
             <button class="btn btn--primary lesson-footer__btn" id="completeLessonBtn" type="button">
           <span class="btn__icon" aria-hidden="true">
-            <!-- check -->
+
             <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-check">
               <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-              <!-- loader (скрыт по умолчанию) -->
+
             <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-loader" aria-hidden="true">
               <path d="M12 2v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               <path d="M12 18v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/>
@@ -79,14 +80,14 @@
     </div>
 </footer>
 
-<!-- Completion modal -->
+
 <div class="modal hidden" id="completionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal__overlay" id="modalOverlay"></div>
 
     <div class="modal__wrap">
         <div class="modal__panel" role="document">
             <button class="modal__close" id="modalCloseBtn" type="button" aria-label="Закрыть">
-                <!-- X -->
+
                 <svg viewBox="0 0 24 24" width="24" height="24">
                     <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
@@ -94,7 +95,7 @@
 
             <div class="modal__body">
                 <div class="modal__icon" aria-hidden="true">
-                    <!-- default icon -->
+
                     <svg viewBox="0 0 24 24" width="40" height="40">
                         <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -104,22 +105,54 @@
                 <p class="modal__text" id="modalText">Перейти к следующему уроку?</p>
 
                 <div class="modal__actions">
-                    <!-- primary -->
+
                     <button class="btn btn--primary" id="goNextBtn" type="button">Следующий урок</button>
-                    <!-- secondary -->
+
                     <button class="btn btn--ghost" id="goCourseBtn" type="button">К курсу</button>
                 </div>
             </div>
 
             <div class="modal__safe" aria-hidden="true"></div>
         </div>
+        <div class="chat" id="chat" hidden>
+            <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+                <div class="chat-head">
+                    <div class="chat-avatar">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <div class="chat-head-text">
+                        <div class="chat-title">AI Ассистент</div>
+                        <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+                    </div>
+
+                    <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                        ✕
+                    </button>
+                </div>
+
+                <div class="chat-body" id="chatBody"></div>
+
+                <div class="chat-input">
+                    <div>
+                        <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                        <button class="chat-send" id="chatSend" type="button">➤</button>
+                    </div>
+                    <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- твои общие скрипты проекта -->
+
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/authFetch.js"></script>
 <script src="/js/lesson.js"></script>
+<script src="/js/chat.js"></script>
 </body>
 </html>
