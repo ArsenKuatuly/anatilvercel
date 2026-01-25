@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AnaTil — Dashboard</title>
-  <link rel="stylesheet" href="/css/headerdash.css" />
-  <link rel="stylesheet" href="/css/dashboard.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnaTil</title>
+    <link rel="stylesheet" href="/css/headerdash.css" />
+    <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/chat.css" />
     <link rel="stylesheet" href="/css/admin.css" />
 </head>
-<body class="page">
-
+<body>
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
 
@@ -22,10 +21,13 @@
         <nav class="dash-header__nav" aria-label="Навигация">
             <a class="dash-header__link" href="/courses">Курсы</a>
             <a class="dash-header__link" href="/progress">Мой прогресс</a>
-            <a class="dash-header__link" href="/library.html">Библиотека</a>
+            <a class="dash-header__link" href="/library">Библиотека</a>
         </nav>
 
         <div class="dash-header__actions">
+            <a href="/admin" id="adminBtn" style="display:none">
+                ⚙ Админ панель
+            </a>
             <a class="dash-header__btn" href="/profile.html">Профиль</a>
 
             <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
@@ -34,7 +36,7 @@
         </div>
     </div>
 
-
+    <!-- Mobile menu -->
     <div class="dash-header__mobile" data-mobile hidden>
         <a class="dash-header__m-link" href="/courses">Курсы</a>
         <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
@@ -43,73 +45,422 @@
     </div>
 </header>
 
+<section class="tests">
+    <div class="tests__container">
+        <h2 class="tests__title">Виды тестирования</h2>
 
-  <section class="hero">
+        <div class="tests__list">
+
+            <!-- Card 1 -->
+            <div class="test-card">
+                <div class="test-card__header">
+                    <div class="test-card__icon">
+                        <img src="/assets/imgs/thirdexam.jpg" alt="LVL">
+                    </div>
+                    <h3 class="test-card__title">Проверить свой уровень</h3>
+                </div>
+
+                <ul class="test-card__info">
+                    <li class="test-card__item">30 Вопросов</li>
+                    <li class="test-card__item">Перевод слов</li>
+                    <li class="test-card__item">Грамотность</li>
+                    <li class="test-card__item">Слушание</li>
+                    <li class="test-card__item">40 минут</li>
+
+                </ul>
+
+                <a href="test.html" class="test-card__btn" id="startTestBtn">
+                    Начать тест
+                    <span class="test-card__arrow">→</span>
+                </a>
+
+
+
+            </div>
+
+            <!-- Card 2 -->
+            <div class="test-card">
+                <div class="test-card__header">
+                    <div class="test-card__icon">
+                        <img src="/assets/imgs/secondexam.png" alt="Prod">
+                    </div>
+                    <h3 class="test-card__title">Продвинутый тест</h3>
+                </div>
+
+                <ul class="test-card__info">
+                    <li class="test-card__item">50 Вопросов</li>
+                    <li class="test-card__item">Чтение</li>
+                    <li class="test-card__item">Слушание</li>
+                    <li class="test-card__item">Грамматика</li>
+                    <li class="test-card__item">100 Баллов</li>
+                </ul>
+
+                <button class="test-card__btn test-card__btn--disabled" disabled>
+                    Скоро
+                </button>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="test-card">
+                <div class="test-card__header">
+                    <div class="test-card__icon">
+                        <img src="/assets/imgs/firstexam.png" alt="Exam">
+                    </div>
+                    <h3 class="test-card__title">
+                        Экзаменационный тест
+                    </h3>
+                </div>
+
+                <ul class="test-card__info">
+                    <li class="test-card__item">80 Вопросов</li>
+                    <li class="test-card__item">240 минут</li>
+                    <li class="test-card__item">140 баллов</li>
+                    <li class="test-card__item">Чтение</li>
+                    <li class="test-card__item">Слушание</li>
+                    <li class="test-card__item">Грамматика</li>
+                </ul>
+
+                <button class="test-card__btn test-card__btn--disabled" disabled>
+                    Скоро
+                </button>
+            </div>
+
+        </div>
+        <div class="course-progress">
+
+            <div class="course-progress__header">
+                <div class="course-progress__circle">
+                    <span id="lessonPercent">0%</span>
+                </div>
+
+                <div class="course-progress__info">
+                    <h3 id="courseTitle">Ваш текущий курс</h3>
+                    <p id="courseDesc">Продолжайте обучение</p>
+                </div>
+            </div>
+
+            <div class="course-progress__lessons">
+
+                <div class="lesson-item lesson-item--done">
+                    <div class="lesson-status"></div>
+                    <div class="lesson-content">
+                        <div class="lesson-title" id="lastLesson">
+                            —
+                        </div>
+                        <div class="lesson-sub">
+                            Урок пройден
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lesson-item lesson-item--next">
+                    <div class="lesson-status"></div>
+                    <div class="lesson-content">
+                        <div class="lesson-title" id="nextLesson">
+                            —
+                        </div>
+                        <div class="lesson-sub">
+                            Урок не пройден
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <a href="#" id="goToCourseBtn" class="course-progress__link">
+                Перейти к курсу →
+            </a>
+
+        </div>
+
+
+    </div>
+
+
+</section>
+
+
+
+
+
+<div class="modal" id="confirmModal">
+    <div class="modal__content">
+        <h3 class="modal__title">Начать тест?</h3>
+        <p class="modal__text">
+            После начала теста таймер запустится.
+            Вы уверены, что хотите продолжить?
+        </p>
+
+        <div class="modal__actions">
+            <button class="modal__btn modal__btn--cancel" id="cancelBtn">
+                Отмена
+            </button>
+            <button class="modal__btn modal__btn--confirm" id="confirmBtn">
+                Да, начать
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<section class="hero" id="hero">
     <div class="hero__container">
-      <div class="hero__grid">
-        <div class="hero__text">
-          <h1 class="hero__title">Добро пожаловать в AnaTil</h1>
-          <p class="hero__subtitle">Продолжайте обучение или пройдите тест</p>
+
+        <div class="hero__left">
+            <div class="hero__badge">
+                <span class="hero__badge-dot"></span>
+                <span class="hero__badge-text">Набор открыт</span>
+            </div>
+
+            <h1 class="hero__title" data-key="hero_title">
+                Поможем поднять<br />
+                ваш <span class="hero__title-accent">казахский язык</span>
+            </h1>
+
+            <p class="hero__subtitle" data-key="hero_subtitle">
+                Обучаем казахскому языку с нуля до уровня C1. Индивидуальный подход,
+                современные методики и гарантированный результат.
+            </p>
+
+            <div class="hero__buttons">
+                <a class="btn btn--primary btn--lg" href="test.html" data-key="check_level">
+                    Проверить свой уровень <span class="btn__icon">→</span>
+                </a>
+                <a class="btn btn--ghost btn--lg" href="#promo">Узнать больше</a>
+            </div>
+
+            <div class="hero__metrics">
+                <div class="hero__metric">
+                    <span class="hero__metric-text"><b>2000+</b> выпускников</span>
+                </div>
+                <div class="hero__metric">
+                    <span class="hero__metric-text"><b>98%</b> успеха</span>
+                </div>
+            </div>
         </div>
 
-        <div class="hero__actions">
-          <button class="btn btn--light hero__btn" type="button" id="continueCourseBtn">
-            <span class="btn__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-              </svg>
-            </span>
-            Продолжить курс
-          </button>
+        <aside class="hero__card">
+            <h3 class="hero__card-title">Уровни Казахского языка</h3>
+            <p class="hero__card-subtitle">Выберите подходящий для вас уровень обучения</p>
 
-          <button class="btn btn--glass hero__btn" type="button" id="takeTestBtn">
-            Пройти тест
-            <span class="btn__icon" aria-hidden="true">
-              <!-- ArrowRight -->
-              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14" />
-                <path d="m13 5 7 7-7 7" />
-              </svg>
-            </span>
-          </button>
-        </div>
-      </div>
+            <div class="hero__levels">
+                <button class="hero__level hero__level--a1" type="button">A1</button>
+                <button class="hero__level hero__level--a2" type="button">A2</button>
+                <button class="hero__level hero__level--b1" type="button">B1</button>
+                <button class="hero__level hero__level--b2" type="button">B2</button>
+                <button class="hero__level hero__level--c1" type="button">C1</button>
+            </div>
+
+            <p class="hero__card-footnote">
+                От базового A1 до продвинутого C1 уровня владения языком
+            </p>
+        </aside>
+
     </div>
-  </section>
+</section>
 
-  <!-- Main -->
-  <main class="main">
-    <div class="wrap">
-      <!-- State switcher (demo) -->
-      <section class="state" aria-label="State switcher">
-        <span class="state__label">Состояние:</span>
-        <button class="state__btn state__btn--active" type="button" data-state="normal">Normal</button>
-        <button class="state__btn" type="button" data-state="loading">Loading</button>
-        <button class="state__btn" type="button" data-state="empty">Empty</button>
-      </section>
+<section class="promo" id="promo">
+    <div class="promo__content">
+        <h2 class="promo__title" data-key="promo_title">
+            AnaTil — место, где начинается свободное владение
+            <span class="promo__highlight">казахским языком</span>
+        </h2>
 
-      <!-- Tests -->
-      <section class="section section--tests">
-        <header class="section__head">
-          <h2 class="section__title">Виды тестирования</h2>
-          <p class="section__desc">Выберите формат — мы определим уровень и подскажем курс</p>
-        </header>
-
-        <div class="tests" id="testsGrid">
-          <!-- JS renders cards here -->
-        </div>
-      </section>
-
-      <!-- Course progress -->
-      <section class="section section--course">
-        <div id="courseWrap">
-          <!-- JS renders block here -->
-        </div>
-      </section>
+        <p class="promo__subtitle" data-key="promo_subtitle">
+            Более 2000 наших выпускников успешно сдали экзамены и используют казахский
+            язык в повседневной жизни и профессиональной деятельности. Присоединяйтесь
+            к сообществу тех, кто уже достиг своих целей вместе с AnaTil.
+        </p>
     </div>
-  </main>
+</section>
 
+<section id="reasons" class="reasons">
+    <div class="reasons__container">
+        <div class="reasons__head">
+            <h2 class="reasons__title" data-key="reasons_title">
+                9 причин, почему вы должны выбрать AnaTil
+            </h2>
+            <p class="reasons__subtitle">
+                Почему обучение с AnaTil даёт результат — быстро, понятно и с поддержкой.
+            </p>
+        </div>
+
+        <div class="reasons__grid">
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">01</span>
+                    <span class="reason__ico reason__ico--blue" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_1">Программа 2025 года, которая обновляется каждые 3 месяца</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">02</span>
+                    <span class="reason__ico reason__ico--indigo" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_2">Обучение с помощью AI. AnaTil использует искусственный интеллект, который общается с вами на казахском языке, объясняет ошибки и помогает говорить увереннее, как настоящий преподаватель.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">03</span>
+                    <span class="reason__ico reason__ico--violet" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_3">Индивидуальный подход. Платформа подстраивается под ваш уровень знаний — от начального до продвинутого, предлагая задания именно для вас.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">04</span>
+                    <span class="reason__ico reason__ico--purple" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_4">Культура и язык вместе. Вы изучаете не только язык, но и культуру, традиции и особенности казахской речи.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">05</span>
+                    <span class="reason__ico reason__ico--pink" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_5">Обучение в любое время и в любом месте. Учитесь с компьютера, планшета или телефона.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">06</span>
+                    <span class="reason__ico reason__ico--rose" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_6">Прогресс и мотивация. Проходите уровни и получайте достижения, которые мотивируют не бросать обучение.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">07</span>
+                    <span class="reason__ico reason__ico--orange" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_7">Современный и удобный интерфейс. Минималистичный дизайн делает обучение приятным.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">08</span>
+                    <span class="reason__ico reason__ico--amber" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_8">Объяснения на понятном языке. Сложная грамматика объясняется простыми словами.</p>
+            </article>
+
+            <article class="reason">
+                <div class="reason__top">
+                    <span class="reason__num">09</span>
+                    <span class="reason__ico reason__ico--fuchsia" aria-hidden="true"></span>
+                </div>
+                <p data-key="reason_9">Практика живого общения. Учитесь через реальные диалоги, которые используете в жизни.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section id="courses" class="courses">
+    <div class="courses__container">
+        <div class="courses__head">
+            <h2 class="courses__title" data-key="courses_title">Доступные курсы</h2>
+            <p class="courses__subtitle">Выберите уровень и начните обучение — от базового до продвинутого.</p>
+        </div>
+
+        <div class="courses__grid">
+
+            <article class="course course--java">
+                <div class="course__head course__head--a1">
+                    <div class="course__label">Уровень</div>
+                    <div class="course__level">A1</div>
+                </div>
+
+                <div class="course__body">
+                    <h3 data-key="course_a1_title">A1 - Элементарный уровень</h3>
+                    <p data-key="course_a1_desc">Человек понимает и использует самые простые слова и выражения.</p>
+
+                    <div class="course__footer">
+                        <span data-key="next_start">Ближайший старт:</span>
+                        <button data-key="oct_18">18 октября</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="course course--android">
+                <div class="course__head course__head--a2">
+                    <div class="course__label">Уровень</div>
+                    <div class="course__level">A2</div>
+                </div>
+
+                <div class="course__body">
+                    <h3 data-key="course_a2_title">A2 - Базовый уровень</h3>
+                    <p data-key="course_a2_desc">Понимание и использование языка в повседневных ситуациях.</p>
+
+                    <div class="course__footer">
+                        <span data-key="next_start">Ближайший старт:</span>
+                        <button class="closed" data-key="closed">Запись закрыта</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="course course--frontend">
+                <div class="course__head course__head--b1">
+                    <div class="course__label">Уровень</div>
+                    <div class="course__level">B1</div>
+                </div>
+
+                <div class="course__body">
+                    <h3 data-key="course_b1_title">B1 - Средний уровень</h3>
+                    <p data-key="course_b1_desc">Уверенное общение в большинстве жизненных ситуаций.</p>
+
+                    <div class="course__footer">
+                        <span data-key="next_start">Ближайший старт:</span>
+                        <button>18 октября</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="course course--ios">
+                <div class="course__head course__head--b2">
+                    <div class="course__label">Уровень</div>
+                    <div class="course__level">B2</div>
+                </div>
+
+                <div class="course__body">
+                    <h3 data-key="course_b2_title">B2 - Уровень выше среднего</h3>
+                    <p data-key="course_b2_desc">Свободное и уверенное использование языка.</p>
+
+                    <div class="course__footer">
+                        <span data-key="next_start">Ближайший старт:</span>
+                        <button>18 октября</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="course course--go">
+                <div class="course__head course__head--c1">
+                    <div class="course__label">Уровень</div>
+                    <div class="course__level">C1</div>
+                </div>
+
+                <div class="course__body">
+                    <h3 data-key="course_c1_title">C1 - Высокий уровень</h3>
+                    <p data-key="course_c1_desc">Почти свободное владение языком.</p>
+
+                    <div class="course__footer">
+                        <span data-key="next_start">Ближайший старт:</span>
+                        <button class="closed">Запись закрыта</button>
+                    </div>
+                </div>
+            </article>
+
+        </div>
+    </div>
+</section>
+
+<!-- AI CHAT (старый красивый) -->
 <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
     <span class="fab-ping" aria-hidden="true"></span>
     <span class="fab-circle">
@@ -158,134 +509,51 @@
     </div>
 </div>
 
-  <!-- Footer -->
-  <footer class="footer">
+
+<footer class="footer" id="contacts">
     <div class="footer__container">
-      <div class="footer__grid">
-        <div class="footer__brand">
-          <div class="footer__brandline">
-            <span class="footer__logo" aria-hidden="true">
-              <svg viewBox="0 0 24 24" class="i i--book" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-              </svg>
-            </span>
-            <span class="footer__name">AnaTil</span>
-          </div>
-          <p class="footer__text">
-            Платформа для изучения казахского языка. Учитесь легко и эффективно.
-          </p>
-        </div>
-
-        <div class="footer__col">
-          <h4 class="footer__title">Платформа</h4>
-          <ul class="footer__list">
-            <li><a class="footer__link" href="#">Курсы</a></li>
-            <li><a class="footer__link" href="#">Тестирование</a></li>
-            <li><a class="footer__link" href="#">Прогресс</a></li>
-            <li><a class="footer__link" href="#">Сертификаты</a></li>
-          </ul>
-        </div>
-
-        <div class="footer__col">
-          <h4 class="footer__title">Поддержка</h4>
-          <ul class="footer__list">
-            <li><a class="footer__link" href="#">Помощь</a></li>
-            <li><a class="footer__link" href="#">FAQ</a></li>
-            <li><a class="footer__link" href="#">Контакты</a></li>
-            <li><a class="footer__link" href="#">О нас</a></li>
-          </ul>
-        </div>
-
-        <div class="footer__col">
-          <h4 class="footer__title">Контакты</h4>
-          <ul class="footer__contact">
-            <li class="footer__contact-item">
-              <span class="footer__contact-ico" aria-hidden="true">
-                <!-- Mail -->
-                <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 4h16v16H4z" opacity="0" />
-                  <path d="M4 4h16v16H4z" />
-                  <path d="m22 6-10 7L2 6" />
-                </svg>
-              </span>
-              info@anatil.kz
-            </li>
-            <li class="footer__contact-item">
-              <span class="footer__contact-ico" aria-hidden="true">
-                <!-- Phone -->
-                <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 16.9v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.17 8.81 19.8 19.8 0 0 1 .1 0.18 2 2 0 0 1 2.11 0h3a2 2 0 0 1 2 1.72c.12.86.31 1.7.57 2.5a2 2 0 0 1-.45 2.11L6.09 7.91a16 16 0 0 0 6 6l1.58-1.14a2 2 0 0 1 2.11-.45c.8.26 1.64.45 2.5.57A2 2 0 0 1 22 16.9Z" />
-                </svg>
-              </span>
-              +7 (777) 123-45-67
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer__bottom">
-        <p class="footer__copy">© 2026 AnaTil. Все права защищены.</p>
-        <div class="footer__bottom-links">
-          <a class="footer__link" href="#">Политика конфиденциальности</a>
-          <a class="footer__link" href="#">Условия использования</a>
-        </div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Modal -->
-  <div class="modal" id="testModal" hidden>
-    <div class="modal__backdrop" data-close="1"></div>
-
-    <div class="modal__wrap" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <div class="modal__panel">
-        <div class="modal__head">
-          <button class="modal__close" type="button" data-close="1" aria-label="Закрыть">
-            <!-- X -->
-            <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
-          </button>
-          <h2 class="modal__title" id="modalTitle">Начать тест?</h2>
-        </div>
-
-        <div class="modal__body">
-          <div class="modal__note">
-            <span class="modal__note-ico" aria-hidden="true">
-              <!-- AlertCircle -->
-              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 8v4" />
-                <path d="M12 16h.01" />
-              </svg>
-            </span>
-            <p class="modal__note-text">
-              После начала теста у вас будет <b>30 минут</b> на прохождение.
-              Убедитесь, что готовы начать прямо сейчас.
+        <div class="footer__column">
+            <h3 class="footer__title" data-key="footer_info">AnaTil</h3>
+            <p class="footer__text" data-key="footer_text">
+                место, где каждый, независимо от уровня подготовки, может изучать казахский язык
             </p>
-          </div>
-
-          <div class="modal__list">
-            <p>• Тест содержит 20 вопросов</p>
-            <p>• Нельзя вернуться к предыдущим вопросам</p>
-            <p>• Результаты будут доступны сразу после завершения</p>
-          </div>
         </div>
 
-        <div class="modal__actions">
-          <button class="modal__btn modal__btn--ghost" type="button" data-close="1">Отмена</button>
-          <button class="modal__btn modal__btn--primary" type="button" id="confirmTestBtn">Да, начать</button>
+        <div class="footer__column">
+            <h3 class="footer__title" data-key="footer_info_title">Информация</h3>
+            <ul class="footer__list">
+                <li class="footer__item"><a class="footer__link" href="#promo" data-key="footer_about">О нас</a></li>
+                <li class="footer__item"><a class="footer__link" href="#reasons" data-key="footer_benefits">Преимущества</a></li>
+                <li class="footer__item"><a class="footer__link" href="#contacts" data-key="footer_contacts">Контакты</a></li>
+            </ul>
         </div>
-      </div>
+
+        <div class="footer__column">
+            <h3 class="footer__title" data-key="footer_courses_title">Курсы</h3>
+            <ul class="footer__courses">
+                <li class="footer__course" data-key="footer_course_a1">Элементарный уровень</li>
+                <li class="footer__course" data-key="footer_course_a2">Базовый уровень</li>
+                <li class="footer__course" data-key="footer_course_b1">Средний уровень</li>
+                <li class="footer__course" data-key="footer_course_b2">Уровень выше среднего</li>
+                <li class="footer__course" data-key="footer_course_c1">Высокий уровень</li>
+            </ul>
+        </div>
     </div>
-  </div>
+</footer>
+
+
+
 
 <script src="/js/authFetch.js"></script>
-  <script src="/js/headerdash.js"></script>
-  <script src="/js/dashboard.js"></script>
+<script src="/js/scroll.js"></script>
+<script src="/js/modal_startexam.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/lastlesson.js"></script>
 <script src="/js/chat.js"></script>
-<script src="/js/admin.js"></script>
+<script src="/js/header.js"></script>
+
+
 </body>
 </html>
+
+
