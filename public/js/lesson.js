@@ -1,3 +1,24 @@
+/* ================== PROGRESS BAR ================== */
+(function initReadingProgress() {
+    const bar = document.getElementById("readingProgressBar");
+    if (!bar) return;
+
+    function update() {
+        const winH = window.innerHeight;
+        const docH = document.documentElement.scrollHeight;
+        const top = window.scrollY || document.documentElement.scrollTop || 0;
+
+        const scrollable = docH - winH;
+        const progress = scrollable > 0 ? (top / scrollable) * 100 : 0;
+
+        bar.style.width = `${Math.min(Math.max(progress, 0), 100)}%`;
+    }
+
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+})();
+
 /* ================== HELPERS ================== */
 function getLessonId() {
     // 1) ?id=
@@ -31,6 +52,7 @@ if (!lessonId) {
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonContent = document.getElementById("lessonContent");
 const completeBtn = document.getElementById("completeLessonBtn");
+const completeBtnText = document.getElementById("completeBtnText");
 const backBtn = document.getElementById("backBtn");
 
 /* ================== MODAL ================== */
@@ -39,6 +61,26 @@ const modalTitle = document.getElementById("modalTitle");
 const modalText = document.getElementById("modalText");
 const goCourseBtn = document.getElementById("goCourseBtn");
 const goNextBtn = document.getElementById("goNextBtn");
+
+const modalOverlay = document.getElementById("modalOverlay");
+const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+function openModal() {
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+}
+function closeModal() {
+    if (!modal) return;
+    modal.classList.add("hidden");
+    document.body.style.overflow = "unset";
+}
+
+modalOverlay?.addEventListener("click", closeModal);
+modalCloseBtn?.addEventListener("click", closeModal);
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal && !modal.classList.contains("hidden")) closeModal();
+});
 
 /* ================== LOAD LESSON ================== */
 async function loadLesson() {
@@ -71,6 +113,8 @@ loadLesson();
 completeBtn?.addEventListener("click", async () => {
     try {
         completeBtn.disabled = true;
+        completeBtn.classList.add("is-loading");
+        if (completeBtnText) completeBtnText.textContent = "Завершение...";
 
         const out = await authFetch("/api/lesson/complete", {
             method: "POST",
@@ -83,34 +127,33 @@ completeBtn?.addEventListener("click", async () => {
         if (!data?.success) {
             alert("Ошибка завершения урока");
             completeBtn.disabled = false;
+            completeBtn.classList.remove("is-loading");
+            if (completeBtnText) completeBtnText.textContent = "Завершить урок";
             return;
         }
 
-        // открыть модалку
-        modal?.classList.remove("hidden");
 
+        openModal();
 
         goCourseBtn.onclick = null;
         goNextBtn.onclick = null;
 
-
-        goCourseBtn.style.display = "inline-block";
+        // secondary
+        goCourseBtn.style.display = "inline-flex";
         goCourseBtn.disabled = false;
         goCourseBtn.textContent = "К курсу";
         goCourseBtn.onclick = () => {
             window.location.href = courseSlug ? `/courses/${courseSlug}` : "/dashboard";
         };
 
-
         if (data.courseCompleted) {
             modalTitle.textContent = "Курс завершён 🎉";
             modalText.textContent =
                 "Вы прошли все уроки. Теперь можно пройти итоговое задание.";
 
-            goNextBtn.style.display = "inline-block";
+            goNextBtn.style.display = "inline-flex";
             goNextBtn.disabled = true;
             goNextBtn.textContent = "Итоговое задание";
-
 
             try {
                 const courseId = data.courseId;
@@ -131,14 +174,13 @@ completeBtn?.addEventListener("click", async () => {
             return;
         }
 
-
         modalTitle.textContent = data.moduleCompleted ? "Модуль завершён 🏆" : "Урок завершён 🎉";
         modalText.textContent = data.moduleCompleted
             ? "Открыт следующий модуль. Перейти к следующему уроку?"
             : "Перейти к следующему уроку?";
 
         // ищем следующий урок
-        goNextBtn.style.display = "inline-block";
+        goNextBtn.style.display = "inline-flex";
         goNextBtn.disabled = true;
         goNextBtn.textContent = "Следующий урок";
 
@@ -165,6 +207,13 @@ completeBtn?.addEventListener("click", async () => {
         if (err?.data) console.error("server payload:", err.data);
         alert("Ошибка завершения урока");
         completeBtn.disabled = false;
+    } finally {
+
+        if (completeBtn) {
+            completeBtn.classList.remove("is-loading");
+            if (completeBtnText) completeBtnText.textContent = "Завершить урок";
+
+        }
     }
 });
 
