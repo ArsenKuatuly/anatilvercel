@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Библиотека</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/globals.css" />
+</head>
+<body class="page">
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <div class="header__top">
+        <div class="header__text">
+          <h1 class="header__title">Библиотека</h1>
+          <p class="header__subtitle">Материалы для практики: слова, грамматика, чтение и аудио</p>
+        </div>
+      </div>
+
+      <div class="header__search">
+        <div class="search" id="searchWrap">
+          <span class="search__icon" aria-hidden="true">
+            <i data-lucide="search"></i>
+          </span>
+          <input id="searchInput" class="search__input" type="text" placeholder="Поиск по словам, темам, уровню…" />
+          <button id="searchClear" class="search__clear u-hidden" type="button" aria-label="Очистить">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <button id="openFiltersBtn" type="button" class="btn btn--outline btn--filters">
+          <i data-lucide="filter"></i>
+          <span>Фильтры</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container page__main">
+    <div class="layout">
+      <aside class="layout__aside" id="filtersSidebar"></aside>
+
+      <main class="layout__content">
+        <div class="tabs" id="categoryTabs"></div>
+        <div id="contentRoot"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="filterSheetMount"></div>
+  <div id="drawerMount"></div>
+  <div id="toastMount" class="toast"></div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
