@@ -1,224 +1,128 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AnaTil</title>
-    <link rel="stylesheet" href="/css/headerdash.css" />
-    <link rel="stylesheet" href="/css/dashboard.css" />
-    <link rel="stylesheet" href="/css/chat.css" />
-    <link rel="stylesheet" href="/css/admin.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnaTil — Dashboard</title>
+  <link rel="stylesheet" href="/dashboard.css" />
 </head>
 <body>
-<script src="/js/auth-guard.js"></script>
-<script src="/js/api.js"></script>
+  <!-- Optional: protect page -->
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
 
+  <header class="topbar">
+    <div class="topbar__container">
+      <button class="topbar__brand" id="logoBtn" type="button" aria-label="AnaTil">
+        <span class="topbar__mark" aria-hidden="true">A</span>
+        <span class="topbar__name">AnaTil</span>
+      </button>
 
-<header class="dash-header" id="header">
-    <div class="dash-header__container">
-        <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
+      <nav class="topbar__nav" aria-label="Навигация">
+        <a class="topbar__link" href="/dashboard.html">Главная</a>
+        <a class="topbar__link" href="/courses.html">Курсы</a>
+        <a class="topbar__link" href="/tests.html">Тесты</a>
+      </nav>
 
-        <nav class="dash-header__nav" aria-label="Навигация">
-            <a class="dash-header__link" href="/courses">Курсы</a>
-            <a class="dash-header__link" href="/progress">Мой прогресс</a>
-            <a class="dash-header__link" href="/library.html">Библиотека</a>
-        </nav>
-
-        <div class="dash-header__actions">
-            <a href="/admin" id="adminBtn" style="display:none">
-                ⚙ Админ панель
-            </a>
-            <a class="dash-header__btn" href="/profile.html">Профиль</a>
-
-            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
-                <span></span><span></span><span></span>
-            </button>
-        </div>
+      <div class="topbar__actions">
+        <a class="topbar__btn topbar__btn--ghost" id="adminBtn" href="/admin.html" style="display:none;">Админ</a>
+        <a class="topbar__btn topbar__btn--primary" id="goToCourseBtn" href="#">Перейти к курсу</a>
+        <button class="topbar__btn topbar__btn--ghost" id="logout" type="button">Выйти</button>
+      </div>
     </div>
+  </header>
 
-    <!-- Mobile menu -->
-    <div class="dash-header__mobile" data-mobile hidden>
-        <a class="dash-header__m-link" href="/courses">Курсы</a>
-        <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
-        <a class="dash-header__m-link" href="/library">Библиотека</a>
-        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
-    </div>
-</header>
+  <main class="page">
+    <div class="page__container">
+      <div class="grid">
+        <!-- Course Progress -->
+        <section class="card course-progress" aria-labelledby="courseProgressTitle">
+          <div class="course-progress__head">
+            <h2 class="card__title" id="courseProgressTitle">Ваш текущий курс</h2>
+            <div class="course-progress__pill">
+              <span class="course-progress__pill-label">Прогресс</span>
+              <span class="course-progress__pill-value" id="lessonPercent">0%</span>
+            </div>
+          </div>
 
-<main class="dash">
-    <div class="dash__container">
+          <div class="course-progress__body">
+            <div class="course-progress__left">
+              <div class="course-progress__circle" aria-label="Прогресс курса">
+                <span class="course-progress__circle-inner">
+                  <span class="course-progress__circle-text" id="lessonPercentInner">0%</span>
+                </span>
+              </div>
 
-        <section class="dash__grid">
+              <div class="course-progress__meta">
+                <h3 class="course-progress__name" id="courseTitle">Ваш текущий курс</h3>
+                <p class="course-progress__desc" id="courseDesc">Продолжайте обучение</p>
+              </div>
+            </div>
 
-            <!-- Progress card -->
-            <article class="card card--progress">
-                <div class="card__head">
-                    <h1 class="card__title">Ваш прогресс</h1>
-                    <p class="card__subtitle">Продолжайте обучение — всё сохраняется автоматически</p>
-                </div>
+            <div class="course-progress__right">
+              <div class="course-progress__row">
+                <div class="course-progress__label">Последний урок</div>
+                <div class="course-progress__value" id="lastLesson">—</div>
+              </div>
+              <div class="course-progress__row">
+                <div class="course-progress__label">Следующий урок</div>
+                <div class="course-progress__value" id="nextLesson">—</div>
+              </div>
 
-                <div class="course-progress">
-                    <div class="course-progress__left">
-                        <!-- IMPORTANT: class + span внутри нужны для твоего JS -->
-                        <div class="course-progress__circle" aria-label="Прогресс курса">
-              <span>
-                <b id="lessonPercent">0%</b>
-                <small>выполнено</small>
-              </span>
-                        </div>
-                    </div>
-
-                    <div class="course-progress__right">
-                        <h2 class="course-progress__title" id="courseTitle">Ваш текущий курс</h2>
-                        <p class="course-progress__desc" id="courseDesc">Продолжайте обучение</p>
-
-                        <div class="course-progress__meta">
-                            <div class="meta">
-                                <div class="meta__label">Последний урок</div>
-                                <div class="meta__value" id="lastLesson">—</div>
-                            </div>
-
-                            <div class="meta">
-                                <div class="meta__label">Следующий урок</div>
-                                <div class="meta__value" id="nextLesson">—</div>
-                            </div>
-                        </div>
-
-                        <div class="course-progress__actions">
-                            <!-- IMPORTANT: id нужен твоему JS -->
-                            <a class="btn btn--primary" id="goToCourseBtn" href="#">
-                                Перейти к курсу
-                            </a>
-                            <a class="btn btn--ghost" href="/tests.html">
-                                Пройти тест
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </article>
-
-            <!-- Quick actions -->
-            <aside class="card card--actions">
-                <h3 class="card__title card__title--sm">Быстрые действия</h3>
-
-                <div class="actions">
-                    <a class="action" href="/profile.html">
-                        <div class="action__title">Профиль</div>
-                        <div class="action__text">Настройки аккаунта и уровень</div>
-                    </a>
-
-                    <a class="action" href="/courses.html">
-                        <div class="action__title">Все курсы</div>
-                        <div class="action__text">Посмотреть доступные программы</div>
-                    </a>
-
-                    <a class="action" href="/support.html">
-                        <div class="action__title">Поддержка</div>
-                        <div class="action__text">Вопросы и помощь</div>
-                    </a>
-                </div>
-            </aside>
-
+              <div class="course-progress__hint">
+                Совет: занимайтесь по 10–15 минут в день — так прогресс будет заметнее.
+              </div>
+            </div>
+          </div>
         </section>
 
+        <!-- Quick Actions / Cards -->
+        <section class="card actions">
+          <h2 class="card__title">Быстрые действия</h2>
+
+          <div class="actions__list">
+            <a class="action" href="/courses.html">
+              <div class="action__icon" aria-hidden="true">📚</div>
+              <div class="action__text">
+                <div class="action__title">Открыть курсы</div>
+                <div class="action__desc">Выберите курс и продолжайте обучение</div>
+              </div>
+              <span class="action__chev" aria-hidden="true">›</span>
+            </a>
+
+            <a class="action" href="/tests.html">
+              <div class="action__icon" aria-hidden="true">✅</div>
+              <div class="action__text">
+                <div class="action__title">Пройти тест</div>
+                <div class="action__desc">Проверьте знания и закрепите материал</div>
+              </div>
+              <span class="action__chev" aria-hidden="true">›</span>
+            </a>
+
+            <a class="action" href="/profile.html">
+              <div class="action__icon" aria-hidden="true">👤</div>
+              <div class="action__text">
+                <div class="action__title">Профиль</div>
+                <div class="action__desc">Настройки аккаунта и результаты</div>
+              </div>
+              <span class="action__chev" aria-hidden="true">›</span>
+            </a>
+          </div>
+        </section>
+      </div>
     </div>
-</main>
+  </main>
 
-
-
-<button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
-    <span class="fab-ping" aria-hidden="true"></span>
-    <span class="fab-circle">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-    <span class="fab-badge" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-</button>
-
-<div class="chat" id="chat" hidden>
-    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-        <div class="chat-head">
-            <div class="chat-avatar">
-                <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                </svg>
-            </div>
-
-            <div class="chat-head-text">
-                <div class="chat-title">AI Ассистент</div>
-                <div class="chat-subtitle">Онлайн • Ответим быстро</div>
-            </div>
-
-            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                ✕
-            </button>
-        </div>
-
-        <div class="chat-body" id="chatBody"></div>
-
-        <div class="chat-input">
-            <div>
-                <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                <button class="chat-send" id="chatSend" type="button">➤</button>
-            </div>
-            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
-        </div>
-    </div>
-</div>
-
-
-<footer class="footer" id="contacts">
+  <footer class="footer">
     <div class="footer__container">
-        <div class="footer__column">
-            <h3 class="footer__title" data-key="footer_info">AnaTil</h3>
-            <p class="footer__text" data-key="footer_text">
-                место, где каждый, независимо от уровня подготовки, может изучать казахский язык
-            </p>
-        </div>
-
-        <div class="footer__column">
-            <h3 class="footer__title" data-key="footer_info_title">Информация</h3>
-            <ul class="footer__list">
-                <li class="footer__item"><a class="footer__link" href="#promo" data-key="footer_about">О нас</a></li>
-                <li class="footer__item"><a class="footer__link" href="#reasons" data-key="footer_benefits">Преимущества</a></li>
-                <li class="footer__item"><a class="footer__link" href="#contacts" data-key="footer_contacts">Контакты</a></li>
-            </ul>
-        </div>
-
-        <div class="footer__column">
-            <h3 class="footer__title" data-key="footer_courses_title">Курсы</h3>
-            <ul class="footer__courses">
-                <li class="footer__course" data-key="footer_course_a1">Элементарный уровень</li>
-                <li class="footer__course" data-key="footer_course_a2">Базовый уровень</li>
-                <li class="footer__course" data-key="footer_course_b1">Средний уровень</li>
-                <li class="footer__course" data-key="footer_course_b2">Уровень выше среднего</li>
-                <li class="footer__course" data-key="footer_course_c1">Высокий уровень</li>
-            </ul>
-        </div>
+      <div class="footer__left">© AnaTil</div>
+      <div class="footer__right">
+        <a class="footer__link" href="/index.html#contacts">Контакты</a>
+        <a class="footer__link" href="/index.html#promo">О проекте</a>
+      </div>
     </div>
-</footer>
+  </footer>
 
-
-
-
-<script src="/js/authFetch.js"></script>
-<script src="/js/scroll.js"></script>
-<script src="/js/modal_startexam.js"></script>
-<script src="/js/dashboard.js"></script>
-<script src="/js/lastlesson.js"></script>
-<script src="/js/chat.js"></script>
-<script src="/js/header.js"></script>
-
-
+  <script src="/dashboard.js"></script>
 </body>
 </html>
-
-
