@@ -1,339 +1,291 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AnaTil — Dashboard</title>
-    <link rel="stylesheet" href="/css/headerdash.css" />
-    <link rel="stylesheet" href="/css/dashboard.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnaTil — Dashboard</title>
+  <link rel="stylesheet" href="/css/headerdash.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
     <link rel="stylesheet" href="/css/chat.css" />
+    <link rel="stylesheet" href="/css/admin.css" />
 </head>
-
 <body class="page">
 
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
 
+
 <header class="dash-header" id="header">
     <div class="dash-header__container">
-        <a class="dash-header__brand" href="/dashboard.html" id="logoBtn" aria-label="AnaTil">
-        <span class="dash-header__logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" class="i i--book" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-          </svg>
-        </span>
-            <span class="dash-header__name">AnaTil</span>
-        </a>
+        <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
 
         <nav class="dash-header__nav" aria-label="Навигация">
             <a class="dash-header__link" href="/courses">Курсы</a>
-            <a class="dash-header__link" href="/tests">Тесты</a>
-            <a class="dash-header__link" href="/progress">Прогресс</a>
-
-            <!-- admin (JS покажет, если role=admin) -->
-            <a class="dash-header__link" href="/admin.html" id="adminBtn" style="display:none;">Админ</a>
+            <a class="dash-header__link" href="/progress">Мой прогресс</a>
+            <a class="dash-header__link" href="/library.html">Библиотека</a>
         </nav>
 
-        <div class="dash-header__user">
-            <div class="dash-header__avatar" title="Профиль" aria-label="Профиль">
-                <span class="dash-header__avatar-letter" id="userInitial">А</span>
-            </div>
-            <button class="dash-header__logout" id="logout" type="button">Выйти</button>
+        <div class="dash-header__actions">
+            <a class="dash-header__btn" href="/profile.html">Профиль</a>
+
+            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                <span></span><span></span><span></span>
+            </button>
         </div>
+    </div>
+
+
+    <div class="dash-header__mobile" data-mobile hidden>
+        <a class="dash-header__m-link" href="/courses">Курсы</a>
+        <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+        <a class="dash-header__m-link" href="/library">Библиотека</a>
+        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
     </div>
 </header>
 
-<!-- STATES ROOT -->
-<div id="dash">
 
-    <!-- ===== STATE: LOADING ===== -->
-    <section class="dash__state dash__state--loading is-active" data-state="loading">
-        <div class="dash-loading">
-            <div class="dash-loading__spinner" aria-hidden="true"></div>
-            <p class="dash-loading__text">Загрузка данных…</p>
-        </div>
-    </section>
-
-    <!-- ===== STATE: EMPTY ===== -->
-    <section class="dash__state dash__state--empty" data-state="empty">
-        <!-- Hero (оставил, чтобы страница не выглядела пустой) -->
-        <section class="hero">
-            <div class="hero__container">
-                <div class="hero__grid">
-                    <div class="hero__text">
-                        <h1 class="hero__title">Добро пожаловать в AnaTil</h1>
-                        <p class="hero__subtitle">Курс пока не назначен. Выберите курс, чтобы начать обучение.</p>
-                    </div>
-
-                    <div class="hero__actions">
-                        <a class="btn btn--light hero__btn" href="/courses">
-                            Перейти к курсам
-                        </a>
-
-                        <button class="btn btn--glass hero__btn" type="button" disabled aria-disabled="true">
-                            Пройти тест
-                            <span class="btn__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m13 5 7 7-7 7" />
-                  </svg>
-                </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <main class="main">
-            <div class="wrap">
-                <section class="empty">
-                    <div class="empty__ico" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-                        </svg>
-                    </div>
-                    <p class="empty__txt">Пока нет активного курса. Как только он появится — здесь будет прогресс.</p>
-                    <button class="empty__btn" type="button" disabled>Перейти к курсу</button>
-                </section>
-            </div>
-        </main>
-    </section>
-
-    <!-- ===== STATE: DATA ===== -->
-    <section class="dash__state dash__state--data" data-state="data">
-
-        <!-- Hero -->
-        <section class="hero">
-            <div class="hero__container">
-                <div class="hero__grid">
-                    <div class="hero__text">
-                        <h1 class="hero__title">Добро пожаловать в AnaTil</h1>
-                        <p class="hero__subtitle">Продолжайте обучение или пройдите тест</p>
-                    </div>
-
-                    <div class="hero__actions">
-                        <!-- Можно оставить кнопки как UI. Переход к курсу делает #goToCourseBtn ниже -->
-                        <a class="btn btn--light hero__btn" href="/courses">Курсы</a>
-
-                        <button class="btn btn--glass hero__btn" type="button" id="takeTestBtn">
-                            Пройти тест
-                            <span class="btn__icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14" />
-                    <path d="m13 5 7 7-7 7" />
-                  </svg>
-                </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Main -->
-        <main class="main">
-            <div class="wrap">
-
-                <!-- Tests -->
-                <section class="section section--tests">
-                    <header class="section__head">
-                        <h2 class="section__title">Виды тестирования</h2>
-                        <p class="section__desc">Выберите формат — мы определим уровень и подскажем курс</p>
-                    </header>
-
-                    <div class="tests" id="testsGrid">
-                        <!-- JS может рендерить карточки тестов сюда (как раньше) -->
-                    </div>
-                </section>
-
-                <!-- Course progress (под твой JS) -->
-                <section class="section section--course">
-                    <div class="course" id="courseWrap">
-                        <h3 class="course__title">Ваш курс</h3>
-
-                        <div class="course__grid">
-                            <div class="course__left">
-                                <!-- ВАЖНО: класс .course-progress__circle нужен твоему JS -->
-                                <div class="course-progress__circle" aria-label="Прогресс курса">
-                                    <span id="lessonPercent">0%</span>
-                                </div>
-
-                                <div class="course__info">
-                                    <h4 class="course__name" id="courseTitle">Ваш текущий курс</h4>
-                                    <p class="course__desc" id="courseDesc">Продолжайте обучение</p>
-                                </div>
-                            </div>
-
-                            <div class="course__right">
-                                <div class="lesson lesson--last">
-                                    <div class="lesson__ico" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M20 6 9 17l-5-5" />
-                                        </svg>
-                                    </div>
-                                    <div class="lesson__body">
-                                        <p class="lesson__cap">Последний урок</p>
-                                        <p class="lesson__txt" id="lastLesson">—</p>
-                                    </div>
-                                </div>
-
-                                <div class="lesson lesson--next">
-                                    <div class="lesson__ico" aria-hidden="true">
-                                        <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M5 12h14" />
-                                            <path d="m13 5 7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                    <div class="lesson__body">
-                                        <p class="lesson__cap">Следующий урок</p>
-                                        <p class="lesson__txt" id="nextLesson">—</p>
-                                    </div>
-                                </div>
-
-                                <a class="course__go" id="goToCourseBtn" href="#">
-                                    Перейти к курсу
-                                    <span aria-hidden="true">
-                      <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 12h14" />
-                        <path d="m13 5 7 7-7 7" />
-                      </svg>
-                    </span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-            </div>
-        </main>
-
-        <!-- Footer (без изменений) -->
-        <footer class="footer">
-            <div class="footer__container">
-                <div class="footer__grid">
-                    <div class="footer__brand">
-                        <div class="footer__brandline">
-                <span class="footer__logo" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" class="i i--book" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-                  </svg>
-                </span>
-                            <span class="footer__name">AnaTil</span>
-                        </div>
-                        <p class="footer__text">
-                            Платформа для изучения казахского языка. Учитесь легко и эффективно.
-                        </p>
-                    </div>
-
-                    <div class="footer__col">
-                        <h4 class="footer__title">Платформа</h4>
-                        <ul class="footer__list">
-                            <li><a class="footer__link" href="/courses">Курсы</a></li>
-                            <li><a class="footer__link" href="/tests">Тестирование</a></li>
-                            <li><a class="footer__link" href="/progress">Прогресс</a></li>
-                            <li><a class="footer__link" href="#">Сертификаты</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="footer__col">
-                        <h4 class="footer__title">Поддержка</h4>
-                        <ul class="footer__list">
-                            <li><a class="footer__link" href="#">Помощь</a></li>
-                            <li><a class="footer__link" href="#">FAQ</a></li>
-                            <li><a class="footer__link" href="#">Контакты</a></li>
-                            <li><a class="footer__link" href="#">О нас</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="footer__col">
-                        <h4 class="footer__title">Контакты</h4>
-                        <ul class="footer__contact">
-                            <li class="footer__contact-item">
-                  <span class="footer__contact-ico" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 4h16v16H4z" opacity="0" />
-                      <path d="M4 4h16v16H4z" />
-                      <path d="m22 6-10 7L2 6" />
-                    </svg>
-                  </span>
-                                info@anatil.kz
-                            </li>
-                            <li class="footer__contact-item">
-                  <span class="footer__contact-ico" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 16.9v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.17 8.81 19.8 19.8 0 0 1 .1 0.18 2 2 0 0 1 2.11 0h3a2 2 0 0 1 2 1.72c.12.86.31 1.7.57 2.5a2 2 0 0 1-.45 2.11L6.09 7.91a16 16 0 0 0 6 6l1.58-1.14a2 2 0 0 1 2.11-.45c.8.26 1.64.45 2.5.57A2 2 0 0 1 22 16.9Z" />
-                    </svg>
-                  </span>
-                                +7 (777) 123-45-67
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="footer__bottom">
-                    <p class="footer__copy">© 2026 AnaTil. Все права защищены.</p>
-                    <div class="footer__bottom-links">
-                        <a class="footer__link" href="#">Политика конфиденциальности</a>
-                        <a class="footer__link" href="#">Условия использования</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
-
-        <!-- Modal (оставил как было) -->
-        <div class="modal" id="testModal" hidden>
-            <div class="modal__backdrop" data-close="1"></div>
-            <div class="modal__wrap" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-                <div class="modal__panel">
-                    <div class="modal__head">
-                        <button class="modal__close" type="button" data-close="1" aria-label="Закрыть">
-                            <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 6 6 18" />
-                                <path d="m6 6 12 12" />
-                            </svg>
-                        </button>
-                        <h2 class="modal__title" id="modalTitle">Начать тест?</h2>
-                    </div>
-
-                    <div class="modal__body">
-                        <div class="modal__note">
-                <span class="modal__note-ico" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 8v4" />
-                    <path d="M12 16h.01" />
-                  </svg>
-                </span>
-                            <p class="modal__note-text">
-                                После начала теста у вас будет <b>30 минут</b> на прохождение.
-                                Убедитесь, что готовы начать прямо сейчас.
-                            </p>
-                        </div>
-
-                        <div class="modal__list">
-                            <p>• Тест содержит 20 вопросов</p>
-                            <p>• Нельзя вернуться к предыдущим вопросам</p>
-                            <p>• Результаты будут доступны сразу после завершения</p>
-                        </div>
-                    </div>
-
-                    <div class="modal__actions">
-                        <button class="modal__btn modal__btn--ghost" type="button" data-close="1">Отмена</button>
-                        <button class="modal__btn modal__btn--primary" type="button" id="confirmTestBtn">Да, начать</button>
-                    </div>
-                </div>
-            </div>
+  <section class="hero">
+    <div class="hero__container">
+      <div class="hero__grid">
+        <div class="hero__text">
+          <h1 class="hero__title">Добро пожаловать в AnaTil</h1>
+          <p class="hero__subtitle">Продолжайте обучение или пройдите тест</p>
         </div>
 
-    </section>
+        <div class="hero__actions">
+          <button class="btn btn--light hero__btn" type="button" id="continueCourseBtn">
+            <span class="btn__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+              </svg>
+            </span>
+            Продолжить курс
+          </button>
+
+          <button class="btn btn--glass hero__btn" type="button" id="takeTestBtn">
+            Пройти тест
+            <span class="btn__icon" aria-hidden="true">
+              <!-- ArrowRight -->
+              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="m13 5 7 7-7 7" />
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="wrap">
+      <!-- State switcher (demo) -->
+      <section class="state" aria-label="State switcher">
+        <span class="state__label">Состояние:</span>
+        <button class="state__btn state__btn--active" type="button" data-state="normal">Normal</button>
+        <button class="state__btn" type="button" data-state="loading">Loading</button>
+        <button class="state__btn" type="button" data-state="empty">Empty</button>
+      </section>
+
+      <!-- Tests -->
+      <section class="section section--tests">
+        <header class="section__head">
+          <h2 class="section__title">Виды тестирования</h2>
+          <p class="section__desc">Выберите формат — мы определим уровень и подскажем курс</p>
+        </header>
+
+        <div class="tests" id="testsGrid">
+          <!-- JS renders cards here -->
+        </div>
+      </section>
+
+      <!-- Course progress -->
+      <section class="section section--course">
+        <div id="courseWrap">
+          <!-- JS renders block here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+<button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+    <span class="fab-ping" aria-hidden="true"></span>
+    <span class="fab-circle">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+    <span class="fab-badge" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+</button>
+
+<div class="chat" id="chat" hidden>
+    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+        <div class="chat-head">
+            <div class="chat-avatar">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div class="chat-head-text">
+                <div class="chat-title">AI Ассистент</div>
+                <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+            </div>
+
+            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                ✕
+            </button>
+        </div>
+
+        <div class="chat-body" id="chatBody"></div>
+
+        <div class="chat-input">
+            <div>
+                <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                <button class="chat-send" id="chatSend" type="button">➤</button>
+            </div>
+            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+        </div>
+    </div>
 </div>
 
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__container">
+      <div class="footer__grid">
+        <div class="footer__brand">
+          <div class="footer__brandline">
+            <span class="footer__logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" class="i i--book" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+              </svg>
+            </span>
+            <span class="footer__name">AnaTil</span>
+          </div>
+          <p class="footer__text">
+            Платформа для изучения казахского языка. Учитесь легко и эффективно.
+          </p>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__title">Платформа</h4>
+          <ul class="footer__list">
+            <li><a class="footer__link" href="#">Курсы</a></li>
+            <li><a class="footer__link" href="#">Тестирование</a></li>
+            <li><a class="footer__link" href="#">Прогресс</a></li>
+            <li><a class="footer__link" href="#">Сертификаты</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__title">Поддержка</h4>
+          <ul class="footer__list">
+            <li><a class="footer__link" href="#">Помощь</a></li>
+            <li><a class="footer__link" href="#">FAQ</a></li>
+            <li><a class="footer__link" href="#">Контакты</a></li>
+            <li><a class="footer__link" href="#">О нас</a></li>
+          </ul>
+        </div>
+
+        <div class="footer__col">
+          <h4 class="footer__title">Контакты</h4>
+          <ul class="footer__contact">
+            <li class="footer__contact-item">
+              <span class="footer__contact-ico" aria-hidden="true">
+                <!-- Mail -->
+                <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16v16H4z" opacity="0" />
+                  <path d="M4 4h16v16H4z" />
+                  <path d="m22 6-10 7L2 6" />
+                </svg>
+              </span>
+              info@anatil.kz
+            </li>
+            <li class="footer__contact-item">
+              <span class="footer__contact-ico" aria-hidden="true">
+                <!-- Phone -->
+                <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.9v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07A19.5 19.5 0 0 1 3.17 8.81 19.8 19.8 0 0 1 .1 0.18 2 2 0 0 1 2.11 0h3a2 2 0 0 1 2 1.72c.12.86.31 1.7.57 2.5a2 2 0 0 1-.45 2.11L6.09 7.91a16 16 0 0 0 6 6l1.58-1.14a2 2 0 0 1 2.11-.45c.8.26 1.64.45 2.5.57A2 2 0 0 1 22 16.9Z" />
+                </svg>
+              </span>
+              +7 (777) 123-45-67
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer__bottom">
+        <p class="footer__copy">© 2026 AnaTil. Все права защищены.</p>
+        <div class="footer__bottom-links">
+          <a class="footer__link" href="#">Политика конфиденциальности</a>
+          <a class="footer__link" href="#">Условия использования</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal -->
+  <div class="modal" id="testModal" hidden>
+    <div class="modal__backdrop" data-close="1"></div>
+
+    <div class="modal__wrap" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__panel">
+        <div class="modal__head">
+          <button class="modal__close" type="button" data-close="1" aria-label="Закрыть">
+            <!-- X -->
+            <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+          <h2 class="modal__title" id="modalTitle">Начать тест?</h2>
+        </div>
+
+        <div class="modal__body">
+          <div class="modal__note">
+            <span class="modal__note-ico" aria-hidden="true">
+              <!-- AlertCircle -->
+              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+            </span>
+            <p class="modal__note-text">
+              После начала теста у вас будет <b>30 минут</b> на прохождение.
+              Убедитесь, что готовы начать прямо сейчас.
+            </p>
+          </div>
+
+          <div class="modal__list">
+            <p>• Тест содержит 20 вопросов</p>
+            <p>• Нельзя вернуться к предыдущим вопросам</p>
+            <p>• Результаты будут доступны сразу после завершения</p>
+          </div>
+        </div>
+
+        <div class="modal__actions">
+          <button class="modal__btn modal__btn--ghost" type="button" data-close="1">Отмена</button>
+          <button class="modal__btn modal__btn--primary" type="button" id="confirmTestBtn">Да, начать</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script src="/js/authFetch.js"></script>
-<script src="/js/dashboard.js"></script>
-<script src="/js/admin.js"></script>
+  <script src="/js/headerdash.js"></script>
+  <script src="/js/dashboard.js"></script>
 <script src="/js/chat.js"></script>
+<script src="/js/admin.js"></script>
 </body>
 </html>
