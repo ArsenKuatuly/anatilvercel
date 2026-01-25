@@ -120,27 +120,29 @@ function buildNav(count) {
 }
 
 function updateNavAnswered() {
-  if (!navEl) return;
+    if (!navEl) return;
 
-  const footer = navEl.querySelector("#ftNavFooter");
-  if (footer) footer.textContent = `Отвечено: ${answeredCount} / ${totalQuestions}`;
+    const footer = navEl.querySelector("#ftNavFooter");
+    if (footer) footer.textContent = `Отвечено: ${answeredCount} / ${totalQuestions}`;
 
-  navEl.querySelectorAll(".ft-nav__btn").forEach((b) => {
-    const num = Number(b.getAttribute("data-qnum"));
-    const qCard = document.querySelector(`[data-question-number='${num}']`);
-    const checked = !!qCard?.querySelector("input[type='radio']:checked");
-    b.classList.toggle("is-answered", checked);
-  });
+    navEl.querySelectorAll(".ft-nav__btn").forEach((b) => {
+        const num = Number(b.getAttribute("data-qnum"));
+        const qCard = document.querySelector(`[data-question-number='${num}']`);
+        const checked = !!qCard?.querySelector("input[type='radio']:checked");
+
+        b.classList.toggle("ft-nav__btn--answered", checked);
+    });
 }
 
 function refreshCountsFromDOM() {
-  // считаем по выбранным radio
-  answeredCount = questionsContainer
-    ? questionsContainer.querySelectorAll(".ft-question input[type='radio']:checked").length
-    : 0;
-  updateProgress();
-  updateNavAnswered();
+    answeredCount = questionsContainer
+        ? questionsContainer.querySelectorAll(".ft-question input[type='radio']:checked").length
+        : 0;
+
+    updateProgress();
+    updateNavAnswered();
 }
+
 
 // ====== boot ======
 if (!taskId) {
@@ -248,23 +250,23 @@ async function loadQuestions(taskId) {
 
     questionsContainer.appendChild(frag);
 
-    // listeners for progress/nav
-    questionsContainer.addEventListener("change", (e) => {
-      const input = e.target;
-      if (input && input.matches("input[type='radio']")) {
-        // обновить стили выбранных опций внутри карточки
-        const card = input.closest(".ft-question");
-        if (card) {
-          card.querySelectorAll(".ft-option").forEach((lab) => {
-            const checked = !!lab.querySelector("input[type='radio']:checked");
-            lab.classList.toggle("is-selected", checked);
-          });
-        }
-        refreshCountsFromDOM();
-      }
-    });
+      questionsContainer.addEventListener("change", (e) => {
+          const input = e.target;
+          if (!input || !input.matches("input[type='radio']")) return;
 
-    // initial
+          const card = input.closest(".ft-question");
+          if (card) {
+              card.querySelectorAll(".ft-option").forEach((lab) => {
+                  const r = lab.querySelector("input[type='radio']");
+                  lab.setAttribute("data-selected", r && r.checked ? "true" : "false");
+              });
+          }
+
+          refreshCountsFromDOM();
+      });
+
+
+      // initial
     answeredCount = 0;
     updateProgress();
     updateNavAnswered();
