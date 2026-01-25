@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AnaTil</title>
-    <link rel="stylesheet" href="/css/header.css" />
+    <link rel="stylesheet" href="/css/headerdash.css" />
     <link rel="stylesheet" href="/css/style.css" />
     <link rel="stylesheet" href="/css/chat.css" />
     <link rel="stylesheet" href="/css/admin.css" />
@@ -14,58 +14,32 @@
 <script src="/js/api.js"></script>
 
 
-<header class="header" id="header">
-    <div class="header__container">
-        <a class="header__logo" href="index.html">AnaTil</a>
+<header class="dash-header" id="header">
+    <div class="dash-header__container">
+        <a class="dash-header__logo" href="/">AnaTil</a>
 
-        <!-- DESKTOP NAV -->
-        <nav class="header__nav nav nav--desktop">
-            <a class="nav__link" href="#promo" data-key="about">О нас</a>
-            <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-            <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-            <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
+        <nav class="dash-header__nav" aria-label="Навигация">
+            <a class="dash-header__link" href="/courses">Курсы</a>
+            <a class="dash-header__link" href="/progress">Мой прогресс</a>
+            <a class="dash-header__link" href="/library">Библиотека</a>
         </nav>
 
-        <div class="header__actions header__actions--desktop">
-            <div class="header__actions header__actions--mobile">
+        <div class="dash-header__actions">
+            <a class="dash-header__btn" href="/profile.html">Профиль</a>
 
-                <a href="/admin" id="adminBtn" style="display:none">
-                    ⚙ Админ панель
-                </a>
-
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
-        </div>
-
-        <!-- BURGER (mobile) -->
-        <button class="header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
-            ☰
-        </button>
-    </div>
-
-    <!-- MOBILE MENU (добавили, но классы старые не меняли) -->
-    <div class="header__mobile" hidden>
-        <div class="header__container header__container--mobile">
-            <nav class="header__nav nav nav--mobile">
-                <a class="nav__link" href="#promo" data-key="about">О нас</a>
-                <a class="nav__link" href="#courses" data-key="courses_nav">Курсы</a>
-                <a class="nav__link" href="#important" data-key="important">Преимущества</a>
-
-                <a class="nav__link" href="#contacts" data-key="contacts">Контакты</a>
-            </nav>
-
-            <div class="header__actions header__actions--mobile">
-
-                <a href="/admin" class="adminBtn" style="display:none">
-                    ⚙ Админ панель
-                </a>
-
-                <a href="profile.html"><button class="btn cta" data-key="check_level">Ваш профиль</button></a>
-            </div>
+            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                <span></span><span></span><span></span>
+            </button>
         </div>
     </div>
 
-
+    <!-- Mobile menu -->
+    <div class="dash-header__mobile" data-mobile hidden>
+        <a class="dash-header__m-link" href="/courses">Курсы</a>
+        <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+        <a class="dash-header__m-link" href="/library">Библиотека</a>
+        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+    </div>
 </header>
 
 <section class="tests">

@@ -141,5 +141,5 @@
 @media (max-width: 768px){
     .dash-header__nav{ display:none; }
     .dash-header__btn{ display:none; } /* на мобиле профиль в меню */
-    .dash-header__burger{ display:inline-flex; }
+    .dash-header__burger{ display:inline-flex; flex-direction: column; }
 }
