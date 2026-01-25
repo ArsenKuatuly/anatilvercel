@@ -1,69 +1,120 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Итоговое задание</title>
-    <link rel="stylesheet" href="/finallytask.css">
-    <link rel="stylesheet" href="/css/chat.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Итоговое задание</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/finallytask.css" />
 </head>
 <body>
-<script src="/js/auth-guard.js"></script>
-<script src="/js/api.js"></script>
 
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
 
-<div class="task-container">
-    <h1>Итоговое задание</h1>
+  <main class="ft">
+    <div class="ft__container">
+      <div class="ft__layout">
 
-    <p id="taskDescription">Загрузка задания...</p>
+        <section class="ft__main">
 
-    <div class="questions" id="questionsContainer">
+          <header class="ft-card ft-header">
+            <div class="ft-header__top">
+              <div class="ft-header__icon" aria-hidden="true">
 
-    </div>
-
-    <div class="buttons">
-        <button id="backBtn">Назад к курсу</button>
-        <button id="submitTaskBtn">Отправить ответы</button>
-    </div>
-
-    <div id="resultMessage" class="hidden"></div>
-</div>
-
-<div class="chat" id="chat" hidden>
-    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-        <div class="chat-head">
-            <div class="chat-avatar">
-                <svg viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M9 15l2 2 4-4"/>
                 </svg>
+              </div>
+
+              <div class="ft-header__content">
+                <h1 class="ft-header__title">Итоговое задание</h1>
+                <p class="ft-header__desc" id="taskDescription">Загрузка...</p>
+              </div>
             </div>
 
-            <div class="chat-head-text">
-                <div class="chat-title">AI Ассистент</div>
-                <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+            <div class="ft-header__meta">
+              <span class="ft-badge ft-badge--secondary">
+                <span class="ft-badge__dot" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 6 9 17l-5-5"/>
+                  </svg>
+                </span>
+                Один правильный ответ
+              </span>
+              <span class="ft-badge ft-badge--secondary" id="metaTotal">Вопросов: —</span>
+              <span class="ft-badge ft-badge--secondary" id="metaPassing" style="display:none">Проходной балл: —%</span>
             </div>
 
-            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                ✕
+            <div class="ft-progress">
+              <div class="ft-progress__row">
+                <span class="ft-progress__label">Прогресс ответов</span>
+                <span class="ft-progress__value" id="progressText">0 / 0</span>
+              </div>
+              <div class="ft-progress__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="ft-progress__fill" id="progressFill" style="width:0%"></div>
+              </div>
+            </div>
+          </header>
+
+
+          <div class="ft-questions" id="questionsContainer"></div>
+
+
+          <div class="ft-actions ft-actions--desktop">
+            <button class="ft-btn ft-btn--outline" id="backBtn" type="button">
+              <span class="ft-btn__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 18l-6-6 6-6"/>
+                </svg>
+              </span>
+              Назад к курсу
             </button>
-        </div>
 
-        <div class="chat-body" id="chatBody"></div>
-
-        <div class="chat-input">
-            <div>
-                <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                <button class="chat-send" id="chatSend" type="button">➤</button>
+            <div class="ft-actions__right">
+              <span class="ft-actions__counter" id="answersCounter">Ответов: 0 / 0</span>
+              <button class="ft-btn ft-btn--primary" id="submitTaskBtn" type="button" disabled>
+                <span class="ft-btn__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2 11 13"/>
+                    <path d="M22 2 15 22l-4-9-9-4Z"/>
+                  </svg>
+                </span>
+                Отправить ответы
+              </button>
             </div>
-            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
-        </div>
+          </div>
+
+
+          <p class="ft-result ft-hidden" id="resultMessage"></p>
+
+
+          <div class="ft-mobile-spacer"></div>
+        </section>
+
+
+        <aside class="ft-nav" id="questionNav" aria-label="Навигация по вопросам"></aside>
+      </div>
     </div>
-</div>
+  </main>
 
-<script src="/js/authFetch.js"></script>
-<script src="/js/finallytask.js"></script>
-<script src="/js/chat.js"></script>
 
+  <div class="ft-actions ft-actions--mobile" role="region" aria-label="Действия">
+    <button class="ft-btn ft-btn--outline ft-btn--icon" id="backBtnMobile" type="button" aria-label="Назад">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </button>
+    <button class="ft-btn ft-btn--primary ft-actions__mobile-submit" id="submitTaskBtnMobile" type="button" disabled>
+      Отправить (0/0)
+    </button>
+  </div>
+
+  <script src="/js/authFetch.js"></script>
+  <script src="../../../Downloads/finallytask.js"></script>
 </body>
 </html>
