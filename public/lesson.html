@@ -114,54 +114,55 @@
 
             <div class="modal__safe" aria-hidden="true"></div>
         </div>
-        <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
-            <span class="fab-ping" aria-hidden="true"></span>
-            <span class="fab-circle">
+
+
+    </div>
+    <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+        <span class="fab-ping" aria-hidden="true"></span>
+        <span class="fab-circle">
     <svg viewBox="0 0 24 24" fill="none">
       <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
             stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
     </svg>
   </span>
-            <span class="fab-badge" aria-hidden="true">
+        <span class="fab-badge" aria-hidden="true">
     <svg viewBox="0 0 24 24" fill="none">
       <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
             stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
     </svg>
   </span>
-        </button>
+    </button>
 
-        <div class="chat" id="chat" hidden>
-            <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-                <div class="chat-head">
-                    <div class="chat-avatar">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-
-                    <div class="chat-head-text">
-                        <div class="chat-title">AI Ассистент</div>
-                        <div class="chat-subtitle">Онлайн • Ответим быстро</div>
-                    </div>
-
-                    <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                        ✕
-                    </button>
+    <div class="chat" id="chat" hidden>
+        <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+            <div class="chat-head">
+                <div class="chat-avatar">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    </svg>
                 </div>
 
-                <div class="chat-body" id="chatBody"></div>
-
-                <div class="chat-input">
-                    <div>
-                        <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                        <button class="chat-send" id="chatSend" type="button">➤</button>
-                    </div>
-                    <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+                <div class="chat-head-text">
+                    <div class="chat-title">AI Ассистент</div>
+                    <div class="chat-subtitle">Онлайн • Ответим быстро</div>
                 </div>
+
+                <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                    ✕
+                </button>
+            </div>
+
+            <div class="chat-body" id="chatBody"></div>
+
+            <div class="chat-input">
+                <div>
+                    <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                    <button class="chat-send" id="chatSend" type="button">➤</button>
+                </div>
+                <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
             </div>
         </div>
-
     </div>
 </div>
 
