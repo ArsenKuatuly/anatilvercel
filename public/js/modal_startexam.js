@@ -1,20 +1,25 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const startBtn = document.getElementById("startTestBtn");
+    const modal = document.getElementById("confirmModal");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const confirmBtn = document.getElementById("confirmBtn");
 
-    const startBtn = document.getElementById('startTestBtn');
-    const modal = document.getElementById('confirmModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const confirmBtn = document.getElementById('confirmBtn');
 
-    startBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    modal.classList.add('modal--active');
+    if (!startBtn || !modal || !cancelBtn || !confirmBtn) {
+        console.warn("[modal_startexam] elements not found");
+        return;
+    }
+
+    startBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        modal.classList.add("modal--active");
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        modal.classList.remove("modal--active");
+    });
+
+    confirmBtn.addEventListener("click", () => {
+        window.location.href = "test.html";
+    });
 });
-
-    cancelBtn.addEventListener('click', () => {
-    modal.classList.remove('modal--active');
-});
-
-    confirmBtn.addEventListener('click', () => {
-    // переход на страницу теста
-    window.location.href = 'test.html';
-});
-
