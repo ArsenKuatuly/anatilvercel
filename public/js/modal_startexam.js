@@ -1,28 +1,38 @@
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.querySelector(".js-start-test");
     const modal = document.getElementById("confirmModal");
-    const cancelBtn = document.getElementById("cancelBtn");
-    const confirmBtn = document.getElementById("confirmBtn");
+    const overlay = modal?.querySelector(".modal__overlay");
+    const cancelBtn = modal?.querySelector("#cancelBtn2");
+    const confirmBtn = modal?.querySelector("#confirmBtn");
 
     if (!startBtn) return;
 
-    if (!modal || !cancelBtn || !confirmBtn) {
-        startBtn.addEventListener("click", () => {
-            window.location.href = "test.html";
-        });
+    const open = (e) => {
+        e?.preventDefault();
+        modal?.classList.add("modal--active");
+    };
+
+    const close = () => {
+        modal?.classList.remove("modal--active");
+    };
+
+    const go = () => {
+        window.location.href = "test.html";
+    };
+
+    if (!modal || !confirmBtn) {
+        startBtn.addEventListener("click", go);
         return;
     }
 
-    startBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        modal.classList.add("modal--active");
-    });
+    startBtn.addEventListener("click", open);
+    overlay?.addEventListener("click", close);
+    cancelBtn?.addEventListener("click", close);
+    confirmBtn.addEventListener("click", go);
 
-    cancelBtn.addEventListener("click", () => {
-        modal.classList.remove("modal--active");
-    });
-
-    confirmBtn.addEventListener("click", () => {
-        window.location.href = "test.html";
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.classList.contains("modal--active")) {
+            close();
+        }
     });
 });
