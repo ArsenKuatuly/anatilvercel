@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-
     const logoutBtn = document.getElementById("logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
@@ -16,7 +15,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             window.location.href = "/index.html";
         });
     }
-
 
     let user = null;
     const me = await apiFetch("/api/auth/me", { method: "GET", headers: {} });
@@ -27,9 +25,56 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (adminBtn) adminBtn.style.display = "inline-block";
     }
 
-
+    await applyWelcomeFromProfile();
     await loadCourseProgress();
 });
+
+async function applyWelcomeFromProfile() {
+    const titleEl = document.querySelector(".welcome__title");
+    const userSpan = document.querySelector(".welcome__user");
+    if (!titleEl && !userSpan) return;
+
+    try {
+        const out = await apiFetch("/api/profile", { method: "GET" });
+        if (!out?.data?.success) {
+            if (titleEl) titleEl.textContent = "Добро пожаловать!";
+            return;
+        }
+
+        const p = out.data.profile || null;
+
+        const first = (p?.first_name || "").trim();
+        const last = (p?.last_name || "").trim();
+        const fullName = [first, last].filter(Boolean).join(" ").trim();
+
+        if (fullName) {
+            if (titleEl) {
+                titleEl.innerHTML = `Добро пожаловать, <span class="welcome__user"></span>!`;
+                const span = titleEl.querySelector(".welcome__user");
+                if (span) span.textContent = fullName;
+            } else if (userSpan) {
+                userSpan.textContent = fullName;
+            }
+        } else {
+            if (titleEl) titleEl.textContent = "Добро пожаловать!";
+        }
+    } catch (err) {
+        console.error("Ошибка загрузки профиля", err);
+        if (titleEl) titleEl.textContent = "Добро пожаловать!";
+    }
+}
+
+function formatLevel(level) {
+    const map = {
+        elementary: "A1 Elementary",
+        basic: "A2 Basic",
+        intermediate: "B1 Intermediate",
+        upper: "B2 Upper",
+        advanced: "C1 Advanced",
+    };
+    const key = String(level || "").toLowerCase().trim();
+    return map[key] || "—";
+}
 
 async function loadCourseProgress() {
     const percentEl = document.getElementById("lessonPercent");
@@ -39,9 +84,9 @@ async function loadCourseProgress() {
     const nextLessonEl = document.getElementById("nextLesson");
     const circleEl = document.querySelector(".course-progress__circle");
     const btn = document.getElementById("goToCourseBtn");
+    const levelEl = document.querySelector(".welcome__level");
 
-
-    if (!percentEl && !courseTitleEl && !btn) return;
+    if (!percentEl && !courseTitleEl && !btn && !levelEl) return;
 
     try {
         const out = await apiFetch("/api/lessons/progress/current", { method: "GET" });
@@ -50,13 +95,13 @@ async function loadCourseProgress() {
         const { data } = out;
         if (!data?.success) return;
 
-
         if (!data.course) {
             if (percentEl) percentEl.textContent = "0%";
             if (courseTitleEl) courseTitleEl.textContent = "Курс пока не назначен";
             if (courseDescEl) courseDescEl.textContent = "";
             if (lastLessonEl) lastLessonEl.textContent = "—";
             if (nextLessonEl) nextLessonEl.textContent = "—";
+            if (levelEl) levelEl.textContent = "—";
             if (btn) {
                 btn.setAttribute("href", "#");
                 btn.style.pointerEvents = "none";
@@ -81,6 +126,7 @@ async function loadCourseProgress() {
         if (lastLessonEl) lastLessonEl.textContent = data.lastLesson ? data.lastLesson.title : "—";
         if (nextLessonEl) nextLessonEl.textContent = data.nextLesson ? data.nextLesson.title : "Все уроки пройдены";
 
+        if (levelEl) levelEl.textContent = formatLevel(data.course.level);
 
         if (circleEl) {
             const deg = Math.max(0, Math.min(100, percent)) * 3.6;
