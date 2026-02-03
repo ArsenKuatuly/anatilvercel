@@ -1,12 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const startBtn = document.getElementById("startTestBtn");
+    const startBtn = document.querySelector(".js-start-test");
     const modal = document.getElementById("confirmModal");
     const cancelBtn = document.getElementById("cancelBtn");
     const confirmBtn = document.getElementById("confirmBtn");
 
+    if (!startBtn) return;
 
-    if (!startBtn || !modal || !cancelBtn || !confirmBtn) {
-        console.warn("[modal_startexam] elements not found");
+    if (!modal || !cancelBtn || !confirmBtn) {
+        startBtn.addEventListener("click", () => {
+            window.location.href = "test.html";
+        });
         return;
     }
 
