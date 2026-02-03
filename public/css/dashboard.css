@@ -640,3 +640,22 @@ button{font:inherit}
         transform:none;
     }
 }
+
+.section__head{
+    padding-left:16px;
+    padding-right:16px;
+}
+
+@media (min-width:640px){
+    .section__head{
+        padding-left:24px;
+        padding-right:24px;
+    }
+}
+
+@media (min-width:1024px){
+    .section__head{
+        padding-left:32px;
+        padding-right:32px;
+    }
+}

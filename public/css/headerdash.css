@@ -82,7 +82,7 @@
 
 /* Burger */
 .dash-header__burger{
-    display: none; /* включим на мобиле */
+    display: none;
     border: none;
     background: transparent;
     padding: 8px;

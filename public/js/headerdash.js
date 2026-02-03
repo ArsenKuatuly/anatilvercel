@@ -1,45 +1,42 @@
-(() => {
-  const header = document.querySelector('.header');
-  if (!header) return;
+document.addEventListener("DOMContentLoaded", () => {
+    const header = document.getElementById("header");
+    const burger = document.querySelector("[data-burger]");
+    const panel = document.querySelector("[data-mobile]");
 
-  const burger = header.querySelector('.header__burger');
-  const mobilePanel = header.querySelector('.header__mobile');
+    if (!burger || !panel) return;
 
-  if (!burger || !mobilePanel) return;
+    const open = () => {
+        panel.hidden = false;
+        burger.setAttribute("aria-expanded", "true");
+    };
 
-  const closeMobile = () => {
-    mobilePanel.hidden = true;
-    burger.setAttribute('aria-expanded', 'false');
-    document.body.classList.remove('no-scroll');
-  };
+    const close = () => {
+        panel.hidden = true;
+        burger.setAttribute("aria-expanded", "false");
+    };
 
-  const openMobile = () => {
-    mobilePanel.hidden = false;
-    burger.setAttribute('aria-expanded', 'true');
-    document.body.classList.add('no-scroll');
-  };
+    const toggle = () => {
+        if (panel.hidden) open();
+        else close();
+    };
 
-  burger.addEventListener('click', () => {
-    const expanded = burger.getAttribute('aria-expanded') === 'true';
-    expanded ? closeMobile() : openMobile();
-  });
+    burger.addEventListener("click", toggle);
 
-  // Close on link click
-  mobilePanel.addEventListener('click', (e) => {
-    const link = e.target.closest('a');
-    if (link) closeMobile();
-  });
+    document.addEventListener("click", (e) => {
+        if (panel.hidden) return;
+        const t = e.target;
+        if (burger.contains(t)) return;
+        if (panel.contains(t)) return;
+        if (header && header.contains(t)) return;
+        close();
+    });
 
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeMobile();
-  });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !panel.hidden) close();
+    });
 
-  // If resize to desktop — just close
-  const mq = window.matchMedia('(max-width: 900px)');
-  const onMqChange = () => {
-    if (!mq.matches) closeMobile();
-  };
-  mq.addEventListener?.('change', onMqChange);
-  onMqChange();
-})();
+    panel.addEventListener("click", (e) => {
+        const a = e.target.closest("a");
+        if (a) close();
+    });
+});
