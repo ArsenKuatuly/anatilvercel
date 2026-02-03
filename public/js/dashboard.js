@@ -30,39 +30,31 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function applyWelcomeFromProfile() {
-    const titleEl = document.querySelector(".welcome__title");
-    const userSpan = document.querySelector(".welcome__user");
-    if (!titleEl && !userSpan) return;
+    const welcomeEl = document.getElementById("welcomeText");
+    if (!welcomeEl) return;
 
     try {
         const out = await apiFetch("/api/profile", { method: "GET" });
-        if (!out?.data?.success) {
-            if (titleEl) titleEl.textContent = "Добро пожаловать!";
+
+        if (!out?.data?.success || !out.data.profile) {
+            welcomeEl.textContent = "Добро пожаловать";
             return;
         }
 
-        const p = out.data.profile || null;
+        const firstName = (out.data.profile.first_name || "").trim();
 
-        const first = (p?.first_name || "").trim();
-        const last = (p?.last_name || "").trim();
-        const fullName = [first, last].filter(Boolean).join(" ").trim();
-
-        if (fullName) {
-            if (titleEl) {
-                titleEl.innerHTML = `Добро пожаловать, <span class="welcome__user"></span>!`;
-                const span = titleEl.querySelector(".welcome__user");
-                if (span) span.textContent = fullName;
-            } else if (userSpan) {
-                userSpan.textContent = fullName;
-            }
+        if (firstName) {
+            welcomeEl.textContent = `Добро пожаловать, ${firstName}`;
         } else {
-            if (titleEl) titleEl.textContent = "Добро пожаловать!";
+            welcomeEl.textContent = "Добро пожаловать";
         }
-    } catch (err) {
-        console.error("Ошибка загрузки профиля", err);
-        if (titleEl) titleEl.textContent = "Добро пожаловать!";
+
+    } catch (e) {
+        console.error("Ошибка загрузки профиля", e);
+        welcomeEl.textContent = "Добро пожаловать";
     }
 }
+
 
 function formatLevel(level) {
     const map = {
