@@ -36,11 +36,11 @@
         </div>
     </div>
 
-    <!-- Mobile menu -->
+
     <div class="dash-header__mobile" data-mobile hidden>
         <a class="dash-header__m-link" href="/courses">Курсы</a>
         <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
-        <a class="dash-header__m-link" href="/library">Библиотека</a>
+        <a class="dash-header__m-link" href="/library.html">Библиотека</a>
         <a class="dash-header__m-link" href="/profile.html">Профиль</a>
     </div>
 </header>
@@ -49,59 +49,154 @@
 
 
 <main class="main">
-    <section class="dash">
-        <div class="dash__grid">
+    <div class="container main__inner">
 
 
-            <article class="card course">
-                <div class="course__top">
-                    <div class="course__txt">
-                        <p class="course__kicker">Текущий курс</p>
-                        <h2 class="course__title" id="courseTitle">—</h2>
-                        <p class="course__desc" id="courseDesc"></p>
-                    </div>
+        <section class="welcome" aria-label="Приветствие">
+            <div class="welcome__content">
+                <div class="welcome__text">
+                    <h1 class="welcome__title">Добро пожаловать, <span class="welcome__user">Александр</span>!</h1>
+                    <p class="welcome__subtitle">Продолжайте обучение и достигайте новых высот</p>
+                </div>
+
+                <div class="welcome__badge" role="status">
+                    Ваш уровень: <span class="welcome__level">B1 Intermediate</span>
+                </div>
+            </div>
+        </section>
 
 
-                    <div class="course-progress">
-                        <div class="course-progress__circle" aria-label="Прогресс курса">
-                            <span class="course-progress__value" id="lessonPercent">0%</span>
+        <section class="section tests" aria-label="Виды тестирования">
+            <div class="section__head">
+                <h2 class="section__title">Виды тестирования</h2>
+                <p class="section__desc">Выберите тест и узнайте свой уровень владения английским языком</p>
+            </div>
+
+            <div class="tests__grid">
+
+                <article class="test-card">
+                    <div class="test-card__top">
+                        <div class="test-card__icon" aria-hidden="true">
+
+                            <svg class="icon icon--accent" viewBox="0 0 24 24"><path d="M9 12l2 2 4-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                        </div>
+
+                        <div class="test-card__info">
+                            <h3 class="test-card__title">Проверить свой уровень</h3>
+                            <p class="test-card__desc">Определите текущий уровень английского</p>
                         </div>
                     </div>
-                </div>
 
-                <div class="course__meta">
-                    <div class="course__row">
-                        <span class="course__label">Последний урок</span>
-                        <span class="course__val" id="lastLesson">—</span>
+                    <ul class="test-card__list">
+                        <li class="test-card__item">
+                <span class="test-card__bullet" aria-hidden="true">
+                  <svg class="icon icon--success" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                            <span>20 вопросов разной сложности</span>
+                        </li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon icon--success" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Тестирование грамматики и лексики</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon icon--success" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Результат за 15 минут</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon icon--success" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Рекомендации по обучению</li>
+                    </ul>
+
+                    <button class="btn btn--primary test-card__btn js-start-test" type="button">
+                        Начать тест <span class="btn__arrow" aria-hidden="true">→</span>
+                    </button>
+                </article>
+
+
+                <article class="test-card test-card--disabled" aria-disabled="true">
+                    <div class="test-card__top">
+                        <div class="test-card__icon test-card__icon--disabled" aria-hidden="true">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M12 8v5l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                        </div>
+
+                        <div class="test-card__info">
+                            <h3 class="test-card__title">Продвинутый тест</h3>
+                            <p class="test-card__desc">Для опытных студентов</p>
+                        </div>
+
+                        <span class="pill test-card__pill">Скоро</span>
                     </div>
 
-                    <div class="course__row">
-                        <span class="course__label">Следующий урок</span>
-                        <span class="course__val" id="nextLesson">—</span>
+                    <ul class="test-card__list">
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Углубленное тестирование</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Проверка письменных навыков</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>40+ заданий</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Детальный анализ результатов</li>
+                    </ul>
+
+                    <button class="btn test-card__btn" type="button" disabled>
+                        Скоро
+                    </button>
+                </article>
+
+
+                <article class="test-card test-card--disabled" aria-disabled="true">
+                    <div class="test-card__top">
+                        <div class="test-card__icon test-card__icon--disabled" aria-hidden="true">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M12 15l-3.5 2 1-4-3-2.5 4-.2L12 6l1.5 4.3 4 .2-3 2.5 1 4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M20 21H4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+
+                        <div class="test-card__info">
+                            <h3 class="test-card__title">Экзаменационный тест</h3>
+                            <p class="test-card__desc">Подготовка к международным экзаменам</p>
+                        </div>
+
+                        <span class="pill test-card__pill">Скоро</span>
+                    </div>
+
+                    <ul class="test-card__list">
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Формат IELTS/TOEFL</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Все секции экзамена</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Симуляция реального экзамена</li>
+                        <li class="test-card__item"><span class="test-card__bullet" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Оценка по международным стандартам</li>
+                    </ul>
+
+                    <button class="btn test-card__btn" type="button" disabled>
+                        Скоро
+                    </button>
+                </article>
+            </div>
+        </section>
+
+
+        <section class="section" aria-label="Прогресс курса">
+            <article class="course course-card">
+                <div class="course-card__top">
+                    <div class="course-card__text">
+                        <h2 class="course-card__title" id="courseTitle">Ваш текущий курс</h2>
+                        <p class="course-card__desc" id="courseDesc"></p>
+                    </div>
+
+
+                    <div class="course-progress__circle" aria-label="Прогресс курса">
+                        <span class="course-progress__value" id="lessonPercent">0%</span>
+                    </div>
+                </div>
+
+                <div class="course-card__rows">
+                    <div class="course-card__row">
+                        <span class="course-card__label">Последний урок</span>
+                        <span class="course-card__val" id="lastLesson">—</span>
+                    </div>
+                    <div class="course-card__row">
+                        <span class="course-card__label">Следующий урок</span>
+                        <span class="course-card__val" id="nextLesson">—</span>
                     </div>
                 </div>
 
 
-                <a class="btn btn--primary course__btn" id="goToCourseBtn" href="#">
-                    Перейти к курсу
+                <a class="btn btn--primary course-card__btn" id="goToCourseBtn" href="#">
+                    Перейти к курсу <span class="btn__arrow" aria-hidden="true">→</span>
                 </a>
             </article>
+        </section>
 
 
-            <article class="card stat">
-                <h3 class="stat__title">Статистика</h3>
-                <p class="stat__text">Здесь могут быть ваши показатели и достижения.</p>
-            </article>
-
-
-            <article class="card news">
-                <h3 class="news__title">Новости</h3>
-                <p class="news__text">Обновления платформы и новые уроки.</p>
-            </article>
-
-        </div>
-    </section>
+    </div>
 </main>
+
 
 
 
