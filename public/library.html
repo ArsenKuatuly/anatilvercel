@@ -44,65 +44,125 @@
 </header>
 
 <div class="library" id="library">
-    <div class="library__header">
-      <div class="library__container library__container--header">
-        <div class="library__titlebox">
-          <h1 class="library__title">Библиотека</h1>
-          <p class="library__subtitle">Материалы для практики казахского языка</p>
-        </div>
 
-        <div class="library__controls">
-          <div class="library-search">
-            <span class="library-search__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <div class="library__header">
+        <div class="library__container library__container--header">
+            <div class="library__titlebox">
+                <h1 class="library__title">Библиотека</h1>
+                <p class="library__subtitle">Материалы для практики казахского языка</p>
+            </div>
+
+            <div class="library__controls">
+                <div class="library__search">
+            <span class="library__search-icon" aria-hidden="true">
+
+              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M21 21l-4.3-4.3"></path>
               </svg>
             </span>
-            <input
-              class="library-search__input"
-              id="searchInput"
-              type="text"
-              placeholder="Поиск по словам и темам…"
-              autocomplete="off"
-            />
-          </div>
+                    <input
+                            class="library__search-input"
+                            id="searchInput"
+                            type="text"
+                            placeholder="Поиск по словам и темам…"
+                            autocomplete="off"
+                    />
+                </div>
 
-          <div class="library-tabs">
-            <div class="library-tabs__track hide-scrollbar" id="tabsTrack" role="tablist" aria-label="Категории"></div>
-          </div>
+                <div class="library__tabs hide-scrollbar" id="tabs">
+                    <div class="library__tabs-row" id="tabsRow"></div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
+
     <main class="library__main">
-      <div class="library__container">
-        <section class="library-continue" id="continueBlock" hidden></section>
+        <div class="library__container library__container--main">
 
-        <section class="library-content" aria-live="polite">
-          <div class="library-grid" id="materialsGrid"></div>
+            <section class="library__continue" id="continueBlock"></section>
 
-          <div class="library-empty" id="emptyState" hidden>
-            <div class="library-empty__card">
-              <div class="library-empty__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M8.5 8.5 12.5 12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <path d="M12.5 8.5 8.5 12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </div>
-              <h3 class="library-empty__title">Ничего не найдено</h3>
-              <p class="library-empty__text">Попробуйте изменить запрос или выбрать другую категорию</p>
-              <button class="btn btn--primary" id="clearBtn" type="button">Очистить поиск</button>
-            </div>
-          </div>
 
-          <div class="library-skeleton" id="skeletonGrid" hidden></div>
-        </section>
-      </div>
+            <section class="library__content">
+                <div class="library__grid" id="materialsGrid"></div>
+                <div class="library__empty" id="emptyState" hidden></div>
+                <div class="library__skeleton" id="skeletonGrid" hidden></div>
+            </section>
+        </div>
     </main>
-  </div>
+
+
+    <div class="material-modal" id="materialModal" hidden>
+        <div class="material-modal__overlay" id="modalOverlay" role="presentation">
+            <div class="material-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+                <div class="material-modal__head">
+                    <div class="material-modal__head-top">
+                        <div class="material-modal__meta">
+                            <div class="material-modal__badges">
+                                <span class="material-modal__emoji" id="modalEmoji">📘</span>
+                                <span class="material-modal__pill material-modal__pill--soft" id="modalType">Грамматика</span>
+                                <span class="material-modal__pill material-modal__pill--blueSoft" id="modalLevel">A1</span>
+                                <span class="material-modal__pill material-modal__pill--gray" id="modalDuration">5 мин</span>
+                            </div>
+
+                            <h2 class="material-modal__title" id="modalTitle">Материал</h2>
+                            <p class="material-modal__desc" id="modalDesc">Описание</p>
+                        </div>
+
+                        <button class="material-modal__close" id="modalClose" type="button" aria-label="Закрыть">
+
+                            <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M18 6L6 18"></path>
+                                <path d="M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="material-modal__progress">
+                        <div class="material-modal__bar">
+                            <div class="material-modal__bar-fill" style="width:35%"></div>
+                        </div>
+                        <p class="material-modal__progress-text">Прогресс: 35%</p>
+                    </div>
+                </div>
+
+                <div class="material-modal__body" id="modalBody"></div>
+
+                <div class="material-modal__foot">
+                    <button class="btn btn--gray" type="button">
+
+                        <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M15 18l-6-6 6-6"></path>
+                        </svg>
+                        <span class="material-modal__foot-text">Назад</span>
+                    </button>
+
+                    <div class="material-modal__foot-right">
+                        <button class="btn btn--outline" type="button">
+
+                            <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 0 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                            </svg>
+                            <span class="material-modal__foot-text">Сохранить</span>
+                        </button>
+
+                        <button class="btn btn--blue" type="button">
+                            <span>Продолжить</span>
+
+                            <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 18l6-6-6-6"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="/js/authFetch.js"></script>
 <script src="/js/library.js"></script>
