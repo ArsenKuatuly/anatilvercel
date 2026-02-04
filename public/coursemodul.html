@@ -17,31 +17,34 @@
 
 
   <header class="dash-header" id="header">
-    <div class="dash-header__container">
-      <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
+      <div class="dash-header__container">
+          <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
 
-      <nav class="dash-header__nav" aria-label="Навигация">
-        <a class="dash-header__link" href="/courses">Курсы</a>
-        <a class="dash-header__link" href="/progress">Мой прогресс</a>
-        <a class="dash-header__link" href="/library.html">Библиотека</a>
-      </nav>
+          <nav class="dash-header__nav" aria-label="Навигация">
+              <a class="dash-header__link" href="/courses">Курсы</a>
+              <a class="dash-header__link" href="/myprogress.html">Мой прогресс</a>
+              <a class="dash-header__link" href="/library.html">Библиотека</a>
+          </nav>
 
-      <div class="dash-header__actions">
-        <a class="dash-header__btn" href="/profile.html">Профиль</a>
+          <div class="dash-header__actions">
+              <a href="/admin" id="adminBtn" style="display:none">
+                  ⚙ Админ панель
+              </a>
+              <a class="dash-header__btn" href="/profile.html">Профиль</a>
 
-        <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
-          <span></span><span></span><span></span>
-        </button>
+              <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                  <span></span><span></span><span></span>
+              </button>
+          </div>
       </div>
-    </div>
 
 
-    <div class="dash-header__mobile" data-mobile hidden>
-      <a class="dash-header__m-link" href="/courses">Курсы</a>
-      <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
-      <a class="dash-header__m-link" href="/library">Библиотека</a>
-      <a class="dash-header__m-link" href="/profile.html">Профиль</a>
-    </div>
+      <div class="dash-header__mobile" data-mobile hidden>
+          <a class="dash-header__m-link" href="/courses">Курсы</a>
+          <a class="dash-header__m-link" href="/myprogress.html">Мой прогресс</a>
+          <a class="dash-header__m-link" href="/library.html">Библиотека</a>
+          <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+      </div>
   </header>
 
   <main class="page">
