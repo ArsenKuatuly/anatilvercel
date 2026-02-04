@@ -2,61 +2,80 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Библиотека</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/headerdash.css" />
   <link rel="stylesheet" href="/css/library.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
 </head>
-<body class="page">
+<body>
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
-  <header class="header" id="header">
-    <div class="container header__inner">
-      <div class="header__top">
-        <div class="header__text">
-          <h1 class="header__title">Библиотека</h1>
-          <p class="header__subtitle">Материалы для практики: слова, грамматика, чтение и аудио</p>
-        </div>
-      </div>
 
-      <div class="header__search">
-        <div class="search" id="searchWrap">
-          <span class="search__icon" aria-hidden="true">
-            <i data-lucide="search"></i>
-          </span>
-          <input id="searchInput" class="search__input" type="text" placeholder="Поиск по словам, темам, уровню…" />
-          <button id="searchClear" class="search__clear u-hidden" type="button" aria-label="Очистить">
-            <i data-lucide="x"></i>
-          </button>
+  <div class="library" id="library">
+    <header class="library__header">
+      <div class="library__container library__container--header">
+        <div class="library__titlebox">
+          <h1 class="library__title">Библиотека</h1>
+          <p class="library__subtitle">Материалы для практики казахского языка</p>
         </div>
 
-        <button id="openFiltersBtn" type="button" class="btn btn--outline btn--filters">
-          <i data-lucide="filter"></i>
-          <span>Фильтры</span>
-        </button>
+        <div class="library__controls">
+          <div class="library-search">
+            <span class="library-search__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <input
+              class="library-search__input"
+              id="searchInput"
+              type="text"
+              placeholder="Поиск по словам и темам…"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="library-tabs">
+            <div class="library-tabs__track hide-scrollbar" id="tabsTrack" role="tablist" aria-label="Категории"></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <div class="container page__main">
-    <div class="layout">
-      <aside class="layout__aside" id="filtersSidebar"></aside>
+    <main class="library__main">
+      <div class="library__container">
+        <section class="library-continue" id="continueBlock" hidden></section>
 
-      <main class="layout__content">
-        <div class="tabs" id="categoryTabs"></div>
-        <div id="contentRoot"></div>
-      </main>
-    </div>
+        <section class="library-content" aria-live="polite">
+          <div class="library-grid" id="materialsGrid"></div>
+
+          <div class="library-empty" id="emptyState" hidden>
+            <div class="library-empty__card">
+              <div class="library-empty__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.5 8.5 12.5 12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M12.5 8.5 8.5 12.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3 class="library-empty__title">Ничего не найдено</h3>
+              <p class="library-empty__text">Попробуйте изменить запрос или выбрать другую категорию</p>
+              <button class="btn btn--primary" id="clearBtn" type="button">Очистить поиск</button>
+            </div>
+          </div>
+
+          <div class="library-skeleton" id="skeletonGrid" hidden></div>
+        </section>
+      </div>
+    </main>
   </div>
-
-  <div id="filterSheetMount"></div>
-  <div id="drawerMount"></div>
-  <div id="toastMount" class="toast"></div>
-
 
 <script src="/js/authFetch.js"></script>
 <script src="/js/library.js"></script>
+<script src="/js/chat.js"></script>
+<script src="/js/headerdash.js"></script>
 </body>
 </html>
