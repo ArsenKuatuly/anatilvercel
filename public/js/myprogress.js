@@ -1,223 +1,248 @@
+// myprogress.js
 (() => {
-  const root = document.getElementById('progress');
-  if (!root) return;
+    const root = document.getElementById("myprogress");
+    if (!root) return;
 
-  const states = Array.from(root.querySelectorAll('.progress__state'));
-  const startTestBtn = document.getElementById('startTestBtn');
+    const states = Array.from(root.querySelectorAll(".myprogress__state"));
 
-  const el = {
-    progressCard: document.getElementById('progressCard'),
-    modulesList: document.getElementById('modulesList'),
-    activityList: document.getElementById('activityList'),
-    achievementsList: document.getElementById('achievementsList'),
-    emptyIcon: document.getElementById('emptyIcon'),
-  };
+    const setState = (name) => {
+        states.forEach((s) => s.classList.toggle("is-active", s.dataset.state === name));
+    };
 
 
-  const svg = {
-    book: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
-    clock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
-    calendar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>`,
-    timer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4"/><path d="M12 14v-4"/><path d="M12 14l2 2"/><circle cx="12" cy="14" r="8"/></svg>`,
-    lock: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
-    award: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5L17 22l-5-2-5 2 1.5-8.5"/></svg>`,
-    star: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l3.1 6.3 7 .9-5.1 4.9 1.3 6.9L12 18.8 5.7 21 7 14.1 1.9 9.2l7-.9L12 2z"/></svg>`,
-    trophy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v4a4 4 0 0 1-8 0V4z"/><path d="M6 4H4a2 2 0 0 0 0 4h2"/><path d="M18 4h2a2 2 0 0 1 0 4h-2"/><path d="M12 12v4"/><path d="M8 20h8"/><path d="M9 16h6"/></svg>`,
-  };
+    const mockData = {
+        course: {
+            name: "A2 — Базовый уровень",
+            level: "A2",
+            status: "в процессе",
+            progress: 35,
+            lessonsCompleted: 7,
+            totalLessons: 20,
+        },
+        activity: [
+            { icon: "book", label: "Последний пройденный урок", value: "Урок 7: Прошедшее время" },
+            { icon: "clock", label: "Следующий урок", value: "Урок 8: Будущее время" },
+            { icon: "calendar", label: "Последняя дата обучения", value: "2 февраля 2026" },
+            { icon: "timer", label: "Время обучения за неделю", value: "3 часа 45 минут" },
+        ],
+        modules: [
+            { number: 1, name: "Модуль 1: Основы грамматики", progress: 80, locked: false },
+            { number: 2, name: "Модуль 2: Времена глаголов", progress: 20, locked: false },
+            { number: 3, name: "Модуль 3: Разговорная практика", progress: 0, locked: true },
+            { number: 4, name: "Модуль 4: Письменная речь", progress: 0, locked: true },
+        ],
+        achievements: [
+            { icon: "award", title: "Первый урок", description: "Начало пути" },
+            { icon: "star", title: "5 уроков", description: "Отличный старт" },
+            { icon: "trophy", title: "Тест пройден", description: "Первый успех" },
+        ],
+    };
 
-  // --- Mock data (как в TSX) ---
-  const mockData = {
-    course: {
-      name: 'A2 — Базовый уровень',
-      level: 'A2',
-      status: 'в процессе',
-      progress: 35,
-      lessonsCompleted: 7,
-      totalLessons: 20,
-    },
-    activity: [
-      { icon: 'book', label: 'Последний пройденный урок', value: 'Урок 7: Прошедшее время' },
-      { icon: 'clock', label: 'Следующий урок', value: 'Урок 8: Будущее время' },
-      { icon: 'calendar', label: 'Последняя дата обучения', value: '2 февраля 2026' },
-      { icon: 'timer', label: 'Время обучения за неделю', value: '3 часа 45 минут' },
-    ],
-    modules: [
-      { number: 1, name: 'Модуль 1: Основы грамматики', progress: 80 },
-      { number: 2, name: 'Модуль 2: Времена глаголов', progress: 20 },
-      { number: 3, name: 'Модуль 3: Разговорная практика', progress: 0, locked: true },
-      { number: 4, name: 'Модуль 4: Письменная речь', progress: 0, locked: true },
-    ],
-    achievements: [
-      { icon: 'award', title: 'Первый урок', description: 'Начало пути' },
-      { icon: 'star', title: '5 уроков', description: 'Отличный старт' },
-      { icon: 'trophy', title: 'Тест пройден', description: 'Первый успех' },
-    ],
-  };
+    // SVG (в стиле lucide)
+    const icons = {
+        clock: `
+      <svg class="activity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 6v6l4 2"></path>
+      </svg>
+    `,
+        book: `
+      <svg class="activity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 7v14"></path>
+        <path d="M3 18a2 2 0 0 0 2 2h7"></path>
+        <path d="M3 6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2"></path>
+        <path d="M12 4h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"></path>
+      </svg>
+    `,
+        calendar: `
+      <svg class="activity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+        <path d="M16 2v4"></path>
+        <path d="M8 2v4"></path>
+        <path d="M3 10h18"></path>
+      </svg>
+    `,
+        timer: `
+      <svg class="activity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10 2h4"></path>
+        <path d="M12 14l2-2"></path>
+        <circle cx="12" cy="14" r="8"></circle>
+      </svg>
+    `,
+        lock: `
+      <svg class="module__lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    `,
+        award: `
+      <svg class="ach__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="6"></circle>
+        <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+      </svg>
+    `,
+        star: `
+      <svg class="ach__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+      </svg>
+    `,
+        trophy: `
+      <svg class="ach__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 21h8"></path>
+        <path d="M12 17v4"></path>
+        <path d="M7 4h10v3a5 5 0 0 1-10 0V4z"></path>
+        <path d="M5 7a4 4 0 0 1-2-3V4h4"></path>
+        <path d="M19 7a4 4 0 0 0 2-3V4h-4"></path>
+      </svg>
+    `,
+    };
 
+    const clampPct = (n) => Math.max(0, Math.min(100, Number(n) || 0));
 
-  function setState(name) {
-    states.forEach((s) => (s.hidden = s.dataset.state !== name));
-  }
+    const render = (data) => {
+        // Course
+        const courseName = document.getElementById("courseName");
+        const courseLevel = document.getElementById("courseLevel");
+        const courseStatus = document.getElementById("courseStatus");
+        const courseProgressValue = document.getElementById("courseProgressValue");
+        const courseProgressFill = document.getElementById("courseProgressFill");
+        const lessonsText = document.getElementById("lessonsText");
 
-  function clamp(n, min, max) {
-    return Math.max(min, Math.min(max, n));
-  }
+        const pct = clampPct(data.course.progress);
 
-  function renderProgressCard(course) {
-    if (!el.progressCard) return;
-    const p = clamp(Number(course.progress) || 0, 0, 100);
+        if (courseName) courseName.textContent = data.course.name;
+        if (courseLevel) courseLevel.textContent = `Уровень: ${data.course.level}`;
+        if (courseStatus) courseStatus.textContent = `Статус: ${data.course.status}`;
+        if (courseProgressValue) courseProgressValue.textContent = `${pct}%`;
+        if (courseProgressFill) courseProgressFill.style.width = `${pct}%`;
+        if (lessonsText) lessonsText.textContent = `Пройдено уроков: ${data.course.lessonsCompleted} из ${data.course.totalLessons}`;
 
-    el.progressCard.innerHTML = `
-      <h2 class="progress-card__title">${escapeHtml(course.name || '')}</h2>
+        // aria-valuenow on progressbar
+        const progressbar = root.querySelector('.progressbar[role="progressbar"]');
+        if (progressbar) progressbar.setAttribute("aria-valuenow", String(pct));
 
-      <div class="badges">
-        <span class="badge badge--primary">Уровень: ${escapeHtml(course.level || '')}</span>
-        <span class="badge badge--success">Статус: ${escapeHtml(course.status || '')}</span>
-      </div>
+        // Modules
+        const modulesList = document.getElementById("modulesList");
+        if (modulesList) {
+            modulesList.innerHTML = data.modules
+                .map((m) => {
+                    const mp = clampPct(m.progress);
+                    const locked = !!m.locked;
 
-      <div class="progressbar">
-        <div class="progressbar__top">
-          <span class="progressbar__label">Прогресс курса</span>
-          <span class="progressbar__value">${p}%</span>
-        </div>
-
-        <div class="progressbar__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}">
-          <div class="progressbar__fill" style="width:${p}%"></div>
-        </div>
-
-        <p class="progressbar__hint">Пройдено уроков: ${Number(course.lessonsCompleted) || 0} из ${Number(course.totalLessons) || 0}</p>
-      </div>
-
-      <button class="btn btn--primary btn--full" type="button" id="continueBtn">Перейти к курсу</button>
-    `;
-
-    const btn = document.getElementById('continueBtn');
-    if (btn) {
-      btn.addEventListener('click', () => {
-
-        console.log('Переход к курсу');
-      });
-    }
-  }
-
-  function renderModules(modules) {
-    if (!el.modulesList) return;
-
-    el.modulesList.innerHTML = modules
-      .map((m) => {
-        const locked = !!m.locked;
-        const p = clamp(Number(m.progress) || 0, 0, 100);
-
-        return `
-          <div class="module ${locked ? 'module--locked' : ''}">
-            <div class="module__top">
-              <div class="module__left">
-                <div class="module__badge ${locked ? 'module__badge--locked' : ''}" aria-hidden="true">
-                  ${locked ? `<span style="color:#9CA3AF">${svg.lock}</span>` : `<span class="module__num">${Number(m.number) || 0}</span>`}
+                    return `
+            <div class="module ${locked ? "module--locked" : ""}">
+              <div class="module__top">
+                <div class="module__left">
+                  ${
+                        locked
+                            ? `<div class="module__iconbox module__iconbox--locked">${icons.lock}</div>`
+                            : `<div class="module__iconbox module__iconbox--open"><span class="module__number">${m.number}</span></div>`
+                    }
+                  <div class="module__text">
+                    <h3 class="module__name">${escapeHtml(m.name)}</h3>
+                  </div>
                 </div>
-                <h3 class="module__name">${escapeHtml(m.name || '')}</h3>
+                ${
+                        locked
+                            ? ``
+                            : `<span class="module__pct">${mp}%</span>`
+                    }
               </div>
-              ${locked ? '' : `<span class="module__percent">${p}%</span>`}
+
+              ${
+                        locked
+                            ? `<p class="module__hint">Модуль закрыт</p>`
+                            : `
+                    <div class="progressbar progressbar--h2">
+                      <div class="progressbar__fill" style="width:${mp}%"></div>
+                    </div>
+                  `
+                    }
             </div>
+          `;
+                })
+                .join("");
+        }
 
-            ${locked
-              ? `<p class="module__locked-text">Модуль закрыт</p>`
-              : `<div class="progressbar__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p}">
-                   <div class="progressbar__fill" style="width:${p}%"></div>
-                 </div>`}
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  function renderActivity(items) {
-    if (!el.activityList) return;
-
-    el.activityList.innerHTML = items
-      .map((it) => {
-        const iconSvg = svg[it.icon] || svg.clock;
-        return `
-          <div class="divider-list__item">
-            <div class="icon" aria-hidden="true" style="color: var(--primary)">${iconSvg}</div>
-            <div style="min-width:0;flex:1">
-              <p class="activity__label">${escapeHtml(it.label || '')}</p>
-              <p class="activity__value" title="${escapeAttr(it.value || '')}">${escapeHtml(it.value || '')}</p>
-            </div>
-          </div>
-        `;
-      })
-      .join('');
-  }
-
-  function renderAchievements(items) {
-    if (!el.achievementsList) return;
-
-    el.achievementsList.innerHTML = items
-      .map((a) => {
-        const iconSvg = svg[a.icon] || svg.award;
-        return `
-          <div class="ach">
-            <div class="ach__row">
-              <div class="ach__icon" aria-hidden="true" style="color: var(--primary)">${iconSvg}</div>
-              <div style="min-width:0;flex:1">
-                <p class="ach__title">${escapeHtml(a.title || '')}</p>
-                ${a.description ? `<p class="ach__desc">${escapeHtml(a.description)}</p>` : ''}
+        // Activity
+        const activityList = document.getElementById("activityList");
+        if (activityList) {
+            activityList.innerHTML = data.activity
+                .map((a) => {
+                    const ic = icons[a.icon] || icons.clock;
+                    return `
+            <div class="activity__item">
+              <div class="activity__iconbox">${ic}</div>
+              <div class="activity__content">
+                <p class="activity__label">${escapeHtml(a.label)}</p>
+                <p class="activity__value">${escapeHtml(a.value)}</p>
               </div>
             </div>
-          </div>
-        `;
-      })
-      .join('');
-  }
+          `;
+                })
+                .join("");
+        }
 
-  function renderEmpty() {
-    if (el.emptyIcon) el.emptyIcon.innerHTML = `<span style="color: var(--primary)">${svg.book}</span>`;
+        // Achievements
+        const achievementsList = document.getElementById("achievementsList");
+        if (achievementsList) {
+            achievementsList.innerHTML = data.achievements
+                .map((a) => {
+                    const ic = icons[a.icon] || icons.award;
+                    const desc = a.description
+                        ? `<p class="ach__desc">${escapeHtml(a.description)}</p>`
+                        : "";
+                    return `
+            <div class="ach">
+              <div class="ach__row">
+                <div class="ach__iconbox">${ic}</div>
+                <div class="ach__text">
+                  <p class="ach__title">${escapeHtml(a.title)}</p>
+                  ${desc}
+                </div>
+              </div>
+            </div>
+          `;
+                })
+                .join("");
+        }
+    };
 
-    if (startTestBtn) {
-      startTestBtn.addEventListener('click', () => {
+    const escapeHtml = (s) => {
+        return String(s)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    };
 
-        console.log('Начать тест');
-      });
+    // Кнопки
+    const continueBtn = document.getElementById("continueCourseBtn");
+    if (continueBtn) {
+        continueBtn.addEventListener("click", () => {
+            // тут поставь свою навигацию
+            console.log("Переход к курсу");
+            // window.location.href = "/course.html";
+        });
     }
-  }
 
-  function renderNormal(data) {
-    renderProgressCard(data.course);
-    renderModules(data.modules || []);
-    renderActivity(data.activity || []);
-    renderAchievements(data.achievements || []);
-  }
-
-
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-  }
-  function escapeAttr(str) {
-    return escapeHtml(str).replaceAll('\n', ' ');
-  }
+    const startTestBtn = document.getElementById("startTestBtn");
+    if (startTestBtn) {
+        startTestBtn.addEventListener("click", () => {
+            console.log("Начать тест");
+            // window.location.href = "/test.html";
+        });
+    }
 
 
-  const params = new URLSearchParams(window.location.search);
-  const state = (params.get('state') || 'normal').toLowerCase();
-
-  if (state === 'loading') {
-    setState('loading');
-    return;
-  }
-
-  if (state === 'empty') {
-    renderEmpty();
-    setState('empty');
-    return;
-  }
+    setState("loading");
 
 
-  renderNormal(mockData);
-  setState('normal');
+    window.setTimeout(() => {
+
+
+        render(mockData);
+        setState("normal");
+    }, 450);
 })();

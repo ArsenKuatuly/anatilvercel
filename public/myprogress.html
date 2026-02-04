@@ -43,136 +43,152 @@
         <a class="dash-header__m-link" href="/profile.html">Профиль</a>
     </div>
 </header>
-<main class="progress" id="progress">
-      <div class="progress__container">
-      <div class="progress__header">
-        <h1 class="progress__title">Мой прогресс</h1>
-        <p class="progress__subtitle">Следите за прогрессом обучения и продолжайте курс</p>
-      </div>
+<main class="myprogress" id="myprogress">
+    <div class="myprogress__container">
+        <header class="myprogress__header">
+            <h1 class="myprogress__title">Мой прогресс</h1>
+            <p class="myprogress__subtitle">Следите за прогрессом обучения и продолжайте курс</p>
+        </header>
 
+        <!-- LOADING -->
+        <section class="myprogress__state is-active" data-state="loading" aria-label="Загрузка">
+            <div class="skeleton">
+                <div class="skeleton__card skeleton__card--big">
+                    <div class="skeleton__h skeleton__h--lg skeleton__w-2_3"></div>
 
-      <section class="progress__state" data-state="loading" hidden>
-        <div class="skeleton" aria-label="Загрузка">
-          <div class="card skeleton__card">
-            <div class="skeleton__line skeleton__line--title"></div>
-            <div class="skeleton__pills">
-              <div class="skeleton__pill"></div>
-              <div class="skeleton__pill skeleton__pill--wide"></div>
-            </div>
-            <div class="skeleton__block">
-              <div class="skeleton__line skeleton__line--sm"></div>
-              <div class="skeleton__line skeleton__line--bar"></div>
-              <div class="skeleton__line skeleton__line--md"></div>
-            </div>
-            <div class="skeleton__btn"></div>
-          </div>
+                    <div class="skeleton__row">
+                        <div class="skeleton__pill skeleton__w-24"></div>
+                        <div class="skeleton__pill skeleton__w-32"></div>
+                    </div>
 
-          <div class="grid grid--3">
-            <div class="grid__col grid__col--2">
-              <div class="card skeleton__card">
-                <div class="skeleton__line skeleton__line--h2"></div>
-                <div class="skeleton__list">
-                  <div class="skeleton__row">
-                    <div class="skeleton__icon"></div>
-                    <div class="skeleton__text">
-                      <div class="skeleton__line skeleton__line--sm"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
+                    <div class="skeleton__block">
+                        <div class="skeleton__h skeleton__h--sm skeleton__w-32"></div>
+                        <div class="skeleton__h skeleton__h--xs skeleton__w-full"></div>
+                        <div class="skeleton__h skeleton__h--sm skeleton__w-40"></div>
                     </div>
-                  </div>
-                  <div class="skeleton__row">
-                    <div class="skeleton__icon"></div>
-                    <div class="skeleton__text">
-                      <div class="skeleton__line skeleton__line--sm"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
-                    </div>
-                  </div>
-                  <div class="skeleton__row">
-                    <div class="skeleton__icon"></div>
-                    <div class="skeleton__text">
-                      <div class="skeleton__line skeleton__line--sm"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
-                    </div>
-                  </div>
+
+                    <div class="skeleton__btn skeleton__w-full"></div>
                 </div>
-              </div>
-            </div>
 
-            <div class="grid__col">
-              <div class="card skeleton__card">
-                <div class="skeleton__line skeleton__line--h2"></div>
-                <div class="skeleton__modules">
-                  <div class="skeleton__module">
-                    <div class="skeleton__row">
-                      <div class="skeleton__icon skeleton__icon--square"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
+                <div class="skeleton__card skeleton__card--mid">
+                    <div class="skeleton__h skeleton__h--md skeleton__w-48"></div>
+                    <div class="skeleton__list">
+                        <div class="skeleton__item">
+                            <div class="skeleton__icon"></div>
+                            <div class="skeleton__lines">
+                                <div class="skeleton__h skeleton__h--xs skeleton__w-40"></div>
+                                <div class="skeleton__h skeleton__h--sm skeleton__w-56"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton__item">
+                            <div class="skeleton__icon"></div>
+                            <div class="skeleton__lines">
+                                <div class="skeleton__h skeleton__h--xs skeleton__w-40"></div>
+                                <div class="skeleton__h skeleton__h--sm skeleton__w-56"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton__item">
+                            <div class="skeleton__icon"></div>
+                            <div class="skeleton__lines">
+                                <div class="skeleton__h skeleton__h--xs skeleton__w-40"></div>
+                                <div class="skeleton__h skeleton__h--sm skeleton__w-56"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="skeleton__line skeleton__line--bar"></div>
-                  </div>
-                  <div class="skeleton__module">
-                    <div class="skeleton__row">
-                      <div class="skeleton__icon skeleton__icon--square"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
-                    </div>
-                    <div class="skeleton__line skeleton__line--bar"></div>
-                  </div>
-                  <div class="skeleton__module">
-                    <div class="skeleton__row">
-                      <div class="skeleton__icon skeleton__icon--square"></div>
-                      <div class="skeleton__line skeleton__line--md"></div>
-                    </div>
-                    <div class="skeleton__line skeleton__line--bar"></div>
-                  </div>
                 </div>
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="progress__state" data-state="empty" hidden>
-        <div class="card empty">
-          <div class="empty__icon" aria-hidden="true" id="emptyIcon"></div>
-          <h2 class="empty__title">У вас пока нет активного курса</h2>
-          <p class="empty__text">Пройдите тест, чтобы получить рекомендованный курс и начать своё обучение</p>
-          <button class="btn btn--primary" type="button" id="startTestBtn">Пройти тест</button>
-        </div>
-      </section>
+        <!-- EMPTY -->
+        <section class="myprogress__state" data-state="empty" aria-label="Нет активного курса">
+            <div class="emptystate">
+                <div class="emptystate__icon" aria-hidden="true">
+                    <!-- book-open -->
+                    <svg class="icon icon--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 7v14"></path>
+                        <path d="M3 18a2 2 0 0 0 2 2h7"></path>
+                        <path d="M3 6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2"></path>
+                        <path d="M12 4h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7"></path>
+                    </svg>
+                </div>
 
-      <section class="progress__state" data-state="normal" hidden>
-        <div class="grid grid--3" id="normalGrid">
-          <div class="grid__col grid__col--2">
-            <div class="stack" id="leftCol">
+                <h2 class="emptystate__title">У вас пока нет активного курса</h2>
+                <p class="emptystate__text">
+                    Пройдите тест, чтобы получить рекомендованный курс и начать своё обучение
+                </p>
 
-              <article class="card progress-card" id="progressCard"></article>
-
-
-              <article class="card" id="modulesCard">
-                <h2 class="card__title">Модули курса</h2>
-                <div class="stack stack--sm" id="modulesList"></div>
-              </article>
+                <button class="btn btn--primary" type="button" id="startTestBtn">
+                    Пройти тест
+                </button>
             </div>
-          </div>
+        </section>
 
-          <div class="grid__col">
-            <div class="stack" id="rightCol">
+        <!-- NORMAL -->
+        <section class="myprogress__state" data-state="normal" aria-label="Прогресс">
+            <div class="grid">
+                <!-- LEFT -->
+                <div class="grid__col grid__col--left">
+                    <!-- Progress Card -->
+                    <article class="card card--padded card--shadow">
+                        <h2 class="card__title" id="courseName">A2 — Базовый уровень</h2>
 
-              <article class="card" id="activityCard">
-                <h2 class="card__title">Последняя активность</h2>
-                <div class="divider-list" id="activityList"></div>
-              </article>
+                        <div class="badges">
+                            <span class="badge badge--primary" id="courseLevel">Уровень: A2</span>
+                            <span class="badge badge--success" id="courseStatus">Статус: в процессе</span>
+                        </div>
 
+                        <div class="progress">
+                            <div class="progress__top">
+                                <span class="progress__label">Прогресс курса</span>
+                                <span class="progress__value" id="courseProgressValue">35%</span>
+                            </div>
 
-              <article class="card" id="achievementsCard">
-                <h2 class="card__title">Достижения</h2>
-                <div class="stack stack--sm" id="achievementsList"></div>
-              </article>
+                            <div class="progressbar progressbar--h3" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35">
+                                <div class="progressbar__fill" id="courseProgressFill" style="width:35%"></div>
+                            </div>
+
+                            <p class="progress__hint" id="lessonsText">Пройдено уроков: 7 из 20</p>
+                        </div>
+
+                        <button class="btn btn--primary btn--full" type="button" id="continueCourseBtn">
+                            Перейти к курсу
+                        </button>
+                    </article>
+
+                    <!-- Modules -->
+                    <article class="card card--padded card--shadow">
+                        <h2 class="card__section-title">Модули курса</h2>
+
+                        <div class="modules" id="modulesList">
+                            <!-- rows via JS -->
+                        </div>
+                    </article>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="grid__col grid__col--right">
+                    <!-- Activity -->
+                    <article class="card card--padded card--shadow">
+                        <h2 class="card__section-title">Последняя активность</h2>
+
+                        <div class="activity" id="activityList">
+                            <!-- items via JS -->
+                        </div>
+                    </article>
+
+                    <!-- Achievements -->
+                    <article class="card card--padded card--shadow">
+                        <h2 class="card__section-title">Достижения</h2>
+
+                        <div class="achievements" id="achievementsList">
+                            <!-- items via JS -->
+                        </div>
+                    </article>
+                </div>
             </div>
-          </div>
-        </div>
-      </section>
-
+        </section>
     </div>
-  </main>
+</main>
 
 <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
     <span class="fab-ping" aria-hidden="true"></span>
