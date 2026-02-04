@@ -33,6 +33,9 @@ const taskGet = require("../server/routes/task/[taskId].js");
 const taskQuestions = require("../server/routes/task/[taskId]/questions.js");
 const taskSubmit = require("../server/routes/task/[taskId]/submit.js");
 
+const myAchievements = require("../server/routes/achievements/my");
+
+
 // ===== tiny router =====
 function matchPath(pathname, pattern) {
     const a = String(pathname).split("/").filter(Boolean);
@@ -99,6 +102,12 @@ module.exports = async (req, res) => {
         if (path === "/api/lessons/progress/current" && method === "GET") return progressCurrent(req, res);
         if (path === "/api/lesson/complete" && method === "POST") return lessonComplete(req, res);
         if (path === "/api/continue-lesson" && method === "GET") return continueLesson(req, res);
+
+
+        if (path === "/api/achievements/my" && method === "GET") {
+            return myAchievements(req, res);
+        }
+
 
         // /api/lesson/:id
         {

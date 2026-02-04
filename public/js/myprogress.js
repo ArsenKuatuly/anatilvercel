@@ -192,6 +192,28 @@
         }
     }
 
+    async function loadAchievements() {
+        const res = await authFetch("/api/achievements/my", { method: "GET" });
+        if (!res?.data?.success) return;
+
+        const list = document.getElementById("achievementsList");
+        if (!list) return;
+
+        list.innerHTML = res.data.achievements.length
+            ? res.data.achievements
+                .map(
+                    (a) => `
+          <div class="ach">
+            <p class="ach__title">${a.title}</p>
+            <p class="ach__desc">${a.description}</p>
+          </div>
+        `
+                )
+                .join("")
+            : `<p class="muted">Пока нет достижений</p>`;
+    }
+
+
     function bindButtons(slug) {
         const continueBtn = el("continueCourseBtn");
         if (continueBtn) {
@@ -319,4 +341,6 @@
     }
 
     load();
+    loadAchievements();
+
 })();
