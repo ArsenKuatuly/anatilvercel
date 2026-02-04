@@ -286,7 +286,7 @@ img{max-width:100%;display:block}
     gap:10px;
     margin-bottom:14px;
 }
-.profile-level__actions{display:flex; gap:10px; flex-wrap:wrap}
+.profile-level__actions{display:flex; gap:10px; flex-wrap:wrap; margin-top: 15px}
 
 .level-badge{
     display:inline-flex;

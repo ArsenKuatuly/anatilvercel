@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Мой прогресс — AnaTil</title>
+  <link rel="stylesheet" href="/css/myprogress.css" />
+    <link rel="stylesheet" href="/css/headerdash.css" />
+    <link rel="stylesheet" href="/css/chat.css" />
+</head>
+<body>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/api.js"></script>
+
+<header class="dash-header" id="header">
+    <div class="dash-header__container">
+        <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
+
+        <nav class="dash-header__nav" aria-label="Навигация">
+            <a class="dash-header__link" href="/courses">Курсы</a>
+            <a class="dash-header__link" href="/progress">Мой прогресс</a>
+            <a class="dash-header__link" href="/library.html">Библиотека</a>
+        </nav>
+
+        <div class="dash-header__actions">
+            <a class="dash-header__btn" href="/profile.html">Профиль</a>
+
+            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+
+
+    <div class="dash-header__mobile" data-mobile hidden>
+        <a class="dash-header__m-link" href="/courses">Курсы</a>
+        <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+        <a class="dash-header__m-link" href="/library">Библиотека</a>
+        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+    </div>
+</header>
+<main class="progress" id="progress">
+      <div class="progress__container">
+      <div class="progress__header">
+        <h1 class="progress__title">Мой прогресс</h1>
+        <p class="progress__subtitle">Следите за прогрессом обучения и продолжайте курс</p>
+      </div>
+
+
+      <section class="progress__state" data-state="loading" hidden>
+        <div class="skeleton" aria-label="Загрузка">
+          <div class="card skeleton__card">
+            <div class="skeleton__line skeleton__line--title"></div>
+            <div class="skeleton__pills">
+              <div class="skeleton__pill"></div>
+              <div class="skeleton__pill skeleton__pill--wide"></div>
+            </div>
+            <div class="skeleton__block">
+              <div class="skeleton__line skeleton__line--sm"></div>
+              <div class="skeleton__line skeleton__line--bar"></div>
+              <div class="skeleton__line skeleton__line--md"></div>
+            </div>
+            <div class="skeleton__btn"></div>
+          </div>
+
+          <div class="grid grid--3">
+            <div class="grid__col grid__col--2">
+              <div class="card skeleton__card">
+                <div class="skeleton__line skeleton__line--h2"></div>
+                <div class="skeleton__list">
+                  <div class="skeleton__row">
+                    <div class="skeleton__icon"></div>
+                    <div class="skeleton__text">
+                      <div class="skeleton__line skeleton__line--sm"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                  </div>
+                  <div class="skeleton__row">
+                    <div class="skeleton__icon"></div>
+                    <div class="skeleton__text">
+                      <div class="skeleton__line skeleton__line--sm"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                  </div>
+                  <div class="skeleton__row">
+                    <div class="skeleton__icon"></div>
+                    <div class="skeleton__text">
+                      <div class="skeleton__line skeleton__line--sm"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid__col">
+              <div class="card skeleton__card">
+                <div class="skeleton__line skeleton__line--h2"></div>
+                <div class="skeleton__modules">
+                  <div class="skeleton__module">
+                    <div class="skeleton__row">
+                      <div class="skeleton__icon skeleton__icon--square"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                    <div class="skeleton__line skeleton__line--bar"></div>
+                  </div>
+                  <div class="skeleton__module">
+                    <div class="skeleton__row">
+                      <div class="skeleton__icon skeleton__icon--square"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                    <div class="skeleton__line skeleton__line--bar"></div>
+                  </div>
+                  <div class="skeleton__module">
+                    <div class="skeleton__row">
+                      <div class="skeleton__icon skeleton__icon--square"></div>
+                      <div class="skeleton__line skeleton__line--md"></div>
+                    </div>
+                    <div class="skeleton__line skeleton__line--bar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="progress__state" data-state="empty" hidden>
+        <div class="card empty">
+          <div class="empty__icon" aria-hidden="true" id="emptyIcon"></div>
+          <h2 class="empty__title">У вас пока нет активного курса</h2>
+          <p class="empty__text">Пройдите тест, чтобы получить рекомендованный курс и начать своё обучение</p>
+          <button class="btn btn--primary" type="button" id="startTestBtn">Пройти тест</button>
+        </div>
+      </section>
+
+      <section class="progress__state" data-state="normal" hidden>
+        <div class="grid grid--3" id="normalGrid">
+          <div class="grid__col grid__col--2">
+            <div class="stack" id="leftCol">
+
+              <article class="card progress-card" id="progressCard"></article>
+
+
+              <article class="card" id="modulesCard">
+                <h2 class="card__title">Модули курса</h2>
+                <div class="stack stack--sm" id="modulesList"></div>
+              </article>
+            </div>
+          </div>
+
+          <div class="grid__col">
+            <div class="stack" id="rightCol">
+
+              <article class="card" id="activityCard">
+                <h2 class="card__title">Последняя активность</h2>
+                <div class="divider-list" id="activityList"></div>
+              </article>
+
+
+              <article class="card" id="achievementsCard">
+                <h2 class="card__title">Достижения</h2>
+                <div class="stack stack--sm" id="achievementsList"></div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+<button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+    <span class="fab-ping" aria-hidden="true"></span>
+    <span class="fab-circle">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+    <span class="fab-badge" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+</button>
+
+<div class="chat" id="chat" hidden>
+    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+        <div class="chat-head">
+            <div class="chat-avatar">
+                <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                          stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div class="chat-head-text">
+                <div class="chat-title">AI Ассистент</div>
+                <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+            </div>
+
+            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                ✕
+            </button>
+        </div>
+
+        <div class="chat-body" id="chatBody"></div>
+
+        <div class="chat-input">
+            <div>
+                <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                <button class="chat-send" id="chatSend" type="button">➤</button>
+            </div>
+            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+        </div>
+    </div>
+</div>
+
+    <script src="/js/myprogress.js"></script>
+    <script src="/js/authFetch.js"></script>
+    <script src="/js/chat.js"></script>
+</body>
+</html>
