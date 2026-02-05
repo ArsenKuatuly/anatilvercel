@@ -1,21 +1,59 @@
 // library.js
 (() => {
-    const materials = [
-        { id:'1', title:'Приветствие и знакомство', description:'Основные фразы для знакомства', type:'Диалог', category:'Диалоги', level:'A1', duration:'5 мин', icon:'💬' },
-        { id:'2', title:'Падежи в казахском языке', description:'Простой разбор всех падежей', type:'Грамматика', category:'Грамматика', level:'A2', duration:'12 мин', icon:'📘' },
-        { id:'3', title:'Слова по теме Работа', description:'20 полезных слов для офиса', type:'Слова', category:'Слова', level:'B1', duration:'8 мин', icon:'📘' },
-        { id:'4', title:'Диалог в магазине', description:'Как купить продукты на казахском', type:'Диалог', category:'Диалоги', level:'A2', duration:'7 мин', icon:'💬' },
-        { id:'5', title:'Упражнения: времена', description:'Закрепление грамматики', type:'Упражнение', category:'Упражнения', level:'B1', duration:'15 мин', icon:'📝' },
-        { id:'6', title:'Базовые фразы приветствия', description:'Изучите основные приветствия', type:'Слова', category:'Слова', level:'A1', duration:'5 мин', icon:'📘' },
-        { id:'7', title:'Рассказ "Моя семья"', description:'Короткий текст для чтения и перевода', type:'Чтение', category:'Чтение', level:'A2', duration:'10 мин', icon:'📖' },
-        { id:'8', title:'Употребление глаголов', description:'Основные правила и примеры', type:'Грамматика', category:'Грамматика', level:'B1', duration:'15 мин', icon:'📘' },
-        { id:'9', title:'Диалог в ресторане', description:'Как заказать еду на казахском языке', type:'Диалог', category:'Диалоги', level:'A2', duration:'8 мин', icon:'💬' }
-    ];
+    // ===== Persistent state (Supabase via our API) =====
+    // Прогресс/сохранённое/слова храним в таблице library_user_state.
+    // В JS держим только кеш в памяти.
+    const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+    const cache = {
+        progressById: {},
+        savedById: {},
+        wordsSavedByMaterial: {},
+        lastOpenedId: null
+    };
+
+    let materials = [];
+
+    const getProgress = (id) => clamp(Number(cache.progressById?.[id] ?? 0) || 0, 0, 100);
+    const isSaved = (id) => !!cache.savedById?.[id];
+
+    const getWordsSavedMap = (materialId) => {
+        const m = cache.wordsSavedByMaterial?.[materialId];
+        return (m && typeof m === 'object') ? m : {};
+    };
+
+    async function saveLibraryState(materialId, patch = {}) {
+        const payload = { materialId, ...patch };
+        const r = await apiFetch('/api/library/state', { method: 'POST', body: JSON.stringify(payload) });
+        if (!r || !r.data || !r.data.success) return null;
+
+        const d = r.data;
+        cache.progressById[materialId] = clamp(Number(d.progress ?? cache.progressById[materialId] ?? 0) || 0, 0, 100);
+        cache.savedById[materialId] = !!(d.isSaved ?? cache.savedById[materialId]);
+        cache.wordsSavedByMaterial[materialId] = (d.wordsSaved && typeof d.wordsSaved === 'object') ? d.wordsSaved : (cache.wordsSavedByMaterial[materialId] || {});
+        cache.lastOpenedId = materialId;
+
+        // также обновим материалы в памяти (если есть)
+        const idx = materials.findIndex(m => String(m.id) === String(materialId));
+        if (idx >= 0) {
+            materials[idx] = {
+                ...materials[idx],
+                progress: cache.progressById[materialId],
+                isSaved: cache.savedById[materialId],
+                wordsSaved: cache.wordsSavedByMaterial[materialId]
+            };
+        }
+        return d;
+    }
 
     const categories = ['Все', 'Слова', 'Грамматика', 'Чтение', 'Диалоги', 'Упражнения'];
 
-    // Continue data
-    const continueData = { title: 'Падежи в казахском языке', progress: 60 };
+    // Continue data (из Supabase state)
+    function getContinueMaterial(){
+        const lastId = String(cache.lastOpenedId || '');
+        const last = materials.find(m => m.id === lastId);
+        return last || materials[0] || null;
+    }
 
     // Elements
     const searchInput = document.getElementById('searchInput');
@@ -36,6 +74,11 @@
     const modalTitle = document.getElementById('modalTitle');
     const modalDesc = document.getElementById('modalDesc');
     const modalBody = document.getElementById('modalBody');
+    const modalProgressFill = document.getElementById('modalProgressFill');
+    const modalProgressText = document.getElementById('modalProgressText');
+    const modalBackBtn = document.getElementById('modalBackBtn');
+    const modalSaveBtn = document.getElementById('modalSaveBtn');
+    const modalContinueBtn = document.getElementById('modalContinueBtn');
 
     let state = {
         query: '',
@@ -100,27 +143,40 @@
             return;
         }
 
+        const mat = getContinueMaterial();
+        if (!mat){
+            continueBlock.innerHTML = '';
+            continueBlock.hidden = true;
+            return;
+        }
+        const progress = getProgress(mat.id);
+
         continueBlock.hidden = false;
         continueBlock.innerHTML = `
       <div class="continue">
         <div class="continue__row">
           <div class="continue__left">
             <p class="continue__label">Продолжить обучение</p>
-            <h3 class="continue__title">${esc(continueData.title)}</h3>
+            <h3 class="continue__title">${esc(mat.title)}</h3>
 
             <div class="continue__bar" aria-hidden="true">
-              <div class="continue__bar-fill" style="width:${continueData.progress}%"></div>
+              <div class="continue__bar-fill" style="width:${progress}%"></div>
             </div>
-            <p class="continue__hint">Пройдено ${continueData.progress}%</p>
+            <p class="continue__hint">Пройдено ${progress}%</p>
           </div>
 
-          <button class="continue__btn" type="button">
+          <button class="continue__btn" type="button" data-continue-open>
             <span>Продолжить</span>
             ${iconArrowRight}
           </button>
         </div>
       </div>
     `;
+
+        const btn = continueBlock.querySelector('[data-continue-open]');
+        if (btn){
+            btn.addEventListener('click', () => openModal(mat));
+        }
     }
 
     // Skeleton
@@ -421,7 +477,13 @@
 
     function renderWordsContent(){
         // local state
-        const words = wordsInitial.map(w => ({...w}));
+        const materialId = state.selected?.id || 'words';
+        // работаем с копией, а затем отправляем целиком в Supabase
+        let wordsSavedMap = { ...getWordsSavedMap(materialId) };
+        const words = wordsInitial.map(w => ({
+            ...w,
+            saved: (typeof wordsSavedMap[w.kazakh] === 'boolean') ? wordsSavedMap[w.kazakh] : !!w.saved
+        }));
         const flipped = new Set();
 
         function countSaved(){ return words.filter(w => w.saved).length; }
@@ -505,10 +567,15 @@
             });
 
             modalBody.querySelectorAll('[data-save]').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const idx = Number(btn.getAttribute('data-save'));
                     words[idx].saved = !words[idx].saved;
+                    // persist (Supabase)
+                    wordsSavedMap[words[idx].kazakh] = !!words[idx].saved;
+                    btn.disabled = true;
+                    await saveLibraryState(String(materialId), { wordsSaved: wordsSavedMap });
+                    btn.disabled = false;
                     render();
                 });
             });
@@ -840,6 +907,10 @@
     function openModal(material){
         state.selected = material;
 
+        // помечаем как последнее открытое (в Supabase) — прогресс не меняем
+        // (обновится updated_at и lastOpenedId в API-ответе, а UI обновим из кеша)
+        saveLibraryState(String(material.id), {}).catch(() => {});
+
         modalEmoji.textContent = material.icon;
         modalType.textContent = material.type;
         modalLevel.textContent = material.level;
@@ -847,10 +918,25 @@
         modalTitle.textContent = material.title;
         modalDesc.textContent = material.description;
 
+        // прогресс + кнопка "сохранить"
+        const p = getProgress(material.id);
+        if (modalProgressFill) modalProgressFill.style.width = `${p}%`;
+        if (modalProgressText) modalProgressText.textContent = `Прогресс: ${p}%`;
+
+        if (modalSaveBtn){
+            const saved = isSaved(material.id);
+            modalSaveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
+            const t = modalSaveBtn.querySelector('.material-modal__foot-text');
+            if (t) t.textContent = saved ? 'Сохранено' : 'Сохранить';
+        }
+
         renderModalContentByCategory(material);
 
         modal.hidden = false;
         lockScroll(true);
+
+        // Обновим continue-блок сразу
+        renderContinue();
     }
 
     function closeModal(){
@@ -865,6 +951,45 @@
 
     // Modal events
     modalClose.addEventListener('click', closeModal);
+
+    if (modalBackBtn) modalBackBtn.addEventListener('click', closeModal);
+
+    if (modalSaveBtn){
+        modalSaveBtn.addEventListener('click', async () => {
+            if (!state.selected) return;
+            const id = String(state.selected.id);
+            const nextSaved = !isSaved(id);
+
+            modalSaveBtn.disabled = true;
+            await saveLibraryState(id, { isSaved: nextSaved });
+            modalSaveBtn.disabled = false;
+
+            modalSaveBtn.setAttribute('aria-pressed', nextSaved ? 'true' : 'false');
+            const t = modalSaveBtn.querySelector('.material-modal__foot-text');
+            if (t) t.textContent = nextSaved ? 'Сохранено' : 'Сохранить';
+
+            renderContinue();
+        });
+    }
+
+    if (modalContinueBtn){
+        modalContinueBtn.addEventListener('click', async () => {
+            if (!state.selected) return;
+            const id = String(state.selected.id);
+
+            const cur = getProgress(id);
+            const next = (cur === 0 ? 35 : cur);
+            const bumped = clamp(next + 15, 0, 100);
+
+            modalContinueBtn.disabled = true;
+            await saveLibraryState(id, { progress: bumped });
+            modalContinueBtn.disabled = false;
+
+            if (modalProgressFill) modalProgressFill.style.width = `${bumped}%`;
+            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${bumped}%`;
+            renderContinue();
+        });
+    }
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();
     });
@@ -887,6 +1012,31 @@
         renderGrid();
     }
 
+    async function loadMaterials(){
+        state.isLoading = true;
+        renderAll();
+
+        const r = await apiFetch('/api/library/materials', { method: 'GET' });
+        if (r && r.data && r.data.success){
+            materials = Array.isArray(r.data.materials) ? r.data.materials : [];
+
+            // hydrate cache
+            cache.lastOpenedId = r.data.lastOpenedId || null;
+            cache.progressById = {};
+            cache.savedById = {};
+            cache.wordsSavedByMaterial = {};
+            materials.forEach((m) => {
+                const id = String(m.id);
+                cache.progressById[id] = clamp(Number(m.progress || 0), 0, 100);
+                cache.savedById[id] = !!m.isSaved;
+                cache.wordsSavedByMaterial[id] = (m.wordsSaved && typeof m.wordsSaved === 'object') ? m.wordsSaved : {};
+            });
+        }
+
+        state.isLoading = false;
+        renderAll();
+    }
+
     // Init
-    renderAll();
+    loadMaterials();
 })();

@@ -35,6 +35,10 @@ const taskSubmit = require("../server/routes/task/[taskId]/submit.js");
 
 const myAchievements = require("../server/routes/achievements/my");
 
+// ===== LIBRARY =====
+const libraryMaterials = require("../server/routes/library/materials.js");
+const libraryState = require("../server/routes/library/state.js");
+
 
 // ===== tiny router =====
 function matchPath(pathname, pattern) {
@@ -107,6 +111,10 @@ module.exports = async (req, res) => {
         if (path === "/api/achievements/my" && method === "GET") {
             return myAchievements(req, res);
         }
+
+        // ===== LIBRARY =====
+        if (path === "/api/library/materials" && method === "GET") return libraryMaterials(req, res);
+        if (path === "/api/library/state" && method === "POST") return libraryState(req, res);
 
 
         // /api/lesson/:id
