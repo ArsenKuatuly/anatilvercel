@@ -1,8 +1,5 @@
 // library.js
 (() => {
-    // ===== Persistent state (Supabase via our API) =====
-    // Прогресс/сохранённое/слова храним в таблице library_user_state.
-    // В JS держим только кеш в памяти.
     const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
     const cache = {
@@ -19,21 +16,20 @@
 
     const getWordsSavedMap = (materialId) => {
         const m = cache.wordsSavedByMaterial?.[materialId];
-        return (m && typeof m === 'object') ? m : {};
+        return (m && typeof m === "object") ? m : {};
     };
 
     async function saveLibraryState(materialId, patch = {}) {
         const payload = { materialId, ...patch };
-        const r = await apiFetch('/api/library/state', { method: 'POST', body: JSON.stringify(payload) });
+        const r = await apiFetch("/api/library/state", { method: "POST", body: JSON.stringify(payload) });
         if (!r || !r.data || !r.data.success) return null;
 
         const d = r.data;
         cache.progressById[materialId] = clamp(Number(d.progress ?? cache.progressById[materialId] ?? 0) || 0, 0, 100);
         cache.savedById[materialId] = !!(d.isSaved ?? cache.savedById[materialId]);
-        cache.wordsSavedByMaterial[materialId] = (d.wordsSaved && typeof d.wordsSaved === 'object') ? d.wordsSaved : (cache.wordsSavedByMaterial[materialId] || {});
+        cache.wordsSavedByMaterial[materialId] = (d.wordsSaved && typeof d.wordsSaved === "object") ? d.wordsSaved : (cache.wordsSavedByMaterial[materialId] || {});
         cache.lastOpenedId = materialId;
 
-        // также обновим материалы в памяти (если есть)
         const idx = materials.findIndex(m => String(m.id) === String(materialId));
         if (idx >= 0) {
             materials[idx] = {
@@ -46,48 +42,48 @@
         return d;
     }
 
-    const categories = ['Все', 'Слова', 'Грамматика', 'Чтение', 'Диалоги', 'Упражнения'];
+    const categories = ["Все", "Слова", "Грамматика", "Чтение", "Диалоги", "Упражнения"];
 
-    // Continue data (из Supabase state)
-    function getContinueMaterial(){
-        const lastId = String(cache.lastOpenedId || '');
+    function getContinueMaterial() {
+        const lastId = String(cache.lastOpenedId || "");
         const last = materials.find(m => m.id === lastId);
         return last || materials[0] || null;
     }
 
-    // Elements
-    const searchInput = document.getElementById('searchInput');
-    const tabsRow = document.getElementById('tabsRow');
-    const grid = document.getElementById('materialsGrid');
-    const empty = document.getElementById('emptyState');
-    const continueBlock = document.getElementById('continueBlock');
-    const skeletonGrid = document.getElementById('skeletonGrid');
+    const searchInput = document.getElementById("searchInput");
+    const tabsRow = document.getElementById("tabsRow");
+    const grid = document.getElementById("materialsGrid");
+    const empty = document.getElementById("emptyState");
+    const continueBlock = document.getElementById("continueBlock");
+    const skeletonGrid = document.getElementById("skeletonGrid");
 
-    // Modal
-    const modal = document.getElementById('materialModal');
-    const modalOverlay = document.getElementById('modalOverlay');
-    const modalClose = document.getElementById('modalClose');
-    const modalEmoji = document.getElementById('modalEmoji');
-    const modalType = document.getElementById('modalType');
-    const modalLevel = document.getElementById('modalLevel');
-    const modalDuration = document.getElementById('modalDuration');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalDesc = document.getElementById('modalDesc');
-    const modalBody = document.getElementById('modalBody');
-    const modalProgressFill = document.getElementById('modalProgressFill');
-    const modalProgressText = document.getElementById('modalProgressText');
-    const modalBackBtn = document.getElementById('modalBackBtn');
-    const modalSaveBtn = document.getElementById('modalSaveBtn');
-    const modalContinueBtn = document.getElementById('modalContinueBtn');
+    const modal = document.getElementById("materialModal");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const modalClose = document.getElementById("modalClose");
+    const modalEmoji = document.getElementById("modalEmoji");
+    const modalType = document.getElementById("modalType");
+    const modalLevel = document.getElementById("modalLevel");
+    const modalDuration = document.getElementById("modalDuration");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalDesc = document.getElementById("modalDesc");
+    const modalBody = document.getElementById("modalBody");
+
+    let modalProgressFill = document.getElementById("modalProgressFill");
+    let modalProgressText = document.getElementById("modalProgressText");
+    if (!modalProgressFill && modal) modalProgressFill = modal.querySelector(".material-modal__bar-fill");
+    if (!modalProgressText && modal) modalProgressText = modal.querySelector(".material-modal__progress-text");
+
+    const modalBackBtn = document.getElementById("modalBackBtn");
+    const modalSaveBtn = document.getElementById("modalSaveBtn");
+    const modalContinueBtn = document.getElementById("modalContinueBtn");
 
     let state = {
-        query: '',
-        category: 'Все',
+        query: "",
+        category: "Все",
         isLoading: false,
         selected: null
     };
 
-    // Icons
     const iconArrowRight = `
     <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M9 18l6-6-6-6"></path>
@@ -105,97 +101,176 @@
       <path d="M21 21l-4.3-4.3"></path>
     </svg>`;
 
-    // Helpers
-    const esc = (s) => String(s ?? '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'",'&#039;');
+    const esc = (s) => String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
-    function lockScroll(locked){
-        document.documentElement.style.overflow = locked ? 'hidden' : '';
-        document.body.style.overflow = locked ? 'hidden' : '';
+    function lockScroll(locked) {
+        document.documentElement.style.overflow = locked ? "hidden" : "";
+        document.body.style.overflow = locked ? "hidden" : "";
     }
 
-    // ===== Continue button behavior (per-material) =====
-    function setContinueButtonLabel(label){
+    function setContinueButtonLabel(label) {
         if (!modalContinueBtn) return;
-        const span = modalContinueBtn.querySelector('span');
-        if (span) span.textContent = String(label || 'Продолжить');
+        const span = modalContinueBtn.querySelector("span");
+        if (span) span.textContent = String(label || "Продолжить");
     }
 
-    // category-specific action can be attached by renderers
-    // signature: async () => void
-    function setModalContinueAction(fn, label){
-        modal._onContinue = typeof fn === 'function' ? fn : null;
-        setContinueButtonLabel(label || 'Продолжить');
+    function setCompletedUI(done) {
+        modal._isCompleted = !!done;
+        if (!modalContinueBtn) return;
+        if (modal._isCompleted) {
+            setContinueButtonLabel("Завершить");
+            modalContinueBtn.setAttribute("data-completed", "1");
+        } else {
+            modalContinueBtn.removeAttribute("data-completed");
+            setContinueButtonLabel(modal._defaultContinueLabel || "Продолжить");
+        }
     }
 
-    async function defaultContinueAction(){
+    function setModalContinueAction(fn, label) {
+        modal._onContinue = typeof fn === "function" ? fn : null;
+        modal._defaultContinueLabel = String(label || "Продолжить");
+        if (!modal._isCompleted) setContinueButtonLabel(modal._defaultContinueLabel);
+    }
+
+    function setProgressUI(materialId, percent, { persist = false } = {}) {
+        const p = clamp(Number(percent) || 0, 0, 100);
+        cache.progressById[String(materialId)] = p;
+        if (modalProgressFill) modalProgressFill.style.width = `${p}%`;
+        if (modalProgressText) modalProgressText.textContent = `Прогресс: ${p}%`;
+        setCompletedUI(p >= 100);
+        renderContinue();
+        if (persist) {
+            clearTimeout(modal._persistT);
+            modal._persistT = setTimeout(() => {
+                if (!state.selected) return;
+                saveLibraryState(String(materialId), { progress: p }).catch(() => {});
+            }, 700);
+        }
+    }
+
+    async function defaultContinueAction() {
         if (!state.selected) return;
         const id = String(state.selected.id);
         const cur = getProgress(id);
         const base = (cur === 0 ? 35 : cur);
         const bumped = clamp(base + 15, 0, 100);
-
-        // Optimistic UI (даже если API упадёт)
-        if (modalProgressFill) modalProgressFill.style.width = `${bumped}%`;
-        if (modalProgressText) modalProgressText.textContent = `Прогресс: ${bumped}%`;
-        cache.progressById[id] = bumped;
-
-        try { await saveLibraryState(id, { progress: bumped }); } catch (_) {}
-        renderContinue();
+        setProgressUI(id, bumped, { persist: true });
     }
 
-    function configureModalContinue(material){
-        // reset to default
-        setModalContinueAction(null, 'Продолжить');
-
-        const cat = material?.category || '';
-        if (cat === 'Слова'){
-            // В словах: "Продолжить" = сохранить следующее не сохранённое слово
-            setContinueButtonLabel('Следующее слово');
-            return; // renderWordsContent установит точный handler
-        }
-
-        if (cat === 'Чтение'){
-            setContinueButtonLabel('Дальше');
-            return; // renderReadingContent установит handler
-        }
-
-        // остальные категории
-        setModalContinueAction(defaultContinueAction, 'Продолжить');
+    function isScrollProgressCategory(cat) {
+        return cat !== "Слова" && cat !== "Чтение" && cat !== "Упражнения";
     }
 
-    // Tabs
-    function renderTabs(){
+    function detachScrollProgress() {
+        if (modal._onBodyScroll && modalBody) modalBody.removeEventListener("scroll", modal._onBodyScroll);
+        modal._onBodyScroll = null;
+        modal._scrollRaf = null;
+        clearTimeout(modal._persistT);
+        modal._persistT = null;
+    }
+
+    function attachScrollProgress(material) {
+        detachScrollProgress();
+        if (!modalBody || !state.selected) return;
+        const cat = material?.category || "";
+        if (!isScrollProgressCategory(cat)) return;
+
+        const id = String(material.id);
+
+        const applyFromScroll = () => {
+            const max = Math.max(0, modalBody.scrollHeight - modalBody.clientHeight);
+            if (max <= 0) {
+                setProgressUI(id, 100, { persist: true });
+                return;
+            }
+            const pct = clamp(Math.round((modalBody.scrollTop / max) * 100), 0, 100);
+            setProgressUI(id, pct, { persist: true });
+        };
+
+        modal._onBodyScroll = () => {
+            if (modal._scrollRaf) return;
+            modal._scrollRaf = requestAnimationFrame(() => {
+                modal._scrollRaf = null;
+                applyFromScroll();
+            });
+        };
+
+        modalBody.addEventListener("scroll", modal._onBodyScroll, { passive: true });
+
+        setTimeout(() => {
+            if (!state.selected || String(state.selected.id) !== id) return;
+            const max = Math.max(0, modalBody.scrollHeight - modalBody.clientHeight);
+            if (max > 0) {
+                const saved = getProgress(id);
+                const target = Math.round((saved / 100) * max);
+                modalBody.scrollTop = target;
+            } else {
+                setProgressUI(id, 100, { persist: true });
+            }
+            applyFromScroll();
+        }, 0);
+
+        setModalContinueAction(async () => {
+            if (!state.selected) return;
+            const max = Math.max(0, modalBody.scrollHeight - modalBody.clientHeight);
+            if (modal._isCompleted || max <= 0 || modalBody.scrollTop >= max - 2) {
+                setProgressUI(id, 100, { persist: true });
+                closeModal();
+                return;
+            }
+            const step = Math.max(220, Math.round(modalBody.clientHeight * 0.85));
+            modalBody.scrollTo({ top: modalBody.scrollTop + step, behavior: "smooth" });
+        }, "Продолжить");
+    }
+
+    function configureModalContinue(material) {
+        setModalContinueAction(null, "Продолжить");
+
+        const cat = material?.category || "";
+        if (cat === "Слова") {
+            modal._defaultContinueLabel = "Следующее слово";
+            if (!modal._isCompleted) setContinueButtonLabel("Следующее слово");
+            return;
+        }
+
+        if (cat === "Чтение") {
+            modal._defaultContinueLabel = "Дальше";
+            if (!modal._isCompleted) setContinueButtonLabel("Дальше");
+            return;
+        }
+
+        setModalContinueAction(defaultContinueAction, "Продолжить");
+    }
+
+    function renderTabs() {
         tabsRow.innerHTML = categories.map((c) => `
-      <button type="button"
-        class="library__tab ${state.category === c ? 'library__tab--active' : ''}"
-        data-cat="${esc(c)}">${esc(c)}</button>
-    `).join('');
+      <button type="button" class="library__tab ${state.category === c ? "library__tab--active" : ""}" data-cat="${esc(c)}">${esc(c)}</button>
+    `).join("");
 
-        tabsRow.querySelectorAll('.library__tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                state.category = btn.dataset.cat || 'Все';
+        tabsRow.querySelectorAll(".library__tab").forEach(btn => {
+            btn.addEventListener("click", () => {
+                state.category = btn.dataset.cat || "Все";
                 renderAll();
             });
         });
     }
 
-    // Continue block
-    function renderContinue(){
-        const shouldShow = !state.isLoading && state.query.trim() === '' && state.category === 'Все';
-        if (!shouldShow){
-            continueBlock.innerHTML = '';
+    function renderContinue() {
+        const shouldShow = !state.isLoading && state.query.trim() === "" && state.category === "Все";
+        if (!shouldShow) {
+            continueBlock.innerHTML = "";
             continueBlock.hidden = true;
             return;
         }
 
         const mat = getContinueMaterial();
-        if (!mat){
-            continueBlock.innerHTML = '';
+        if (!mat) {
+            continueBlock.innerHTML = "";
             continueBlock.hidden = true;
             return;
         }
@@ -208,7 +283,6 @@
           <div class="continue__left">
             <p class="continue__label">Продолжить обучение</p>
             <h3 class="continue__title">${esc(mat.title)}</h3>
-
             <div class="continue__bar" aria-hidden="true">
               <div class="continue__bar-fill" style="width:${progress}%"></div>
             </div>
@@ -223,20 +297,16 @@
       </div>
     `;
 
-        const btn = continueBlock.querySelector('[data-continue-open]');
-        if (btn){
-            btn.addEventListener('click', () => openModal(mat));
-        }
+        const btn = continueBlock.querySelector("[data-continue-open]");
+        if (btn) btn.addEventListener("click", () => openModal(mat));
     }
 
-    // Skeleton
-    function renderSkeleton(){
-        if (!state.isLoading){
+    function renderSkeleton() {
+        if (!state.isLoading) {
             skeletonGrid.hidden = true;
-            skeletonGrid.innerHTML = '';
+            skeletonGrid.innerHTML = "";
             return;
         }
-
         skeletonGrid.hidden = false;
         skeletonGrid.innerHTML = new Array(6).fill(0).map(() => `
       <div class="skeleton">
@@ -253,13 +323,12 @@
         </div>
         <div class="skeleton__btn"></div>
       </div>
-    `).join('');
+    `).join("");
     }
 
-    // Cards
-    function renderGrid(){
-        if (state.isLoading){
-            grid.innerHTML = '';
+    function renderGrid() {
+        if (state.isLoading) {
+            grid.innerHTML = "";
             grid.hidden = true;
             empty.hidden = true;
             return;
@@ -267,15 +336,13 @@
 
         const q = state.query.trim().toLowerCase();
         const filtered = materials.filter(m => {
-            const matchesSearch =
-                m.title.toLowerCase().includes(q) ||
-                m.description.toLowerCase().includes(q);
-            const matchesCategory = state.category === 'Все' || m.category === state.category;
-            return (q === '' ? true : matchesSearch) && matchesCategory;
+            const matchesSearch = m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q);
+            const matchesCategory = state.category === "Все" || m.category === state.category;
+            return (q === "" ? true : matchesSearch) && matchesCategory;
         });
 
-        if (filtered.length === 0){
-            grid.innerHTML = '';
+        if (filtered.length === 0) {
+            grid.innerHTML = "";
             grid.hidden = true;
             renderEmpty();
             return;
@@ -313,19 +380,18 @@
           ${iconArrowRight}
         </button>
       </article>
-    `).join('');
+    `).join("");
 
-        grid.querySelectorAll('[data-open]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.getAttribute('data-open');
+        grid.querySelectorAll("[data-open]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const id = btn.getAttribute("data-open");
                 const mat = materials.find(x => x.id === id);
                 if (mat) openModal(mat);
             });
         });
     }
 
-    // Empty state
-    function renderEmpty(){
+    function renderEmpty() {
         empty.hidden = false;
         empty.innerHTML = `
       <div class="empty">
@@ -336,90 +402,88 @@
       </div>
     `;
 
-        const clearBtn = document.getElementById('clearSearchBtn');
-        if (clearBtn){
-            clearBtn.addEventListener('click', () => {
-                state.query = '';
-                state.category = 'Все';
-                if (searchInput) searchInput.value = '';
+        const clearBtn = document.getElementById("clearSearchBtn");
+        if (clearBtn) {
+            clearBtn.addEventListener("click", () => {
+                state.query = "";
+                state.category = "Все";
+                if (searchInput) searchInput.value = "";
                 renderAll();
             });
         }
     }
 
-    // Modal content data
     const dialogLines = [
-        { speaker:'Алия',  kazakh:'Сәлеметсіз бе!', russian:'Здравствуйте!', role:'person1' },
-        { speaker:'Марат', kazakh:'Сәлеметсіз бе! Менің атым Марат. Сіздің атыңыз кім?', russian:'Здравствуйте! Меня зовут Марат. Как вас зовут?', role:'person2' },
-        { speaker:'Алия',  kazakh:'Менің атым Алия. Танысқаныма қуаныштымын.', russian:'Меня зовут Алия. Рада познакомиться.', role:'person1' },
-        { speaker:'Марат', kazakh:'Мен де қуаныштымын. Сіз қайдан келдіңіз?', russian:'Я тоже рад. Откуда вы?', role:'person2' },
-        { speaker:'Алия',  kazakh:'Мен Алматыданмын. Ал сіз?', russian:'Я из Алматы. А вы?', role:'person1' },
-        { speaker:'Марат', kazakh:'Мен Астанаданмын.', russian:'Я из Астаны.', role:'person2' }
+        { speaker: "Алия", kazakh: "Сәлеметсіз бе!", russian: "Здравствуйте!", role: "person1" },
+        { speaker: "Марат", kazakh: "Сәлеметсіз бе! Менің атым Марат. Сіздің атыңыз кім?", russian: "Здравствуйте! Меня зовут Марат. Как вас зовут?", role: "person2" },
+        { speaker: "Алия", kazakh: "Менің атым Алия. Танысқаныма қуаныштымын.", russian: "Меня зовут Алия. Рада познакомиться.", role: "person1" },
+        { speaker: "Марат", kazakh: "Мен де қуаныштымын. Сіз қайдан келдіңіз?", russian: "Я тоже рад. Откуда вы?", role: "person2" },
+        { speaker: "Алия", kazakh: "Мен Алматыданмын. Ал сіз?", russian: "Я из Алматы. А вы?", role: "person1" },
+        { speaker: "Марат", kazakh: "Мен Астанаданмын.", russian: "Я из Астаны.", role: "person2" }
     ];
 
     const grammarCases = [
-        { name:'Атау (Именительный)', question:'Кім? Не?', example:'Бала оқиды', translation:'Ребенок читает', suffix:'—' },
-        { name:'Ілік (Родительный)', question:'Кімнің? Ненің?', example:'Баланың кітабы', translation:'Книга ребенка', suffix:'-ның/-нің, -дың/-дің, -тың/-тің' },
-        { name:'Барыс (Дательный)', question:'Кімге? Неге?', example:'Балаға кітап бердім', translation:'Я дал книгу ребенку', suffix:'-ға/-ге, -қа/-ке, -а/-е' },
-        { name:'Табыс (Винительный)', question:'Кімді? Нені?', example:'Баланы көрдім', translation:'Я увидел ребенка', suffix:'-ны/-ні, -ды/-ді, -ты/-ті' },
-        { name:'Жатыс (Местный)', question:'Кімде? Неде?', example:'Балада кітап бар', translation:'У ребенка есть книга', suffix:'-да/-де, -та/-те' },
-        { name:'Шығыс (Исходный)', question:'Кімнен? Неден?', example:'Баладан сұрадым', translation:'Я спросил у ребенка', suffix:'-дан/-ден, -тан/-тен, -нан/-нен' },
-        { name:'Көмектес (Творительный)', question:'Кіммен? Немен?', example:'Баламен келдім', translation:'Я пришел с ребенком', suffix:'-мен/-бен/-пен' }
+        { name: "Атау (Именительный)", question: "Кім? Не?", example: "Бала оқиды", translation: "Ребенок читает", suffix: "—" },
+        { name: "Ілік (Родительный)", question: "Кімнің? Ненің?", example: "Баланың кітабы", translation: "Книга ребенка", suffix: "-ның/-нің, -дың/-дің, -тың/-тің" },
+        { name: "Барыс (Дательный)", question: "Кімге? Неге?", example: "Балаға кітап бердім", translation: "Я дал книгу ребенку", suffix: "-ға/-ге, -қа/-ке, -а/-е" },
+        { name: "Табыс (Винительный)", question: "Кімді? Нені?", example: "Баланы көрдім", translation: "Я увидел ребенка", suffix: "-ны/-ні, -ды/-ді, -ты/-ті" },
+        { name: "Жатыс (Местный)", question: "Кімде? Неде?", example: "Балада кітап бар", translation: "У ребенка есть книга", suffix: "-да/-де, -та/-те" },
+        { name: "Шығыс (Исходный)", question: "Кімнен? Неден?", example: "Баладан сұрадым", translation: "Я спросил у ребенка", suffix: "-дан/-ден, -тан/-тен, -нан/-нен" },
+        { name: "Көмектес (Творительный)", question: "Кіммен? Немен?", example: "Баламен келдім", translation: "Я пришел с ребенком", suffix: "-мен/-бен/-пен" }
     ];
 
     const wordsInitial = [
-        { kazakh:'Жұмыс', russian:'Работа', example:'Мен жұмыста боламын', translation:'Я буду на работе', saved:false },
-        { kazakh:'Кеңсе', russian:'Офис', example:'Кеңсе үлкен', translation:'Офис большой', saved:true },
-        { kazakh:'Компьютер', russian:'Компьютер', example:'Компьютер үстелде', translation:'Компьютер на столе', saved:false },
-        { kazakh:'Жиналыс', russian:'Собрание', example:'Бүгін жиналыс бар', translation:'Сегодня есть собрание', saved:false },
-        { kazakh:'Әріптес', russian:'Коллега', example:'Менің әріптесім мейірімді', translation:'Мой коллега добрый', saved:false },
-        { kazakh:'Басшы', russian:'Руководитель', example:'Басшы кеңседе', translation:'Руководитель в офисе', saved:true },
-        { kazakh:'Құжат', russian:'Документ', example:'Құжатты дайындадым', translation:'Я подготовил документ', saved:false },
-        { kazakh:'Есеп', russian:'Отчет', example:'Есепті жібердім', translation:'Я отправил отчет', saved:false },
-        { kazakh:'Жоба', russian:'Проект', example:'Жаңа жоба басталды', translation:'Начался новый проект', saved:false },
-        { kazakh:'Мүмкіндік', russian:'Возможность', example:'Бұл жақсы мүмкіндік', translation:'Это хорошая возможность', saved:false }
+        { kazakh: "Жұмыс", russian: "Работа", example: "Мен жұмыста боламын", translation: "Я буду на работе", saved: false },
+        { kazakh: "Кеңсе", russian: "Офис", example: "Кеңсе үлкен", translation: "Офис большой", saved: true },
+        { kazakh: "Компьютер", russian: "Компьютер", example: "Компьютер үстелде", translation: "Компьютер на столе", saved: false },
+        { kazakh: "Жиналыс", russian: "Собрание", example: "Бүгін жиналыс бар", translation: "Сегодня есть собрание", saved: false },
+        { kazakh: "Әріптес", russian: "Коллега", example: "Менің әріптесім мейірімді", translation: "Мой коллега добрый", saved: false },
+        { kazakh: "Басшы", russian: "Руководитель", example: "Басшы кеңседе", translation: "Руководитель в офисе", saved: true },
+        { kazakh: "Құжат", russian: "Документ", example: "Құжатты дайындадым", translation: "Я подготовил документ", saved: false },
+        { kazakh: "Есеп", russian: "Отчет", example: "Есепті жібердім", translation: "Я отправил отчет", saved: false },
+        { kazakh: "Жоба", russian: "Проект", example: "Жаңа жоба басталды", translation: "Начался новый проект", saved: false },
+        { kazakh: "Мүмкіндік", russian: "Возможность", example: "Бұл жақсы мүмкіндік", translation: "Это хорошая возможность", saved: false }
     ];
 
     const readingParagraphs = [
-        { kazakh:'Менің атым Айдос. Мен Алматыда тұрамын. Менің отбасым үлкен.', russian:'Меня зовут Айдос. Я живу в Алматы. Моя семья большая.' },
-        { kazakh:'Менің әкем дәрігер, ал анам мұғалім. Олар өте жақсы адамдар.', russian:'Мой отец врач, а мама учитель. Они очень хорошие люди.' },
-        { kazakh:'Менің екі апам бар. Үлкен апам университетте оқиды. Кіші апам мектепте оқиды.', russian:'У меня есть две сестры. Старшая сестра учится в университете. Младшая сестра учится в школе.' },
-        { kazakh:'Біз жыл сайын демалысқа барамыз. Жазда біз Иссык-Көлге барамыз. Қыста біз тауға барамыз.', russian:'Мы каждый год ездим в отпуск. Летом мы едем на Иссык-Куль. Зимой мы едем в горы.' },
-        { kazakh:'Мен өз отбасымды жақсы көремін. Біз бақыттымыз.', russian:'Я люблю свою семью. Мы счастливы.' }
+        { kazakh: "Менің атым Айдос. Мен Алматыда тұрамын. Менің отбасым үлкен.", russian: "Меня зовут Айдос. Я живу в Алматы. Моя семья большая." },
+        { kazakh: "Менің әкем дәрігер, ал анам мұғалім. Олар өте жақсы адамдар.", russian: "Мой отец врач, а мама учитель. Они очень хорошие люди." },
+        { kazakh: "Менің екі апам бар. Үлкен апам университетте оқиды. Кіші апам мектепте оқиды.", russian: "У меня есть две сестры. Старшая сестра учится в университете. Младшая сестра учится в школе." },
+        { kazakh: "Біз жыл сайын демалысқа барамыз. Жазда біз Иссык-Көлге барамыз. Қыста біз тауға барамыз.", russian: "Мы каждый год ездим в отпуск. Летом мы едем на Иссык-Куль. Зимой мы едем в горы." },
+        { kazakh: "Мен өз отбасымды жақсы көремін. Біз бақыттымыз.", russian: "Я люблю свою семью. Мы счастливы." }
     ];
 
     const readingVocabulary = [
-        { kz:'Отбасы', ru:'Семья' }, { kz:'Дәрігер', ru:'Врач' }, { kz:'Мұғалім', ru:'Учитель' },
-        { kz:'Апа', ru:'Сестра (старшая)' }, { kz:'Университет', ru:'Университет' }, { kz:'Демалыс', ru:'Отпуск' },
-        { kz:'Жаз', ru:'Лето' }, { kz:'Қыс', ru:'Зима' }, { kz:'Тау', ru:'Гора' }, { kz:'Бақытты', ru:'Счастливый' }
+        { kz: "Отбасы", ru: "Семья" }, { kz: "Дәрігер", ru: "Врач" }, { kz: "Мұғалім", ru: "Учитель" },
+        { kz: "Апа", ru: "Сестра (старшая)" }, { kz: "Университет", ru: "Университет" }, { kz: "Демалыс", ru: "Отпуск" },
+        { kz: "Жаз", ru: "Лето" }, { kz: "Қыс", ru: "Зима" }, { kz: "Тау", ru: "Гора" }, { kz: "Бақытты", ru: "Счастливый" }
     ];
 
     const exerciseQuestions = [
-        { id:1, question:'Мен мектепке _____ (идти - настоящее время)', options:['барамын','бардым','баламын','барайын'], correct:0, explanation:'Настоящее время для глагола "бару" (идти) в первом лице - "барамын"' },
-        { id:2, question:'Ол кітап _____ (читать - прошедшее время)', options:['оқиды','оқыды','оқиған','оқитын'], correct:1, explanation:'Прошедшее время для глагола "оқу" (читать) - "оқыды"' },
-        { id:3, question:'Біз ертең киноға _____ (пойти - будущее время)', options:['барамыз','бардық','барамыз','бармақпыз'], correct:3, explanation:'Будущее время для глагола "бару" во множественном числе - "бармақпыз"' },
-        { id:4, question:'Сен үйде _____ (быть - настоящее время)', options:['боласың','болдың','болсың','болатынсың'], correct:0, explanation:'Настоящее время глагола "болу" во втором лице - "боласың"' },
-        { id:5, question:'Олар тамақ _____ (кушать - прошедшее время)', options:['жейді','жеді','жегені','жейтін'], correct:1, explanation:'Прошедшее время глагола "жеу" (кушать) - "жеді"' }
+        { id: 1, question: "Мен мектепке _____ (идти - настоящее время)", options: ["барамын", "бардым", "баламын", "барайын"], correct: 0, explanation: 'Настоящее время для глагола "бару" (идти) в первом лице - "барамын"' },
+        { id: 2, question: "Ол кітап _____ (читать - прошедшее время)", options: ["оқиды", "оқыды", "оқиған", "оқитын"], correct: 1, explanation: 'Прошедшее время для глагола "оқу" (читать) - "оқыды"' },
+        { id: 3, question: "Біз ертең киноға _____ (пойти - будущее время)", options: ["барамыз", "бардық", "барамыз", "бармақпыз"], correct: 3, explanation: 'Будущее время для глагола "бару" во множественном числе - "бармақпыз"' },
+        { id: 4, question: "Сен үйде _____ (быть - настоящее время)", options: ["боласың", "болдың", "болсың", "болатынсың"], correct: 0, explanation: 'Настоящее время глагола "болу" во втором лице - "боласың"' },
+        { id: 5, question: "Олар тамақ _____ (кушать - прошедшее время)", options: ["жейді", "жеді", "жегені", "жейтін"], correct: 1, explanation: 'Прошедшее время глагола "жеу" (кушать) - "жеді"' }
     ];
 
-    // Modal renderers
-    function renderDialogContent(){
+    function renderDialogContent() {
         let showTranslation = true;
 
         const vocab = [
-            { kz:'Сәлеметсіз бе', ru:'Здравствуйте' },
-            { kz:'Атым', ru:'Меня зовут' },
-            { kz:'Танысқаныма қуаныштымын', ru:'Рад познакомиться' },
-            { kz:'Қайдан', ru:'Откуда' }
+            { kz: "Сәлеметсіз бе", ru: "Здравствуйте" },
+            { kz: "Атым", ru: "Меня зовут" },
+            { kz: "Танысқаныма қуаныштымын", ru: "Рад познакомиться" },
+            { kz: "Қайдан", ru: "Откуда" }
         ];
 
-        function bubble(line){
-            const isP1 = line.role === 'person1';
-            const wrapStyle = `display:flex; justify-content:${isP1 ? 'flex-start' : 'flex-end'};`;
+        function bubble(line) {
+            const isP1 = line.role === "person1";
+            const wrapStyle = `display:flex; justify-content:${isP1 ? "flex-start" : "flex-end"};`;
             const cardStyle = isP1
-                ? 'background:#f3f4f6; color:var(--text); border-top-left-radius:6px;'
-                : 'background:var(--primary); color:#fff; border-top-right-radius:6px;';
-            const subColor = isP1 ? 'color:var(--muted);' : 'color:rgba(255,255,255,.8);';
+                ? "background:#f3f4f6; color:var(--text); border-top-left-radius:6px;"
+                : "background:var(--primary); color:#fff; border-top-right-radius:6px;";
+            const subColor = isP1 ? "color:var(--muted);" : "color:rgba(255,255,255,.8);";
             return `
         <div style="${wrapStyle}">
           <div style="max-width:80%;">
@@ -433,18 +497,18 @@
       `;
         }
 
-        function render(){
+        function render() {
             modalBody.innerHTML = `
         <div class="block">
           <div class="box" style="display:flex; align-items:center; justify-content:space-between;">
             <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:var(--text); font-size:.875rem;">
-              <input id="dlgToggle" type="checkbox" ${showTranslation ? 'checked' : ''} style="width:16px; height:16px; accent-color: var(--primary);" />
+              <input id="dlgToggle" type="checkbox" ${showTranslation ? "checked" : ""} style="width:16px; height:16px; accent-color: var(--primary);" />
               Показать перевод
             </label>
           </div>
 
           <div class="block" style="gap:16px;">
-            ${dialogLines.map(bubble).join('')}
+            ${dialogLines.map(bubble).join("")}
           </div>
 
           <div class="box">
@@ -455,15 +519,15 @@
                   <p style="margin:0; color:var(--text);">${esc(w.kz)}</p>
                   <p style="margin:4px 0 0; color:var(--muted); font-size:.875rem;">${esc(w.ru)}</p>
                 </div>
-              `).join('')}
+              `).join("")}
             </div>
           </div>
         </div>
       `;
 
-            const toggle = document.getElementById('dlgToggle');
-            if (toggle){
-                toggle.addEventListener('change', (e) => {
+            const toggle = document.getElementById("dlgToggle");
+            if (toggle) {
+                toggle.addEventListener("change", (e) => {
                     showTranslation = !!e.target.checked;
                     render();
                 });
@@ -471,11 +535,9 @@
         }
 
         render();
-
-        // (кнопка "Продолжить" для этого раздела настраивается внутри соответствующих рендеров)
     }
 
-    function renderGrammarContent(){
+    function renderGrammarContent() {
         modalBody.innerHTML = `
       <div class="block">
         <div class="panel">
@@ -510,7 +572,7 @@
                 </div>
               </div>
             </div>
-          `).join('')}
+          `).join("")}
         </div>
 
         <div class="box">
@@ -527,20 +589,18 @@
     `;
     }
 
-    function renderWordsContent(){
-        // local state
-        const materialId = state.selected?.id || 'words';
-        // работаем с копией, а затем отправляем целиком в Supabase
+    function renderWordsContent() {
+        const materialId = state.selected?.id || "words";
         let wordsSavedMap = { ...getWordsSavedMap(materialId) };
         const words = wordsInitial.map(w => ({
             ...w,
-            saved: (typeof wordsSavedMap[w.kazakh] === 'boolean') ? wordsSavedMap[w.kazakh] : !!w.saved
+            saved: (typeof wordsSavedMap[w.kazakh] === "boolean") ? wordsSavedMap[w.kazakh] : !!w.saved
         }));
         const flipped = new Set();
 
-        function countSaved(){ return words.filter(w => w.saved).length; }
+        function countSaved() { return words.filter(w => w.saved).length; }
 
-        function render(){
+        function render() {
             const saved = countSaved();
             const percent = Math.round((saved / words.length) * 100);
 
@@ -556,16 +616,13 @@
 
           <div style="display:grid; grid-template-columns:1fr; gap:16px;" class="words-grid">
             ${words.map((w, idx) => `
-              <div class="card"
-                data-word="${idx}"
-                style="border:2px solid var(--border); border-radius:12px; padding:0; overflow:hidden; cursor:pointer;">
+              <div class="card" data-word="${idx}" style="border:2px solid var(--border); border-radius:12px; padding:0; overflow:hidden; cursor:pointer;">
                 <div class="word-card__front" style="padding:20px; min-height:140px; display:flex; flex-direction:column; justify-content:space-between;">
                   <div>
                     <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px;">
                       <h4 style="margin:0; font-size:1.25rem; font-weight:500;">${esc(w.kazakh)}</h4>
-                      <button type="button" data-save="${idx}"
-                        style="border:0; background:transparent; padding:4px; border-radius:8px; cursor:pointer;">
-                        <span style="font-size:18px; color:${w.saved ? 'var(--primary)' : '#9ca3af'};">${w.saved ? '★' : '☆'}</span>
+                      <button type="button" data-save="${idx}" style="border:0; background:transparent; padding:4px; border-radius:8px; cursor:pointer;">
+                        <span style="font-size:18px; color:${w.saved ? "var(--primary)" : "#9ca3af"};">${w.saved ? "★" : "☆"}</span>
                       </button>
                     </div>
                     <p style="margin:0; color:var(--muted);">${esc(w.russian)}</p>
@@ -581,11 +638,11 @@
 
                 <div style="background:var(--bg); padding:8px 16px; text-align:center; border-top:1px solid var(--border);">
                   <p style="margin:0; font-size:.75rem; color:var(--muted);">
-                    ${flipped.has(idx) ? 'Нажмите, чтобы скрыть пример' : 'Нажмите, чтобы увидеть пример'}
+                    ${flipped.has(idx) ? "Нажмите, чтобы скрыть пример" : "Нажмите, чтобы увидеть пример"}
                   </p>
                 </div>
               </div>
-            `).join('')}
+            `).join("")}
           </div>
 
           <div class="box">
@@ -603,27 +660,23 @@
         </div>
       `;
 
-            // responsive for words grid: sm 2 cols
-            const gridEl = modalBody.querySelector('.words-grid');
-            if (gridEl){
-                gridEl.style.gridTemplateColumns = (window.innerWidth >= 640) ? '1fr 1fr' : '1fr';
-            }
+            const gridEl = modalBody.querySelector(".words-grid");
+            if (gridEl) gridEl.style.gridTemplateColumns = (window.innerWidth >= 640) ? "1fr 1fr" : "1fr";
 
-            modalBody.querySelectorAll('[data-word]').forEach(card => {
-                card.addEventListener('click', () => {
-                    const idx = Number(card.getAttribute('data-word'));
+            modalBody.querySelectorAll("[data-word]").forEach(card => {
+                card.addEventListener("click", () => {
+                    const idx = Number(card.getAttribute("data-word"));
                     if (flipped.has(idx)) flipped.delete(idx);
                     else flipped.add(idx);
                     render();
                 });
             });
 
-            modalBody.querySelectorAll('[data-save]').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+            modalBody.querySelectorAll("[data-save]").forEach(btn => {
+                btn.addEventListener("click", async (e) => {
                     e.stopPropagation();
-                    const idx = Number(btn.getAttribute('data-save'));
+                    const idx = Number(btn.getAttribute("data-save"));
                     words[idx].saved = !words[idx].saved;
-                    // persist (Supabase)
                     wordsSavedMap[words[idx].kazakh] = !!words[idx].saved;
                     btn.disabled = true;
                     await saveLibraryState(String(materialId), { wordsSaved: wordsSavedMap });
@@ -635,15 +688,10 @@
 
         render();
 
-        // Кнопка "Продолжить" в словах: сохраняет следующее не сохранённое слово
         setModalContinueAction(async () => {
             const nextIdx = words.findIndex(w => !w.saved);
             if (nextIdx === -1) {
-                if (modalProgressFill) modalProgressFill.style.width = `100%`;
-                if (modalProgressText) modalProgressText.textContent = `Прогресс: 100%`;
-                cache.progressById[String(materialId)] = 100;
-                try { await saveLibraryState(String(materialId), { progress: 100 }); } catch (_) {}
-                renderContinue();
+                setProgressUI(String(materialId), 100, { persist: true });
                 return;
             }
 
@@ -653,32 +701,26 @@
             const savedCount = words.filter(w => w.saved).length;
             const percent = clamp(Math.round((savedCount / words.length) * 100), 0, 100);
 
-            // Optimistic UI
-            if (modalProgressFill) modalProgressFill.style.width = `${percent}%`;
-            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${percent}%`;
-            cache.progressById[String(materialId)] = percent;
             cache.wordsSavedByMaterial[String(materialId)] = { ...wordsSavedMap };
+            setProgressUI(String(materialId), percent, { persist: true });
 
             try { await saveLibraryState(String(materialId), { progress: percent, wordsSaved: wordsSavedMap }); } catch (_) {}
             render();
             renderContinue();
-        }, 'Следующее слово');
+        }, "Следующее слово");
 
-        // keep simple resize handling just for 2-col switch
         const onResize = () => {
-            const gridEl = modalBody.querySelector('.words-grid');
+            const gridEl = modalBody.querySelector(".words-grid");
             if (!gridEl) return;
-            gridEl.style.gridTemplateColumns = (window.innerWidth >= 640) ? '1fr 1fr' : '1fr';
+            gridEl.style.gridTemplateColumns = (window.innerWidth >= 640) ? "1fr 1fr" : "1fr";
         };
-        window.addEventListener('resize', onResize, { passive:true });
-
-        // remove handler on close
-        modal._cleanupWords = () => window.removeEventListener('resize', onResize);
+        window.addEventListener("resize", onResize, { passive: true });
+        modal._cleanupWords = () => window.removeEventListener("resize", onResize);
     }
 
-    function renderReadingContent(){
+    function renderReadingContent() {
         let showTranslation = false;
-        const materialId = String(state.selected?.id || 'reading');
+        const materialId = String(state.selected?.id || "reading");
         let wordsMap = { ...getWordsSavedMap(materialId) };
         let readIndex = clamp(Number(wordsMap.__readingIndex || 0) || 0, 0, readingParagraphs.length);
 
@@ -695,17 +737,15 @@
         <path d="M14.12 14.12A3 3 0 0 1 9.88 9.88"></path>
       </svg>`;
 
-        function render(){
+        function render() {
             modalBody.innerHTML = `
         <div class="block">
           <div class="box" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
             <h3 style="margin:0; font-weight:500;">Рассказ: Моя семья</h3>
-            <button type="button" id="readingToggle"
-              style="border:1px solid var(--border); background:var(--white); color:var(--text);
-              border-radius:10px; padding:8px 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
+            <button type="button" id="readingToggle" style="border:1px solid var(--border); background:var(--white); color:var(--text); border-radius:10px; padding:8px 16px; cursor:pointer; display:flex; align-items:center; gap:8px;">
               ${showTranslation ? eyeOff : eye}
               <span style="display:none;" class="readingToggleText">
-                ${showTranslation ? 'Скрыть перевод' : 'Показать перевод'}
+                ${showTranslation ? "Скрыть перевод" : "Показать перевод"}
               </span>
             </button>
           </div>
@@ -720,30 +760,30 @@
                 const isRead = idx < readIndex;
                 const isLast = idx === readingParagraphs.length - 1;
                 return `
-              <div id="readingP${idx}" style="padding-bottom:16px; border-bottom:1px solid var(--border2); ${isLast ? 'border-bottom:0; padding-bottom:0;' : ''}; opacity:${isRead ? '1' : '.45'};">
-                <p style="margin:0 0 8px; font-size:1.125rem; line-height:1.625; color:var(--text);">${esc(p.kazakh)}</p>
-                ${showTranslation ? `<p style="margin:0; line-height:1.625; color:var(--muted);">${esc(p.russian)}</p>` : ``}
-              </div>
-            `;
-            }).join('')}
+                <div id="readingP${idx}" style="padding-bottom:16px; border-bottom:1px solid var(--border2); ${isLast ? "border-bottom:0; padding-bottom:0;" : ""}; opacity:${isRead ? "1" : ".45"};">
+                  <p style="margin:0 0 8px; font-size:1.125rem; line-height:1.625; color:var(--text);">${esc(p.kazakh)}</p>
+                  ${showTranslation ? `<p style="margin:0; line-height:1.625; color:var(--muted);">${esc(p.russian)}</p>` : ``}
+                </div>
+              `;
+            }).join("")}
           </div>
 
           <div class="panel">
             <h3 class="panel__title" style="margin-bottom:16px;">Вопросы для понимания</h3>
             <div style="display:flex; flex-direction:column; gap:12px;">
               ${[
-                'Қайда тұрады Айдос? (Где живет Айдос?)',
-                'Әкесі кім? (Кто его отец?)',
-                'Неше апасы бар? (Сколько у него сестер?)',
-                'Олар қайда демалысқа барады? (Куда они ездят в отпуск?)'
+                "Қайда тұрады Айдос? (Где живет Айдос?)",
+                "Әкесі кім? (Кто его отец?)",
+                "Неше апасы бар? (Сколько у него сестер?)",
+                "Олар қайда демалысқа барады? (Куда они ездят в отпуск?)"
             ].map((q, i) => `
                 <div style="display:flex; align-items:flex-start; gap:12px;">
                   <div style="width:24px; height:24px; border-radius:999px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:.875rem;">
-                    ${i+1}
+                    ${i + 1}
                   </div>
                   <p style="margin:0; color:var(--text);">${esc(q)}</p>
                 </div>
-              `).join('')}
+              `).join("")}
             </div>
           </div>
 
@@ -755,27 +795,25 @@
                   <p style="margin:0; color:var(--text);">${esc(w.kz)}</p>
                   <p style="margin:4px 0 0; color:var(--muted); font-size:.875rem;">${esc(w.ru)}</p>
                 </div>
-              `).join('')}
+              `).join("")}
             </div>
           </div>
         </div>
       `;
 
-            // mimic hidden sm:inline text
-            const txt = modalBody.querySelector('.readingToggleText');
-            if (txt) txt.style.display = (window.innerWidth >= 640) ? 'inline' : 'none';
+            const txt = modalBody.querySelector(".readingToggleText");
+            if (txt) txt.style.display = (window.innerWidth >= 640) ? "inline" : "none";
 
-            // responsive vocab columns: sm 2, lg 3
-            const vocabEl = modalBody.querySelector('.readingVocab');
-            if (vocabEl){
-                if (window.innerWidth >= 1024) vocabEl.style.gridTemplateColumns = '1fr 1fr 1fr';
-                else if (window.innerWidth >= 640) vocabEl.style.gridTemplateColumns = '1fr 1fr';
-                else vocabEl.style.gridTemplateColumns = '1fr';
+            const vocabEl = modalBody.querySelector(".readingVocab");
+            if (vocabEl) {
+                if (window.innerWidth >= 1024) vocabEl.style.gridTemplateColumns = "1fr 1fr 1fr";
+                else if (window.innerWidth >= 640) vocabEl.style.gridTemplateColumns = "1fr 1fr";
+                else vocabEl.style.gridTemplateColumns = "1fr";
             }
 
-            const btn = document.getElementById('readingToggle');
-            if (btn){
-                btn.addEventListener('click', () => {
+            const btn = document.getElementById("readingToggle");
+            if (btn) {
+                btn.addEventListener("click", () => {
                     showTranslation = !showTranslation;
                     render();
                 });
@@ -784,10 +822,10 @@
 
         render();
 
-        // Кнопка "Продолжить" в чтении: отмечает следующий абзац как прочитанный
         setModalContinueAction(async () => {
             if (readIndex >= readingParagraphs.length) {
-                await defaultContinueAction();
+                setProgressUI(materialId, 100, { persist: true });
+                closeModal();
                 return;
             }
 
@@ -796,45 +834,42 @@
 
             const percent = clamp(Math.round((readIndex / readingParagraphs.length) * 100), 0, 100);
 
-            // Optimistic UI
-            if (modalProgressFill) modalProgressFill.style.width = `${percent}%`;
-            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${percent}%`;
-            cache.progressById[materialId] = percent;
             cache.wordsSavedByMaterial[materialId] = { ...wordsMap };
+            setProgressUI(materialId, percent, { persist: true });
 
             try { await saveLibraryState(materialId, { progress: percent, wordsSaved: wordsMap }); } catch (_) {}
 
             render();
             const el = document.getElementById(`readingP${Math.max(0, readIndex - 1)}`);
-            if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        }, 'Дальше');
+            if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+        }, "Дальше");
 
         const onResize = () => {
-            const txt = modalBody.querySelector('.readingToggleText');
-            if (txt) txt.style.display = (window.innerWidth >= 640) ? 'inline' : 'none';
+            const txt = modalBody.querySelector(".readingToggleText");
+            if (txt) txt.style.display = (window.innerWidth >= 640) ? "inline" : "none";
 
-            const vocabEl = modalBody.querySelector('.readingVocab');
+            const vocabEl = modalBody.querySelector(".readingVocab");
             if (!vocabEl) return;
-            if (window.innerWidth >= 1024) vocabEl.style.gridTemplateColumns = '1fr 1fr 1fr';
-            else if (window.innerWidth >= 640) vocabEl.style.gridTemplateColumns = '1fr 1fr';
-            else vocabEl.style.gridTemplateColumns = '1fr';
+            if (window.innerWidth >= 1024) vocabEl.style.gridTemplateColumns = "1fr 1fr 1fr";
+            else if (window.innerWidth >= 640) vocabEl.style.gridTemplateColumns = "1fr 1fr";
+            else vocabEl.style.gridTemplateColumns = "1fr";
         };
-        window.addEventListener('resize', onResize, { passive:true });
-        modal._cleanupReading = () => window.removeEventListener('resize', onResize);
+        window.addEventListener("resize", onResize, { passive: true });
+        modal._cleanupReading = () => window.removeEventListener("resize", onResize);
     }
 
-    function renderExerciseContent(){
-        const answers = {}; // id -> optionIndex
+    function renderExerciseContent() {
+        const answers = {};
         let submitted = false;
         let showExplanation = null;
 
-        function score(){
+        function score() {
             let correct = 0;
             exerciseQuestions.forEach(q => { if (answers[q.id] === q.correct) correct++; });
             return correct;
         }
 
-        function render(){
+        function render() {
             const canSubmit = Object.keys(answers).length === exerciseQuestions.length;
 
             modalBody.innerHTML = `
@@ -848,116 +883,70 @@
           </div>
 
           <div class="block" style="gap:20px;">
-            ${exerciseQuestions.map((q, idx) => {
-                return `
-                <div class="card">
-                  <div style="display:flex; gap:12px; margin-bottom:16px; align-items:flex-start;">
-                    <div style="width:32px; height:32px; border-radius:999px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                      ${idx + 1}
-                    </div>
-                    <p style="margin:0; font-size:1.125rem; color:var(--text);">${esc(q.question)}</p>
+            ${exerciseQuestions.map((q, idx) => `
+              <div class="card">
+                <div style="display:flex; gap:12px; margin-bottom:16px; align-items:flex-start;">
+                  <div style="width:32px; height:32px; border-radius:999px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    ${idx + 1}
                   </div>
-
-                  <div style="margin-left:44px; display:flex; flex-direction:column; gap:8px;">
-                    ${q.options.map((opt, oIdx) => {
-                    const selected = answers[q.id] === oIdx;
-                    const isCorrect = answers[q.id] === q.correct;
-                    const showCorrect = submitted && oIdx === q.correct;
-                    const showWrong = submitted && selected && !isCorrect;
-
-                    const border = showCorrect ? '#22c55e' : showWrong ? '#ef4444' : selected ? 'var(--primary)' : 'var(--border)';
-                    const bg = showCorrect ? '#f0fdf4' : showWrong ? '#fef2f2' : selected ? 'rgba(37,99,235,.05)' : '#fff';
-
-                    return `
-                        <button type="button"
-                          data-q="${q.id}" data-o="${oIdx}"
-                          ${submitted ? 'disabled' : ''}
-                          style="
-                            width:100%;
-                            text-align:left;
-                            padding:16px;
-                            border-radius:10px;
-                            border:2px solid ${border};
-                            background:${bg};
-                            cursor:${submitted ? 'default' : 'pointer'};
-                            transition: border-color .15s ease, background .15s ease;
-                          ">
-                          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-                            <span style="color:var(--text);">${esc(opt)}</span>
-                            ${submitted && showCorrect ? `<span style="color:#16a34a;">✔</span>` : ''}
-                            ${submitted && showWrong ? `<span style="color:#dc2626;">✖</span>` : ''}
-                          </div>
-                        </button>
-                      `;
-                }).join('')}
-                  </div>
-
-                  ${submitted ? `
-                    <div style="margin-left:44px; margin-top:16px;">
-                      <button type="button" data-exp="${q.id}"
-                        style="border:0; background:transparent; color:var(--primary); cursor:pointer; padding:0; display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:18px;">?</span>
-                        <span style="font-size:.875rem;">
-                          ${showExplanation === q.id ? 'Скрыть объяснение' : 'Показать объяснение'}
-                        </span>
-                      </button>
-                      ${showExplanation === q.id ? `
-                        <div style="margin-top:8px; padding:12px; background:var(--bg); border-radius:10px; color:var(--muted); font-size:.875rem;">
-                          ${esc(q.explanation)}
-                        </div>
-                      ` : ``}
-                    </div>
-                  ` : ``}
+                  <p style="margin:0; font-size:1.125rem; color:var(--text);">${esc(q.question)}</p>
                 </div>
-              `;
-            }).join('')}
+
+                <div style="margin-left:44px; display:flex; flex-direction:column; gap:8px;">
+                  ${q.options.map((opt, oIdx) => {
+                const selected = answers[q.id] === oIdx;
+                const isCorrect = answers[q.id] === q.correct;
+                const showCorrect = submitted && oIdx === q.correct;
+                const showWrong = submitted && selected && !isCorrect;
+                const border = showCorrect ? "#22c55e" : showWrong ? "#ef4444" : selected ? "var(--primary)" : "var(--border)";
+                const bg = showCorrect ? "#f0fdf4" : showWrong ? "#fef2f2" : selected ? "rgba(37,99,235,.05)" : "#fff";
+                return `
+                      <button type="button" data-q="${q.id}" data-o="${oIdx}" ${submitted ? "disabled" : ""} style="width:100%; text-align:left; padding:16px; border-radius:10px; border:2px solid ${border}; background:${bg}; cursor:${submitted ? "default" : "pointer"}; transition: border-color .15s ease, background .15s ease;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                          <span style="color:var(--text);">${esc(opt)}</span>
+                          ${submitted && showCorrect ? `<span style="color:#16a34a;">✔</span>` : ""}
+                          ${submitted && showWrong ? `<span style="color:#dc2626;">✖</span>` : ""}
+                        </div>
+                      </button>
+                    `;
+            }).join("")}
+                </div>
+
+                ${submitted ? `
+                  <div style="margin-left:44px; margin-top:16px;">
+                    <button type="button" data-exp="${q.id}" style="border:0; background:transparent; color:var(--primary); cursor:pointer; padding:0; display:flex; align-items:center; gap:8px;">
+                      <span style="font-size:18px;">?</span>
+                      <span style="font-size:.875rem;">
+                        ${showExplanation === q.id ? "Скрыть объяснение" : "Показать объяснение"}
+                      </span>
+                    </button>
+                    ${showExplanation === q.id ? `
+                      <div style="margin-top:8px; padding:12px; background:var(--bg); border-radius:10px; color:var(--muted); font-size:.875rem;">
+                        ${esc(q.explanation)}
+                      </div>
+                    ` : ""}
+                  </div>
+                ` : ""}
+              </div>
+            `).join("")}
           </div>
 
           <div class="box">
             ${!submitted ? `
-              <button type="button" id="exerciseSubmit"
-                ${canSubmit ? '' : 'disabled'}
-                style="
-                  width:100%;
-                  padding:12px 24px;
-                  border:0;
-                  border-radius:var(--r-md);
-                  background:var(--primary);
-                  color:#fff;
-                  font-weight:500;
-                  cursor:${canSubmit ? 'pointer' : 'not-allowed'};
-                  opacity:${canSubmit ? '1' : '.5'};
-                  transition:background .15s ease;
-                ">
+              <button type="button" id="exerciseSubmit" ${canSubmit ? "" : "disabled"} style="width:100%; padding:12px 24px; border:0; border-radius:var(--r-md); background:var(--primary); color:#fff; font-weight:500; cursor:${canSubmit ? "pointer" : "not-allowed"}; opacity:${canSubmit ? "1" : ".5"}; transition:background .15s ease;">
                 Проверить ответы
               </button>
             ` : `
               <div style="text-align:center; margin-bottom:16px;">
                 <h3 style="margin:0 0 8px; font-weight:500;">Результат</h3>
-                <div style="font-size:2.25rem; margin-bottom:8px;">${score() === exerciseQuestions.length ? '🎉' : '📊'}</div>
+                <div style="font-size:2.25rem; margin-bottom:8px;">${score() === exerciseQuestions.length ? "🎉" : "📊"}</div>
                 <p style="margin:0 0 4px; font-size:1.5rem; color:var(--primary); font-weight:500;">${score()} из ${exerciseQuestions.length}</p>
                 <p style="margin:0; color:var(--muted);">
-                  ${
-                score() === exerciseQuestions.length
-                    ? 'Отлично! Все ответы правильные!'
-                    : score() >= exerciseQuestions.length * 0.7
-                        ? 'Хорошо! Продолжайте в том же духе!'
-                        : 'Попробуйте еще раз!'
-            }
+                  ${score() === exerciseQuestions.length ? "Отлично! Все ответы правильные!" : score() >= exerciseQuestions.length * 0.7 ? "Хорошо! Продолжайте в том же духе!" : "Попробуйте еще раз!"}
                 </p>
               </div>
 
-              <button type="button" id="exerciseReset"
-                style="
-                  width:100%;
-                  padding:12px 24px;
-                  border:1px solid var(--border);
-                  border-radius:var(--r-md);
-                  background:var(--white);
-                  color:var(--text);
-                  font-weight:500;
-                  cursor:pointer;
-                ">
+              <button type="button" id="exerciseReset" style="width:100%; padding:12px 24px; border:1px solid var(--border); border-radius:var(--r-md); background:var(--white); color:var(--text); font-weight:500; cursor:pointer;">
                 Попробовать снова
               </button>
             `}
@@ -965,29 +954,28 @@
         </div>
       `;
 
-            // handlers
-            modalBody.querySelectorAll('[data-q][data-o]').forEach(btn => {
-                btn.addEventListener('click', () => {
+            modalBody.querySelectorAll("[data-q][data-o]").forEach(btn => {
+                btn.addEventListener("click", () => {
                     if (submitted) return;
-                    const qId = Number(btn.getAttribute('data-q'));
-                    const oId = Number(btn.getAttribute('data-o'));
+                    const qId = Number(btn.getAttribute("data-q"));
+                    const oId = Number(btn.getAttribute("data-o"));
                     answers[qId] = oId;
                     render();
                 });
             });
 
-            const submitBtn = document.getElementById('exerciseSubmit');
-            if (submitBtn){
-                submitBtn.addEventListener('click', () => {
+            const submitBtn = document.getElementById("exerciseSubmit");
+            if (submitBtn) {
+                submitBtn.addEventListener("click", () => {
                     if (!canSubmit) return;
                     submitted = true;
                     render();
                 });
             }
 
-            const resetBtn = document.getElementById('exerciseReset');
-            if (resetBtn){
-                resetBtn.addEventListener('click', () => {
+            const resetBtn = document.getElementById("exerciseReset");
+            if (resetBtn) {
+                resetBtn.addEventListener("click", () => {
                     Object.keys(answers).forEach(k => delete answers[k]);
                     submitted = false;
                     showExplanation = null;
@@ -995,9 +983,9 @@
                 });
             }
 
-            modalBody.querySelectorAll('[data-exp]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = Number(btn.getAttribute('data-exp'));
+            modalBody.querySelectorAll("[data-exp]").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const id = Number(btn.getAttribute("data-exp"));
                     showExplanation = (showExplanation === id) ? null : id;
                     render();
                 });
@@ -1007,25 +995,25 @@
         render();
     }
 
-    function renderModalContentByCategory(material){
-        // cleanup any previous modal-specific listeners
+    function renderModalContentByCategory(material) {
         if (modal._cleanupWords) { modal._cleanupWords(); modal._cleanupWords = null; }
         if (modal._cleanupReading) { modal._cleanupReading(); modal._cleanupReading = null; }
+        detachScrollProgress();
 
-        switch (material.category){
-            case 'Диалоги': return renderDialogContent();
-            case 'Грамматика': return renderGrammarContent();
-            case 'Слова': return renderWordsContent();
-            case 'Чтение': return renderReadingContent();
-            case 'Упражнения': return renderExerciseContent();
-            default: return renderDialogContent();
+        switch (material.category) {
+            case "Диалоги": renderDialogContent(); break;
+            case "Грамматика": renderGrammarContent(); break;
+            case "Слова": renderWordsContent(); break;
+            case "Чтение": renderReadingContent(); break;
+            case "Упражнения": renderExerciseContent(); break;
+            default: renderDialogContent(); break;
         }
+
+        attachScrollProgress(material);
     }
 
-    function openModal(material){
+    function openModal(material) {
         state.selected = material;
-
-
         saveLibraryState(String(material.id), {}).catch(() => {});
 
         modalEmoji.textContent = material.icon;
@@ -1035,47 +1023,44 @@
         modalTitle.textContent = material.title;
         modalDesc.textContent = material.description;
 
-
         const p = getProgress(material.id);
+        setCompletedUI(p >= 100);
         if (modalProgressFill) modalProgressFill.style.width = `${p}%`;
         if (modalProgressText) modalProgressText.textContent = `Прогресс: ${p}%`;
 
-        if (modalSaveBtn){
+        if (modalSaveBtn) {
             const saved = isSaved(material.id);
-            modalSaveBtn.setAttribute('aria-pressed', saved ? 'true' : 'false');
-            const t = modalSaveBtn.querySelector('.material-modal__foot-text');
-            if (t) t.textContent = saved ? 'Сохранено' : 'Сохранить';
+            modalSaveBtn.setAttribute("aria-pressed", saved ? "true" : "false");
+            const t = modalSaveBtn.querySelector(".material-modal__foot-text");
+            if (t) t.textContent = saved ? "Сохранено" : "Сохранить";
         }
 
-
         configureModalContinue(material);
-
         renderModalContentByCategory(material);
 
         modal.hidden = false;
         lockScroll(true);
-
-
         renderContinue();
     }
 
-    function closeModal(){
+    function closeModal() {
         state.selected = null;
         modal.hidden = true;
         lockScroll(false);
 
-        // cleanup if needed
         if (modal._cleanupWords) { modal._cleanupWords(); modal._cleanupWords = null; }
         if (modal._cleanupReading) { modal._cleanupReading(); modal._cleanupReading = null; }
+        detachScrollProgress();
+        modal._onContinue = null;
+        modal._defaultContinueLabel = null;
+        modal._isCompleted = false;
     }
 
-    // Modal events
-    modalClose.addEventListener('click', closeModal);
+    if (modalClose) modalClose.addEventListener("click", closeModal);
+    if (modalBackBtn) modalBackBtn.addEventListener("click", closeModal);
 
-    if (modalBackBtn) modalBackBtn.addEventListener('click', closeModal);
-
-    if (modalSaveBtn){
-        modalSaveBtn.addEventListener('click', async () => {
+    if (modalSaveBtn) {
+        modalSaveBtn.addEventListener("click", async () => {
             if (!state.selected) return;
             const id = String(state.selected.id);
             const nextSaved = !isSaved(id);
@@ -1084,63 +1069,60 @@
             await saveLibraryState(id, { isSaved: nextSaved });
             modalSaveBtn.disabled = false;
 
-            modalSaveBtn.setAttribute('aria-pressed', nextSaved ? 'true' : 'false');
-            const t = modalSaveBtn.querySelector('.material-modal__foot-text');
-            if (t) t.textContent = nextSaved ? 'Сохранено' : 'Сохранить';
+            modalSaveBtn.setAttribute("aria-pressed", nextSaved ? "true" : "false");
+            const t = modalSaveBtn.querySelector(".material-modal__foot-text");
+            if (t) t.textContent = nextSaved ? "Сохранено" : "Сохранить";
 
             renderContinue();
         });
     }
 
-    if (modalContinueBtn){
-        modalContinueBtn.addEventListener('click', async () => {
+    if (modalContinueBtn) {
+        modalContinueBtn.addEventListener("click", async () => {
             if (!state.selected) return;
             modalContinueBtn.disabled = true;
             try {
-                if (typeof modal._onContinue === 'function') {
-                    await modal._onContinue();
-                } else {
-                    await defaultContinueAction();
-                }
+                if (typeof modal._onContinue === "function") await modal._onContinue();
+                else await defaultContinueAction();
             } catch (_) {
-                // даже если что-то упало, не блокируем UI
                 try { await defaultContinueAction(); } catch (_) {}
             } finally {
                 modalContinueBtn.disabled = false;
             }
         });
     }
-    modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModal();
-    });
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.hidden) closeModal();
+
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal && !modal.hidden) closeModal();
     });
 
-    // Search
-    if (searchInput){
-        searchInput.addEventListener('input', () => {
-            state.query = searchInput.value || '';
+    if (searchInput) {
+        searchInput.addEventListener("input", () => {
+            state.query = searchInput.value || "";
             renderAll();
         });
     }
 
-    function renderAll(){
+    function renderAll() {
         renderTabs();
         renderContinue();
         renderSkeleton();
         renderGrid();
     }
 
-    async function loadMaterials(){
+    async function loadMaterials() {
         state.isLoading = true;
         renderAll();
 
-        const r = await apiFetch('/api/library/materials', { method: 'GET' });
-        if (r && r.data && r.data.success){
+        const r = await apiFetch("/api/library/materials", { method: "GET" });
+        if (r && r.data && r.data.success) {
             materials = Array.isArray(r.data.materials) ? r.data.materials : [];
-
-            // hydrate cache
             cache.lastOpenedId = r.data.lastOpenedId || null;
             cache.progressById = {};
             cache.savedById = {};
@@ -1149,7 +1131,7 @@
                 const id = String(m.id);
                 cache.progressById[id] = clamp(Number(m.progress || 0), 0, 100);
                 cache.savedById[id] = !!m.isSaved;
-                cache.wordsSavedByMaterial[id] = (m.wordsSaved && typeof m.wordsSaved === 'object') ? m.wordsSaved : {};
+                cache.wordsSavedByMaterial[id] = (m.wordsSaved && typeof m.wordsSaved === "object") ? m.wordsSaved : {};
             });
         }
 
@@ -1157,6 +1139,5 @@
         renderAll();
     }
 
-    // Init
     loadMaterials();
 })();
