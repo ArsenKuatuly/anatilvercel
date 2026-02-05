@@ -1,33 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Panel</title>
-    <link rel="stylesheet" href="/css/admin.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnaTil Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/admin.css" />
 </head>
-<body>
+<body class="admin">
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
+<div class="admin__app" id="adminApp">
+    <header class="admin__mheader" id="mobileHeader">
+        <div class="admin__mheader-inner">
+            <h1 class="admin__mheader-title">AnaTil Admin</h1>
+            <button class="admin__iconbtn" id="mobileMenuBtn" aria-label="Меню">
+                <span class="admin__icon" id="mobileMenuIcon"></span>
+            </button>
+        </div>
+    </header>
 
+    <div class="admin__overlay" id="overlay" hidden></div>
+    <div class="admin__drawer" id="drawer" hidden></div>
 
-<div class="admin">
+    <div class="admin__layout">
+        <aside class="sidebar" id="desktopSidebar"></aside>
 
-    <aside class="admin__sidebar">
-        <h2>Админка</h2>
-        <button data-tab="users">Пользователи</button>
-        <button data-tab="courses">Курсы</button>
-        <button data-tab="tasks">Задания</button>
-        <button data-tab="stats">Статистика</button>
-        <button onclick="location.href='/'">На сайт</button>
-    </aside>
-
-
-    <main class="admin__content" id="content">
-        Загрузка...
-    </main>
-
+        <main class="admin__main">
+            <div class="admin__container">
+                <div id="content"></div>
+            </div>
+        </main>
+    </div>
 </div>
 
-<script src="/js/admin.js   "></script>
+<script src="/js/authFetch.js"></script>
+<script src="/js/admin.js"></script>
 </body>
 </html>
