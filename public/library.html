@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Библиотека</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Библиотека</title>
     <link rel="stylesheet" href="/css/headerdash.css" />
-  <link rel="stylesheet" href="/css/library.css" />
+    <link rel="stylesheet" href="/css/library.css" />
     <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body>
@@ -23,9 +23,7 @@
         </nav>
 
         <div class="dash-header__actions">
-            <a href="/admin" id="adminBtn" style="display:none">
-                ⚙ Админ панель
-            </a>
+            <a href="/admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
             <a class="dash-header__btn" href="/profile.html">Профиль</a>
 
             <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
@@ -33,7 +31,6 @@
             </button>
         </div>
     </div>
-
 
     <div class="dash-header__mobile" data-mobile hidden>
         <a class="dash-header__m-link" href="/courses">Курсы</a>
@@ -54,13 +51,12 @@
 
             <div class="library__controls">
                 <div class="library__search">
-            <span class="library__search-icon" aria-hidden="true">
-
-              <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="7"></circle>
-                <path d="M21 21l-4.3-4.3"></path>
-              </svg>
-            </span>
+          <span class="library__search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"></circle>
+              <path d="M21 21l-4.3-4.3"></path>
+            </svg>
+          </span>
                     <input
                             class="library__search-input"
                             id="searchInput"
@@ -77,12 +73,10 @@
         </div>
     </div>
 
-
     <main class="library__main">
         <div class="library__container library__container--main">
 
             <section class="library__continue" id="continueBlock"></section>
-
 
             <section class="library__content">
                 <div class="library__grid" id="materialsGrid"></div>
@@ -91,7 +85,6 @@
             </section>
         </div>
     </main>
-
 
     <div class="material-modal" id="materialModal" hidden>
         <div class="material-modal__overlay" id="modalOverlay" role="presentation">
@@ -111,7 +104,6 @@
                         </div>
 
                         <button class="material-modal__close" id="modalClose" type="button" aria-label="Закрыть">
-
                             <svg viewBox="0 0 24 24" class="i" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M18 6L6 18"></path>
                                 <path d="M6 6l12 12"></path>
@@ -121,17 +113,16 @@
 
                     <div class="material-modal__progress">
                         <div class="material-modal__bar">
-                            <div class="material-modal__bar-fill" style="width:35%"></div>
+                            <div class="material-modal__bar-fill" id="modalProgressFill" style="width:0%"></div>
                         </div>
-                        <p class="material-modal__progress-text">Прогресс: 35%</p>
+                        <p class="material-modal__progress-text" id="modalProgressText">Прогресс: 0%</p>
                     </div>
                 </div>
 
                 <div class="material-modal__body" id="modalBody"></div>
 
                 <div class="material-modal__foot">
-                    <button class="btn btn--gray" type="button">
-
+                    <button class="btn btn--gray" id="modalBackBtn" type="button">
                         <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M15 18l-6-6 6-6"></path>
                         </svg>
@@ -139,8 +130,7 @@
                     </button>
 
                     <div class="material-modal__foot-right">
-                        <button class="btn btn--outline" type="button">
-
+                        <button class="btn btn--outline" id="modalSaveBtn" type="button">
                             <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                                 <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 0 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
@@ -148,9 +138,8 @@
                             <span class="material-modal__foot-text">Сохранить</span>
                         </button>
 
-                        <button class="btn btn--blue" type="button">
+                        <button class="btn btn--blue" id="modalContinueBtn" type="button">
                             <span>Продолжить</span>
-
                             <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M9 18l6-6-6-6"></path>
                             </svg>
@@ -162,7 +151,6 @@
         </div>
     </div>
 </div>
-
 
 <script src="/js/authFetch.js"></script>
 <script src="/js/library.js"></script>

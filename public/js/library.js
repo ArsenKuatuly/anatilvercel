@@ -1025,8 +1025,7 @@
     function openModal(material){
         state.selected = material;
 
-        // помечаем как последнее открытое (в Supabase) — прогресс не меняем
-        // (обновится updated_at и lastOpenedId в API-ответе, а UI обновим из кеша)
+
         saveLibraryState(String(material.id), {}).catch(() => {});
 
         modalEmoji.textContent = material.icon;
@@ -1036,7 +1035,7 @@
         modalTitle.textContent = material.title;
         modalDesc.textContent = material.description;
 
-        // прогресс + кнопка "сохранить"
+
         const p = getProgress(material.id);
         if (modalProgressFill) modalProgressFill.style.width = `${p}%`;
         if (modalProgressText) modalProgressText.textContent = `Прогресс: ${p}%`;
@@ -1048,7 +1047,7 @@
             if (t) t.textContent = saved ? 'Сохранено' : 'Сохранить';
         }
 
-        // настроим поведение кнопки "Продолжить" (может зависеть от раздела)
+
         configureModalContinue(material);
 
         renderModalContentByCategory(material);
@@ -1056,7 +1055,7 @@
         modal.hidden = false;
         lockScroll(true);
 
-        // Обновим continue-блок сразу
+
         renderContinue();
     }
 
