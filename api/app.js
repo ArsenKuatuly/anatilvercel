@@ -39,6 +39,24 @@ const myAchievements = require("../server/routes/achievements/my");
 const libraryMaterials = require("../server/routes/library/materials.js");
 const libraryState = require("../server/routes/library/state.js");
 
+// ===== ADMIN =====
+const adminUsers = require("../server/routes/admin/users.js");
+const adminUserUpdate = require("../server/routes/admin/userUpdate.js");
+const adminUserReset = require("../server/routes/admin/userReset.js");
+
+const adminCourses = require("../server/routes/admin/courses.js");
+const adminCourseModules = require("../server/routes/admin/courseModules.js");
+const adminModuleLessons = require("../server/routes/admin/moduleLessons.js");
+const adminLessonUpdate = require("../server/routes/admin/lessonUpdate.js");
+
+const adminTasks = require("../server/routes/admin/tasks.js");
+const adminTaskGet = require("../server/routes/admin/taskGet.js");
+const adminTaskUpdate = require("../server/routes/admin/taskUpdate.js");
+const adminQuestionUpdate = require("../server/routes/admin/questionUpdate.js");
+
+const adminLibraryMaterials = require("../server/routes/admin/libraryMaterials.js");
+const adminLibraryMaterialUpdate = require("../server/routes/admin/libraryMaterialUpdate.js");
+
 
 // ===== tiny router =====
 function matchPath(pathname, pattern) {
@@ -115,6 +133,97 @@ module.exports = async (req, res) => {
         // ===== LIBRARY =====
         if (path === "/api/library/materials" && method === "GET") return libraryMaterials(req, res);
         if (path === "/api/library/state" && method === "POST") return libraryState(req, res);
+
+        // ===== ADMIN =====
+        if (path === "/api/admin/users" && method === "GET") return adminUsers(req, res);
+        if (path === "/api/admin/courses" && method === "GET") return adminCourses(req, res);
+        if (path === "/api/admin/tasks" && method === "GET") return adminTasks(req, res);
+        if (path === "/api/admin/library/materials" && method === "GET") return adminLibraryMaterials(req, res);
+
+        // /api/admin/users/:id
+        {
+            const p = matchPath(path, "/api/admin/users/:id");
+            if (p && method === "PATCH") {
+                req.query = req.query || {};
+                req.query.id = p.id;
+                return adminUserUpdate(req, res);
+            }
+        }
+
+        // /api/admin/users/:id/reset
+        {
+            const p = matchPath(path, "/api/admin/users/:id/reset");
+            if (p && method === "POST") {
+                req.query = req.query || {};
+                req.query.id = p.id;
+                return adminUserReset(req, res);
+            }
+        }
+
+        // /api/admin/courses/:courseId/modules
+        {
+            const p = matchPath(path, "/api/admin/courses/:courseId/modules");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.courseId = p.courseId;
+                return adminCourseModules(req, res);
+            }
+        }
+
+        // /api/admin/modules/:moduleId/lessons
+        {
+            const p = matchPath(path, "/api/admin/modules/:moduleId/lessons");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.moduleId = p.moduleId;
+                return adminModuleLessons(req, res);
+            }
+        }
+
+        // /api/admin/lessons/:lessonId
+        {
+            const p = matchPath(path, "/api/admin/lessons/:lessonId");
+            if (p && method === "PATCH") {
+                req.query = req.query || {};
+                req.query.lessonId = p.lessonId;
+                return adminLessonUpdate(req, res);
+            }
+        }
+
+        // /api/admin/tasks/:taskId
+        {
+            const p = matchPath(path, "/api/admin/tasks/:taskId");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.taskId = p.taskId;
+                return adminTaskGet(req, res);
+            }
+            if (p && method === "PATCH") {
+                req.query = req.query || {};
+                req.query.taskId = p.taskId;
+                return adminTaskUpdate(req, res);
+            }
+        }
+
+        // /api/admin/questions/:id
+        {
+            const p = matchPath(path, "/api/admin/questions/:id");
+            if (p && method === "PATCH") {
+                req.query = req.query || {};
+                req.query.id = p.id;
+                return adminQuestionUpdate(req, res);
+            }
+        }
+
+        // /api/admin/library/materials/:id
+        {
+            const p = matchPath(path, "/api/admin/library/materials/:id");
+            if (p && method === "PATCH") {
+                req.query = req.query || {};
+                req.query.id = p.id;
+                return adminLibraryMaterialUpdate(req, res);
+            }
+        }
 
 
         // /api/lesson/:id
