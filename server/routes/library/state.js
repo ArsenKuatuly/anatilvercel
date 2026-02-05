@@ -60,8 +60,9 @@ module.exports = async (req, res) => {
             wordsSaved: nextWordsSaved
         });
     } catch (e) {
-        const msg = String(e && e.message ? e.message : "Server error");
+        console.error("[library/state] error:", e);
+        const msg = String(e?.message || e || "Server error");
         const code = msg.toLowerCase().includes("unauthorized") ? 401 : 500;
-        return res.status(code).json({ success: false, message: code === 401 ? "Unauthorized" : "Server error" });
+        return res.status(code).json({ success: false, message: msg });
     }
 };
