@@ -118,6 +118,56 @@
         document.body.style.overflow = locked ? 'hidden' : '';
     }
 
+    // ===== Continue button behavior (per-material) =====
+    function setContinueButtonLabel(label){
+        if (!modalContinueBtn) return;
+        const span = modalContinueBtn.querySelector('span');
+        if (span) span.textContent = String(label || 'Продолжить');
+    }
+
+    // category-specific action can be attached by renderers
+    // signature: async () => void
+    function setModalContinueAction(fn, label){
+        modal._onContinue = typeof fn === 'function' ? fn : null;
+        setContinueButtonLabel(label || 'Продолжить');
+    }
+
+    async function defaultContinueAction(){
+        if (!state.selected) return;
+        const id = String(state.selected.id);
+        const cur = getProgress(id);
+        const base = (cur === 0 ? 35 : cur);
+        const bumped = clamp(base + 15, 0, 100);
+
+        // Optimistic UI (даже если API упадёт)
+        if (modalProgressFill) modalProgressFill.style.width = `${bumped}%`;
+        if (modalProgressText) modalProgressText.textContent = `Прогресс: ${bumped}%`;
+        cache.progressById[id] = bumped;
+
+        try { await saveLibraryState(id, { progress: bumped }); } catch (_) {}
+        renderContinue();
+    }
+
+    function configureModalContinue(material){
+        // reset to default
+        setModalContinueAction(null, 'Продолжить');
+
+        const cat = material?.category || '';
+        if (cat === 'Слова'){
+            // В словах: "Продолжить" = сохранить следующее не сохранённое слово
+            setContinueButtonLabel('Следующее слово');
+            return; // renderWordsContent установит точный handler
+        }
+
+        if (cat === 'Чтение'){
+            setContinueButtonLabel('Дальше');
+            return; // renderReadingContent установит handler
+        }
+
+        // остальные категории
+        setModalContinueAction(defaultContinueAction, 'Продолжить');
+    }
+
     // Tabs
     function renderTabs(){
         tabsRow.innerHTML = categories.map((c) => `
@@ -421,6 +471,8 @@
         }
 
         render();
+
+        // (кнопка "Продолжить" для этого раздела настраивается внутри соответствующих рендеров)
     }
 
     function renderGrammarContent(){
@@ -583,6 +635,35 @@
 
         render();
 
+        // Кнопка "Продолжить" в словах: сохраняет следующее не сохранённое слово
+        setModalContinueAction(async () => {
+            const nextIdx = words.findIndex(w => !w.saved);
+            if (nextIdx === -1) {
+                if (modalProgressFill) modalProgressFill.style.width = `100%`;
+                if (modalProgressText) modalProgressText.textContent = `Прогресс: 100%`;
+                cache.progressById[String(materialId)] = 100;
+                try { await saveLibraryState(String(materialId), { progress: 100 }); } catch (_) {}
+                renderContinue();
+                return;
+            }
+
+            words[nextIdx].saved = true;
+            wordsSavedMap[words[nextIdx].kazakh] = true;
+
+            const savedCount = words.filter(w => w.saved).length;
+            const percent = clamp(Math.round((savedCount / words.length) * 100), 0, 100);
+
+            // Optimistic UI
+            if (modalProgressFill) modalProgressFill.style.width = `${percent}%`;
+            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${percent}%`;
+            cache.progressById[String(materialId)] = percent;
+            cache.wordsSavedByMaterial[String(materialId)] = { ...wordsSavedMap };
+
+            try { await saveLibraryState(String(materialId), { progress: percent, wordsSaved: wordsSavedMap }); } catch (_) {}
+            render();
+            renderContinue();
+        }, 'Следующее слово');
+
         // keep simple resize handling just for 2-col switch
         const onResize = () => {
             const gridEl = modalBody.querySelector('.words-grid');
@@ -597,6 +678,9 @@
 
     function renderReadingContent(){
         let showTranslation = false;
+        const materialId = String(state.selected?.id || 'reading');
+        let wordsMap = { ...getWordsSavedMap(materialId) };
+        let readIndex = clamp(Number(wordsMap.__readingIndex || 0) || 0, 0, readingParagraphs.length);
 
         const eye = `
       <svg viewBox="0 0 24 24" class="i i--sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -626,13 +710,22 @@
             </button>
           </div>
 
+          <div class="box" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <p style="margin:0; color:var(--muted); font-size:.875rem;">Прочитано ${readIndex} из ${readingParagraphs.length}</p>
+            <span class="badge badge--blueSoft">${Math.round((readIndex / readingParagraphs.length) * 100)}%</span>
+          </div>
+
           <div class="card" style="padding:20px;">
-            ${readingParagraphs.map((p, idx) => `
-              <div style="padding-bottom:16px; border-bottom:1px solid var(--border2); ${idx === readingParagraphs.length-1 ? 'border-bottom:0; padding-bottom:0;' : ''}">
+            ${readingParagraphs.map((p, idx) => {
+                const isRead = idx < readIndex;
+                const isLast = idx === readingParagraphs.length - 1;
+                return `
+              <div id="readingP${idx}" style="padding-bottom:16px; border-bottom:1px solid var(--border2); ${isLast ? 'border-bottom:0; padding-bottom:0;' : ''}; opacity:${isRead ? '1' : '.45'};">
                 <p style="margin:0 0 8px; font-size:1.125rem; line-height:1.625; color:var(--text);">${esc(p.kazakh)}</p>
                 ${showTranslation ? `<p style="margin:0; line-height:1.625; color:var(--muted);">${esc(p.russian)}</p>` : ``}
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
 
           <div class="panel">
@@ -690,6 +783,31 @@
         }
 
         render();
+
+        // Кнопка "Продолжить" в чтении: отмечает следующий абзац как прочитанный
+        setModalContinueAction(async () => {
+            if (readIndex >= readingParagraphs.length) {
+                await defaultContinueAction();
+                return;
+            }
+
+            readIndex = clamp(readIndex + 1, 0, readingParagraphs.length);
+            wordsMap.__readingIndex = readIndex;
+
+            const percent = clamp(Math.round((readIndex / readingParagraphs.length) * 100), 0, 100);
+
+            // Optimistic UI
+            if (modalProgressFill) modalProgressFill.style.width = `${percent}%`;
+            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${percent}%`;
+            cache.progressById[materialId] = percent;
+            cache.wordsSavedByMaterial[materialId] = { ...wordsMap };
+
+            try { await saveLibraryState(materialId, { progress: percent, wordsSaved: wordsMap }); } catch (_) {}
+
+            render();
+            const el = document.getElementById(`readingP${Math.max(0, readIndex - 1)}`);
+            if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 'Дальше');
 
         const onResize = () => {
             const txt = modalBody.querySelector('.readingToggleText');
@@ -930,6 +1048,9 @@
             if (t) t.textContent = saved ? 'Сохранено' : 'Сохранить';
         }
 
+        // настроим поведение кнопки "Продолжить" (может зависеть от раздела)
+        configureModalContinue(material);
+
         renderModalContentByCategory(material);
 
         modal.hidden = false;
@@ -975,19 +1096,19 @@
     if (modalContinueBtn){
         modalContinueBtn.addEventListener('click', async () => {
             if (!state.selected) return;
-            const id = String(state.selected.id);
-
-            const cur = getProgress(id);
-            const next = (cur === 0 ? 35 : cur);
-            const bumped = clamp(next + 15, 0, 100);
-
             modalContinueBtn.disabled = true;
-            await saveLibraryState(id, { progress: bumped });
-            modalContinueBtn.disabled = false;
-
-            if (modalProgressFill) modalProgressFill.style.width = `${bumped}%`;
-            if (modalProgressText) modalProgressText.textContent = `Прогресс: ${bumped}%`;
-            renderContinue();
+            try {
+                if (typeof modal._onContinue === 'function') {
+                    await modal._onContinue();
+                } else {
+                    await defaultContinueAction();
+                }
+            } catch (_) {
+                // даже если что-то упало, не блокируем UI
+                try { await defaultContinueAction(); } catch (_) {}
+            } finally {
+                modalContinueBtn.disabled = false;
+            }
         });
     }
     modalOverlay.addEventListener('click', (e) => {
