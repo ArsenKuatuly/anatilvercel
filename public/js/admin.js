@@ -29,7 +29,7 @@
   const usersState = { loading: true, items: [] };
   const coursesState = {
     loading: true,
-    view: "courses", // courses | modules | lessons
+    view: "courses",
     selectedCourse: null,
     selectedModule: null,
     currentLessonId: null,
@@ -39,17 +39,17 @@
   };
   const tasksState = {
     loading: true,
-    view: "list", // list | edit
+    view: "list",
     selectedTask: null,
     tasks: [],
     questions: []
   };
   const libraryState = {
     loading: true,
-    view: "list", // list | edit
+    view: "list",
     selectedMaterial: null,
     materials: [],
-    // for UI only
+
     types: ["Слова", "Грамматика", "Чтение", "Диалоги", "Упражнения"],
     levels: ["A1", "A2", "B1", "B2", "C1", "C2"]
   };
@@ -277,7 +277,7 @@
         </nav>
 
         <div class="sidebar__bottom">
-          <a class="sidebar__link" href="/">
+          <a class="sidebar__link" href="/dashboard.html">
             ${icons.ext}
             На сайт
           </a>
