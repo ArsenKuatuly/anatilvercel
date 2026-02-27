@@ -299,7 +299,7 @@
   border-radius: 14px;
   background: var(--auth-blue);
   color: var(--auth-white);
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   transition: transform .05s ease, background .2s ease;
 }
