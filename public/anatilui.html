@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Практика</title>
+  <link rel="stylesheet" href="/css/anatilui.css" />
+</head>
+
+<body>
+  <div class="app" id="app">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="container header__container">
+        <div class="header__left">
+          <h1 class="header__title">AI Практика</h1>
+          <p class="header__subtitle">Тренируй казахский с ИИ: ошибки, диалоги, задания</p>
+        </div>
+
+        <div class="header__right">
+          <div class="badge badge--outline" id="messagesBadge">
+            <span class="badge__label badge__label--desktop">Сообщений:</span>
+            <span class="badge__value"><span class="badge__strong" id="messagesNow">12</span>/<span id="messagesMax">50</span></span>
+          </div>
+
+          <button class="button button--outline header__history" id="historyOpenBtn" type="button">
+            <span class="icon icon--scroll" aria-hidden="true"></span>
+            <span class="button__text button__text--desktop">История</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- HISTORY SHEET -->
+    <div class="sheet" id="historySheet" aria-hidden="true">
+      <div class="sheet__backdrop" id="historyBackdrop"></div>
+      <aside class="sheet__panel" role="dialog" aria-modal="true" aria-label="История практик">
+        <div class="sheet__head">
+          <h2 class="sheet__title">История практик</h2>
+          <button class="button button--ghost sheet__close" id="historyCloseBtn" type="button" aria-label="Закрыть">✕</button>
+        </div>
+
+        <div class="sheet__content" id="historyList">
+          <!-- JS renders items -->
+        </div>
+      </aside>
+    </div>
+
+    <main class="main">
+      <!-- Back bar (only on mode routes) -->
+      <div class="container main__backbar" id="backBar" hidden>
+        <button class="button button--ghost backbar__btn" id="backBtn" type="button">
+          <span class="icon icon--arrow-left" aria-hidden="true"></span>
+          Назад к выбору режима
+        </button>
+      </div>
+
+      <!-- HOME -->
+      <section class="container view view--home" id="viewHome" data-view="home">
+        <div class="home">
+          <div class="home__block">
+            <h2 class="home__heading">Выберите режим практики</h2>
+
+            <div class="modes" id="modesGrid">
+              <!-- Mode cards (static, handled by JS) -->
+              <button class="card mode mode--clickable" data-route="sentence" type="button">
+                <div class="mode__inner">
+                  <div class="mode__icon">✍️</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Проверка предложения</h3>
+                    <p class="mode__desc">Напиши фразу — я исправлю и объясню</p>
+                  </div>
+                </div>
+              </button>
+
+              <button class="card mode mode--clickable" data-route="dialog" type="button">
+                <div class="mode__inner">
+                  <div class="mode__icon">🗣</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Диалог</h3>
+                    <p class="mode__desc">Кафе / Магазин / Университет / Собеседование</p>
+                  </div>
+                </div>
+              </button>
+
+              <button class="card mode mode--clickable" data-route="tutor" type="button">
+                <div class="mode__inner">
+                  <div class="mode__icon">🧑‍🏫</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Репетитор по уроку</h3>
+                    <p class="mode__desc">Задай вопрос по текущему уроку или теме</p>
+                  </div>
+                </div>
+              </button>
+
+              <button class="card mode mode--disabled" type="button" disabled>
+                <span class="mode__badge">Скоро</span>
+                <div class="mode__inner">
+                  <div class="mode__icon">📝</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Генерация упражнений</h3>
+                    <p class="mode__desc">Получи персональные задания для практики</p>
+                  </div>
+                </div>
+              </button>
+
+              <button class="card mode mode--disabled" type="button" disabled>
+                <span class="mode__badge">Скоро</span>
+                <div class="mode__inner">
+                  <div class="mode__icon">📚</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Словарь</h3>
+                    <p class="mode__desc">Узнай перевод и примеры использования слов</p>
+                  </div>
+                </div>
+              </button>
+
+              <button class="card mode mode--disabled" type="button" disabled>
+                <span class="mode__badge">Скоро</span>
+                <div class="mode__inner">
+                  <div class="mode__icon">🎧</div>
+                  <div class="mode__text">
+                    <h3 class="mode__title">Аудирование</h3>
+                    <p class="mode__desc">Практикуй восприятие речи на слух</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="home__stats">
+            <section class="card stat">
+              <h3 class="stat__title">Прогресс сессии</h3>
+
+              <div class="stat__grid">
+                <div class="stat__item">
+                  <div class="stat__icon stat__icon--blue" aria-hidden="true">
+                    <span class="icon icon--clock"></span>
+                  </div>
+                  <div class="stat__num" id="minutesToday">14</div>
+                  <div class="stat__label">минут</div>
+                </div>
+
+                <div class="stat__item">
+                  <div class="stat__icon stat__icon--amber" aria-hidden="true">
+                    <span class="icon icon--check"></span>
+                  </div>
+                  <div class="stat__num" id="errorsCorrected">9</div>
+                  <div class="stat__label">ошибок</div>
+                </div>
+
+                <div class="stat__item">
+                  <div class="stat__icon stat__icon--green" aria-hidden="true">
+                    <span class="icon icon--book"></span>
+                  </div>
+                  <div class="stat__num" id="newWords">6</div>
+                  <div class="stat__label">слов</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card achievements">
+              <div class="achievements__head">
+                <span class="icon icon--award achievements__award" aria-hidden="true"></span>
+                <h3 class="achievements__title">Достижения</h3>
+              </div>
+
+              <div class="achievements__list" id="achievementsList">
+                <!-- JS renders -->
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- SENTENCE MODE -->
+      <section class="container view" id="viewSentence" data-view="sentence" hidden>
+        <div class="layout">
+          <aside class="card settings settings--sticky" id="sentenceSettings">
+            <h3 class="settings__title">Настройки</h3>
+
+            <div class="settings__group">
+              <label class="settings__label">Уровень</label>
+              <div class="chips" id="sentenceLevel">
+                <button class="chip chip--active" type="button" data-level="A1">A1</button>
+                <button class="chip" type="button" data-level="A2">A2</button>
+                <button class="chip" type="button" data-level="B1">B1</button>
+              </div>
+            </div>
+
+            <div class="settings__group">
+              <label class="settings__label">Сложность объяснений</label>
+              <div class="chips chips--col" id="sentenceComplexity">
+                <button class="chip chip--active chip--center" type="button" data-complexity="simple">Просто</button>
+                <button class="chip chip--center" type="button" data-complexity="detailed">Подробно</button>
+              </div>
+            </div>
+
+            <button class="button button--primary button--full" id="sentenceCheckBtn" type="button" disabled>
+              Проверить
+            </button>
+          </aside>
+
+          <div class="work">
+            <section class="card work__input">
+              <label class="work__label" for="sentenceTextarea">Ваше предложение на казахском</label>
+              <textarea class="textarea" id="sentenceTextarea" placeholder="Напишите предложение, которое хотите проверить..." rows="5"></textarea>
+            </section>
+
+            <section class="card work__loading" id="sentenceLoading" hidden>
+              <div class="loading">
+                <div class="spinner" aria-hidden="true"></div>
+                <p class="loading__text">Анализирую предложение...</p>
+              </div>
+            </section>
+
+            <section class="work__result" id="sentenceResult" hidden>
+              <!-- JS renders ResultCard -->
+            </section>
+
+            <section class="work__empty" id="sentenceEmpty">
+              <div class="empty">
+                <div class="empty__icon">✍️</div>
+                <h3 class="empty__title">Введите предложение</h3>
+                <p class="empty__desc">
+                  Напишите фразу на казахском языке, и я проверю её на ошибки и дам подробное объяснение
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- DIALOG MODE -->
+      <section class="container view" id="viewDialog" data-view="dialog" hidden>
+        <div class="layout">
+          <aside class="card settings settings--sticky settings--desktop" id="dialogSettings">
+            <h3 class="settings__title">Настройки диалога</h3>
+
+            <div class="settings__group">
+              <label class="settings__label">Сценарий</label>
+              <div class="chips chips--grid" id="dialogScenario">
+                <!-- JS renders -->
+              </div>
+            </div>
+
+            <div class="settings__group">
+              <label class="settings__label">Уровень</label>
+              <div class="chips" id="dialogLevel">
+                <button class="chip chip--active" type="button" data-level="A1">A1</button>
+                <button class="chip" type="button" data-level="A2">A2</button>
+                <button class="chip" type="button" data-level="B1">B1</button>
+              </div>
+            </div>
+
+            <div class="settings__group">
+              <label class="settings__label">Тон</label>
+              <div class="chips" id="dialogTone">
+                <button class="chip chip--active chip--center" type="button" data-tone="friendly">Дружелюбно</button>
+                <button class="chip chip--center" type="button" data-tone="formal">Официально</button>
+              </div>
+            </div>
+
+            <button class="button button--primary button--full" id="dialogStartBtn" type="button">
+              Начать диалог
+            </button>
+          </aside>
+
+          <div class="work">
+            <!-- mobile settings trigger -->
+            <div class="mobilebar">
+              <button class="button button--outline mobilebar__btn" id="dialogMobileSettingsBtn" type="button">
+                <span class="icon icon--settings" aria-hidden="true"></span>
+                Настройки
+              </button>
+            </div>
+
+            <section class="card chat">
+              <div class="chat__head">
+                <div class="chat__title">
+                  <span class="icon icon--message" aria-hidden="true"></span>
+                  Диалог
+                </div>
+                <button class="button button--ghost chat__hint" id="dialogHintBtn" type="button" title="Подсказка">
+                  <span class="icon icon--bulb" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div class="chat__body" id="dialogMessages">
+                <div class="empty empty--compact" id="dialogEmpty">
+                  <div class="empty__icon">🗣</div>
+                  <h3 class="empty__title">Начните диалог</h3>
+                  <p class="empty__desc">Выберите сценарий и нажмите “Начать диалог”</p>
+                </div>
+              </div>
+
+              <div class="chat__footer">
+                <input class="input" id="dialogInput" type="text" placeholder="Напишите ответ на казахском..." disabled />
+                <button class="button button--primary chat__send" id="dialogSendBtn" type="button" disabled>
+                  <span class="icon icon--send" aria-hidden="true"></span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- TUTOR MODE -->
+      <section class="container view" id="viewTutor" data-view="tutor" hidden>
+        <div class="layout">
+          <aside class="card settings settings--sticky settings--desktop" id="tutorSettings">
+            <h3 class="settings__title">Настройки</h3>
+
+            <div class="settings__group">
+              <label class="settings__label">Урок</label>
+
+              <div class="select" id="lessonSelect">
+                <button class="select__trigger" id="lessonTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span class="select__value" id="lessonValue">Текущий урок (Урок 12 — Келер шақ)</span>
+                  <span class="icon icon--chevron" aria-hidden="true"></span>
+                </button>
+
+                <div class="select__menu" id="lessonMenu" role="listbox" aria-hidden="true">
+                  <!-- JS renders -->
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="work">
+            <div class="mobilebar">
+              <button class="button button--outline mobilebar__btn" id="tutorMobileSettingsBtn" type="button">
+                <span class="icon icon--settings" aria-hidden="true"></span>
+                Настройки
+              </button>
+            </div>
+
+            <section class="card chat">
+              <div class="chat__head">
+                <div class="chat__title">
+                  <span class="icon icon--book" aria-hidden="true"></span>
+                  Репетитор
+                </div>
+              </div>
+
+              <div class="chat__body" id="tutorMessages">
+                <!-- JS renders (initial has AI message) -->
+              </div>
+
+              <div class="chat__footer">
+                <input class="input" id="tutorInput" type="text" placeholder="Задайте вопрос по уроку..." />
+                <button class="button button--primary chat__send" id="tutorSendBtn" type="button">
+                  <span class="icon icon--send" aria-hidden="true"></span>
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- MOBILE SETTINGS SHEET -->
+      <div class="sheet sheet--bottom" id="mobileSettingsSheet" aria-hidden="true">
+        <div class="sheet__backdrop" id="mobileSettingsBackdrop"></div>
+        <aside class="sheet__panel sheet__panel--bottom" role="dialog" aria-modal="true" aria-label="Настройки">
+          <div class="sheet__head">
+            <h2 class="sheet__title">Настройки</h2>
+            <button class="button button--ghost sheet__close" id="mobileSettingsCloseBtn" type="button" aria-label="Закрыть">✕</button>
+          </div>
+          <div class="sheet__content" id="mobileSettingsBody">
+            <!-- JS injects current mode settings markup clone -->
+          </div>
+        </aside>
+      </div>
+
+      <!-- TOAST -->
+      <div class="toast" id="toast" aria-live="polite" aria-atomic="true" hidden>
+        <div class="toast__inner" id="toastText">Скопировано!</div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/authFetch.js"></script>
+  <script src="/js/anatilui.js"></script>
+</body>
+</html>
