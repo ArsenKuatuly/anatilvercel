@@ -8,9 +8,41 @@
 </head>
 
 <body>
-  <div class="app" id="app">
-    <!-- HEADER -->
-    <header class="header">
+<header class="dash-header" id="header">
+    <div class="dash-header__container">
+        <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
+
+        <nav class="dash-header__nav" aria-label="Навигация">
+            <a class="dash-header__link" href="/courses">Курсы</a>
+            <a class="dash-header__link" href="/myprogress.html">Мой прогресс</a>
+            <a class="dash-header__link" href="/library.html">Библиотека</a>
+            <a class="dash-header__link" href="/anatilui.html">AI практика</a>
+            <a class="dash-header__link" href="/admin" id="adminBtn" style="display:none">
+                Админка
+            </a>
+        </nav>
+
+        <div class="dash-header__actions">
+            <a class="dash-header__btn" href="/profile.html">Профиль</a>
+
+            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+
+
+    <div class="dash-header__mobile" data-mobile hidden>
+        <a class="dash-header__m-link" href="/courses">Курсы</a>
+        <a class="dash-header__m-link" href="/myprogress.html">Мой прогресс</a>
+        <a class="dash-header__m-link" href="/library.html">Библиотека</a>
+        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+    </div>
+</header>
+<div class="app" id="app">
+
+
+      <div class="header">
       <div class="container header__container">
         <div class="header__left">
           <h1 class="header__title">AI Практика</h1>
@@ -29,7 +61,7 @@
           </button>
         </div>
       </div>
-    </header>
+    </div>
 
     <!-- HISTORY SHEET -->
     <div class="sheet" id="historySheet" aria-hidden="true">
