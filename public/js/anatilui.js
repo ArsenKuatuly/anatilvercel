@@ -1,104 +1,164 @@
 (function () {
-  // -----------------------------
-  // Helpers
-  // -----------------------------
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  function nowTimeRU() {
-    const d = new Date();
-    return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-  }
+    function nowTimeRU() {
+        const d = new Date();
+        return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    }
 
-  function setHidden(el, hidden) {
-    if (!el) return;
-    el.hidden = !!hidden;
-  }
+    function setHidden(el, hidden) {
+        if (!el) return;
+        el.hidden = !!hidden;
+    }
 
-  function toast(msg) {
-    const t = $("#toast");
-    const tt = $("#toastText");
-    if (!t || !tt) return;
-    tt.textContent = msg;
-    t.hidden = false;
-    clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => (t.hidden = true), 1400);
-  }
+    function toast(msg) {
+        const t = $("#toast");
+        const tt = $("#toastText");
+        if (!t || !tt) return;
+        tt.textContent = msg;
+        t.hidden = false;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => (t.hidden = true), 1400);
+    }
 
-  // -----------------------------
-  // Routing (hash-based)
-  // -----------------------------
-  const views = {
-    home: $("#viewHome"),
-    sentence: $("#viewSentence"),
-    dialog: $("#viewDialog"),
-    tutor: $("#viewTutor"),
-  };
+    function escapeHtml(s) {
+        return String(s)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
 
-  const backBar = $("#backBar");
-  const backBtn = $("#backBtn");
+    // -----------------------------
+    // AI API (Vercel /api/ai/chat)
+    // -----------------------------
+    async function aiChat(message) {
+        // Prefer apiFetch if exists (common in your project), fallback to fetch
+        if (typeof window.apiFetch === "function") {
+            const out = await window.apiFetch("/api/ai/chat", {
+                method: "POST",
+                body: JSON.stringify({ message }),
+            });
+            const data = out && out.data;
+            if (!data) throw new Error("Empty response");
+            if (data.error) throw new Error(data.details || data.error);
+            if (typeof data.reply !== "string") throw new Error("Bad AI response");
+            return data.reply;
+        }
 
-  function showView(name) {
-    Object.keys(views).forEach((k) => setHidden(views[k], k !== name));
-    setHidden(backBar, name === "home");
-  }
+        const r = await fetch("/api/ai/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+        });
+        const data = await r.json().catch(() => null);
+        if (!r.ok) throw new Error((data && (data.details || data.error)) || "Request failed");
+        if (!data || typeof data.reply !== "string") throw new Error("Bad AI response");
+        return data.reply;
+    }
 
-  function getRoute() {
-    const h = (location.hash || "#/").trim();
-    const path = h.replace(/^#\/?/, "");
-    if (!path) return "home";
-    if (views[path]) return path;
-    return "home";
-  }
+    function extractJsonFromText(text) {
+        const s = String(text || "").trim();
+        if (!s) return null;
 
-  function go(route) {
-    location.hash = route === "home" ? "#/" : `#/${route}`;
-  }
+        // If wrapped in ```json ... ```
+        const fenced = s.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        const candidate = fenced ? fenced[1].trim() : s;
 
-  window.addEventListener("hashchange", () => {
-    const route = getRoute();
-    showView(route);
+        try {
+            return JSON.parse(candidate);
+        } catch {
+            // Try to slice first {...} block
+            const i = candidate.indexOf("{");
+            const j = candidate.lastIndexOf("}");
+            if (i >= 0 && j > i) {
+                try {
+                    return JSON.parse(candidate.slice(i, j + 1));
+                } catch {
+                    return null;
+                }
+            }
+            return null;
+        }
+    }
 
-    // When opening dialog/tutor on mobile, ensure sheet closed
-    closeMobileSettings();
-  });
+    // -----------------------------
+    // Routing (hash-based)
+    // -----------------------------
+    const views = {
+        home: $("#viewHome"),
+        sentence: $("#viewSentence"),
+        dialog: $("#viewDialog"),
+        tutor: $("#viewTutor"),
+    };
 
-  // -----------------------------
-  // History panel (Sheet)
-  // -----------------------------
-  const historySheet = $("#historySheet");
-  const historyOpenBtn = $("#historyOpenBtn");
-  const historyCloseBtn = $("#historyCloseBtn");
-  const historyBackdrop = $("#historyBackdrop");
-  const historyList = $("#historyList");
+    const backBar = $("#backBar");
+    const backBtn = $("#backBtn");
 
-  const historyItems = [
-    { id: "1", mode: "sentence", date: "1 марта, 14:32", topic: "Проверка предложения", preview: "Мен кофе ішемін..." },
-    { id: "2", mode: "dialog", date: "1 марта, 12:15", topic: "Диалог: Кафе", preview: "Практиковал заказ в кафе" },
-    { id: "3", mode: "tutor", date: "28 февраля, 18:45", topic: "Урок 12 — Келер шақ", preview: "Вопросы по будущему времени" },
-  ];
+    function showView(name) {
+        Object.keys(views).forEach((k) => setHidden(views[k], k !== name));
+        setHidden(backBar, name === "home");
+    }
 
-  function modeBadgeClass(mode) {
-    if (mode === "sentence") return "hitem__badge hitem__badge--purple";
-    if (mode === "dialog") return "hitem__badge hitem__badge--blue";
-    return "hitem__badge hitem__badge--green";
-  }
-  function modeLabel(mode) {
-    if (mode === "sentence") return "Проверка";
-    if (mode === "dialog") return "Диалог";
-    return "Репетитор";
-  }
-  function modeIcon(mode) {
-    if (mode === "sentence") return "✍️";
-    if (mode === "dialog") return "💬";
-    return "🎓";
-  }
+    function getRoute() {
+        const h = (location.hash || "#/").trim();
+        const path = h.replace(/^#\/?/, "");
+        if (!path) return "home";
+        if (views[path]) return path;
+        return "home";
+    }
 
-  function renderHistory() {
-    if (!historyList) return;
-    historyList.innerHTML = historyItems
-      .map((it) => {
-        return `
+    function go(route) {
+        location.hash = route === "home" ? "#/" : `#/${route}`;
+    }
+
+    window.addEventListener("hashchange", () => {
+        const route = getRoute();
+        showView(route);
+        closeMobileSettings();
+    });
+
+    // -----------------------------
+    // History panel (Sheet)
+    // -----------------------------
+    const historySheet = $("#historySheet");
+    const historyOpenBtn = $("#historyOpenBtn");
+    const historyCloseBtn = $("#historyCloseBtn");
+    const historyBackdrop = $("#historyBackdrop");
+    const historyList = $("#historyList");
+
+    const historyItems = [
+        { id: "1", mode: "sentence", date: "1 марта, 14:32", topic: "Проверка предложения", preview: "Мен кофе ішемін..." },
+        { id: "2", mode: "dialog", date: "1 марта, 12:15", topic: "Диалог: Кафе", preview: "Практиковал заказ в кафе" },
+        { id: "3", mode: "tutor", date: "28 февраля, 18:45", topic: "Урок 12 — Келер шақ", preview: "Вопросы по будущему времени" },
+    ];
+
+    function modeBadgeClass(mode) {
+        if (mode === "sentence") return "hitem__badge hitem__badge--purple";
+        if (mode === "dialog") return "hitem__badge hitem__badge--blue";
+        return "hitem__badge hitem__badge--green";
+    }
+    function modeLabel(mode) {
+        if (mode === "sentence") return "Проверка";
+        if (mode === "dialog") return "Диалог";
+        return "Репетитор";
+    }
+    function modeIcon(mode) {
+        if (mode === "sentence") return "✍️";
+        if (mode === "dialog") return "💬";
+        return "🎓";
+    }
+
+    function renderHistory() {
+        if (!historyList) return;
+        historyList.innerHTML = historyItems
+            .map((it) => {
+                return `
           <div class="hitem" data-go="${it.mode}">
             <div class="hitem__top">
               <div class="${modeBadgeClass(it.mode)}">${modeIcon(it.mode)} ${modeLabel(it.mode)}</div>
@@ -108,131 +168,127 @@
             <p class="hitem__preview">${it.preview}</p>
           </div>
         `;
-      })
-      .join("");
+            })
+            .join("");
 
-    $$(".hitem", historyList).forEach((node) => {
-      node.addEventListener("click", () => {
-        const r = node.getAttribute("data-go") || "home";
-        closeHistory();
-        go(r);
-      });
-    });
-  }
+        $$(".hitem", historyList).forEach((node) => {
+            node.addEventListener("click", () => {
+                const r = node.getAttribute("data-go") || "home";
+                closeHistory();
+                go(r);
+            });
+        });
+    }
 
-  function openHistory() {
-    if (!historySheet) return;
-    historySheet.classList.add("sheet--open");
-    historySheet.setAttribute("aria-hidden", "false");
-  }
-  function closeHistory() {
-    if (!historySheet) return;
-    historySheet.classList.remove("sheet--open");
-    historySheet.setAttribute("aria-hidden", "true");
-  }
+    function openHistory() {
+        if (!historySheet) return;
+        historySheet.classList.add("sheet--open");
+        historySheet.setAttribute("aria-hidden", "false");
+    }
+    function closeHistory() {
+        if (!historySheet) return;
+        historySheet.classList.remove("sheet--open");
+        historySheet.setAttribute("aria-hidden", "true");
+    }
 
-  historyOpenBtn && historyOpenBtn.addEventListener("click", openHistory);
-  historyCloseBtn && historyCloseBtn.addEventListener("click", closeHistory);
-  historyBackdrop && historyBackdrop.addEventListener("click", closeHistory);
+    historyOpenBtn && historyOpenBtn.addEventListener("click", openHistory);
+    historyCloseBtn && historyCloseBtn.addEventListener("click", closeHistory);
+    historyBackdrop && historyBackdrop.addEventListener("click", closeHistory);
 
-  renderHistory();
+    renderHistory();
 
-  // -----------------------------
-  // Home: achievements
-  // -----------------------------
-  const achievementsList = $("#achievementsList");
-  const achievements = [
-    { icon: "✅", title: "Проверил 10 предложений", achieved: true },
-    { icon: "💬", title: "Прошёл 3 диалога подряд", achieved: true },
-    { icon: "🔥", title: "7 дней подряд практика", achieved: false },
-  ];
+    // -----------------------------
+    // Home: achievements
+    // -----------------------------
+    const achievementsList = $("#achievementsList");
+    const achievements = [
+        { icon: "✅", title: "Проверил 10 предложений", achieved: true },
+        { icon: "💬", title: "Прошёл 3 диалога подряд", achieved: true },
+        { icon: "🔥", title: "7 дней подряд практика", achieved: false },
+    ];
 
-  function renderAchievements() {
-    if (!achievementsList) return;
-    achievementsList.innerHTML = achievements
-      .map((a) => {
-        const cls = a.achieved ? "ach ach--on" : "ach ach--off";
-        return `
+    function renderAchievements() {
+        if (!achievementsList) return;
+        achievementsList.innerHTML = achievements
+            .map((a) => {
+                const cls = a.achieved ? "ach ach--on" : "ach ach--off";
+                return `
           <div class="${cls}">
             <div class="ach__icon">${a.icon}</div>
             <div class="ach__text">${a.title}</div>
           </div>
         `;
-      })
-      .join("");
-  }
-  renderAchievements();
+            })
+            .join("");
+    }
+    renderAchievements();
 
-  // Home mode cards navigation
-  $$("#modesGrid [data-route]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const r = btn.getAttribute("data-route");
-      if (r) go(r);
+    $$("#modesGrid [data-route]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const r = btn.getAttribute("data-route");
+            if (r) go(r);
+        });
     });
-  });
 
-  // Back button
-  backBtn && backBtn.addEventListener("click", () => go("home"));
+    backBtn && backBtn.addEventListener("click", () => go("home"));
 
-  // -----------------------------
-  // Sentence mode
-  // -----------------------------
-  let sentenceState = {
-    level: "A1",
-    complexity: "simple",
-    sentence: "",
-    loading: false,
-    result: null,
-  };
+    // -----------------------------
+    // Sentence mode
+    // -----------------------------
+    let sentenceState = {
+        level: "A1",
+        complexity: "simple",
+        sentence: "",
+        loading: false,
+        result: null,
+    };
 
-  const sentenceLevel = $("#sentenceLevel");
-  const sentenceComplexity = $("#sentenceComplexity");
-  const sentenceTextarea = $("#sentenceTextarea");
-  const sentenceCheckBtn = $("#sentenceCheckBtn");
-  const sentenceLoading = $("#sentenceLoading");
-  const sentenceResult = $("#sentenceResult");
-  const sentenceEmpty = $("#sentenceEmpty");
+    const sentenceLevel = $("#sentenceLevel");
+    const sentenceComplexity = $("#sentenceComplexity");
+    const sentenceTextarea = $("#sentenceTextarea");
+    const sentenceCheckBtn = $("#sentenceCheckBtn");
+    const sentenceLoading = $("#sentenceLoading");
+    const sentenceResult = $("#sentenceResult");
+    const sentenceEmpty = $("#sentenceEmpty");
 
-  function setChipActive(container, selectorAttr, value) {
-    if (!container) return;
-    $$(`button[${selectorAttr}]`, container).forEach((b) => {
-      b.classList.toggle("chip--active", b.getAttribute(selectorAttr) === value);
-    });
-  }
-
-  function sentenceUpdateUI() {
-    setHidden(sentenceLoading, !sentenceState.loading);
-    setHidden(sentenceEmpty, sentenceState.loading || !!sentenceState.result);
-    setHidden(sentenceResult, !sentenceState.result || sentenceState.loading);
-
-    if (sentenceCheckBtn) {
-      const can = !!sentenceState.sentence.trim() && !sentenceState.loading;
-      sentenceCheckBtn.disabled = !can;
+    function setChipActive(container, selectorAttr, value) {
+        if (!container) return;
+        $$(`button[${selectorAttr}]`, container).forEach((b) => {
+            b.classList.toggle("chip--active", b.getAttribute(selectorAttr) === value);
+        });
     }
 
-    if (sentenceResult && sentenceState.result && !sentenceState.loading) {
-      sentenceResult.innerHTML = renderResultCard(sentenceState.result);
-      bindResultCard(sentenceResult, sentenceState.result);
-    }
-  }
+    function sentenceUpdateUI() {
+        setHidden(sentenceLoading, !sentenceState.loading);
+        setHidden(sentenceEmpty, sentenceState.loading || !!sentenceState.result);
+        setHidden(sentenceResult, !sentenceState.result || sentenceState.loading);
 
-  function renderResultCard(res) {
-    const errorsHtml = (res.errors || [])
-      .map(
-        (e) => `
+        if (sentenceCheckBtn) {
+            const can = !!sentenceState.sentence.trim() && !sentenceState.loading;
+            sentenceCheckBtn.disabled = !can;
+        }
+
+        if (sentenceResult && sentenceState.result && !sentenceState.loading) {
+            sentenceResult.innerHTML = renderResultCard(sentenceState.result);
+            bindResultCard(sentenceResult, sentenceState.result);
+        }
+    }
+
+    function renderResultCard(res) {
+        const errorsHtml = (res.errors || [])
+            .map(
+                (e) => `
         <div class="err">
-          <p class="err__title">${e.text}</p>
-          <p class="err__desc">${e.explanation}</p>
+          <p class="err__title">${escapeHtml(e.text)}</p>
+          <p class="err__desc">${escapeHtml(e.explanation)}</p>
         </div>
       `
-      )
-      .join("");
+            )
+            .join("");
 
-    const examplesHtml = (res.examples || [])
-      .map((ex) => `<li>${ex}</li>`)
-      .join("");
+        const examplesHtml = (res.examples || []).map((ex) => `<li>${escapeHtml(ex)}</li>`).join("");
 
-    return `
+        return `
       <div class="result">
         <section class="card result__card">
           <div class="result__section">
@@ -250,7 +306,7 @@
 
           ${
             (res.errors || []).length
-              ? `
+                ? `
             <div class="result__section">
               <div class="result__head">
                 <span class="icon icon--bulb" style="color:#D97706" aria-hidden="true"></span>
@@ -259,12 +315,12 @@
               <div class="result__errors">${errorsHtml}</div>
             </div>
           `
-              : ""
-          }
+                : ""
+        }
 
           ${
             res.rule
-              ? `
+                ? `
             <div class="result__section">
               <div class="result__head">
                 <span class="icon icon--book" style="color:#2563EB" aria-hidden="true"></span>
@@ -273,12 +329,12 @@
               <div class="result__rule">${escapeHtml(res.rule)}</div>
             </div>
           `
-              : ""
-          }
+                : ""
+        }
 
           ${
             (res.examples || []).length
-              ? `
+                ? `
             <div class="result__section">
               <div class="result__head">
                 <span class="icon icon--book" style="color:#2563EB" aria-hidden="true"></span>
@@ -289,12 +345,12 @@
               </div>
             </div>
           `
-              : ""
-          }
+                : ""
+        }
 
           ${
             res.exercise
-              ? `
+                ? `
             <div class="result__section">
               <div class="result__head">
                 <span class="icon icon--target" aria-hidden="true"></span>
@@ -303,539 +359,601 @@
               <div class="result__exercise">${escapeHtml(res.exercise)}</div>
             </div>
           `
-              : ""
-          }
+                : ""
+        }
         </section>
       </div>
     `;
-  }
+    }
 
-  function bindResultCard(root, res) {
-    const copyBtn = $("[data-copy]", root);
-    copyBtn &&
-      copyBtn.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(res.corrected || "");
-          toast("Скопировано!");
-        } catch {
-          // Fallback
-          toast("Не удалось скопировать");
-        }
-      });
-  }
+    function bindResultCard(root, res) {
+        const copyBtn = $("[data-copy]", root);
+        copyBtn &&
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(res.corrected || "");
+                toast("Скопировано!");
+            } catch {
+                toast("Не удалось скопировать");
+            }
+        });
+    }
 
-  function escapeHtml(s) {
-    return String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  sentenceLevel &&
+    sentenceLevel &&
     sentenceLevel.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-level]");
-      if (!btn) return;
-      sentenceState.level = btn.getAttribute("data-level");
-      setChipActive(sentenceLevel, "data-level", sentenceState.level);
+        const btn = e.target.closest("button[data-level]");
+        if (!btn) return;
+        sentenceState.level = btn.getAttribute("data-level");
+        setChipActive(sentenceLevel, "data-level", sentenceState.level);
     });
 
-  sentenceComplexity &&
+    sentenceComplexity &&
     sentenceComplexity.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-complexity]");
-      if (!btn) return;
-      sentenceState.complexity = btn.getAttribute("data-complexity");
-      setChipActive(sentenceComplexity, "data-complexity", sentenceState.complexity);
+        const btn = e.target.closest("button[data-complexity]");
+        if (!btn) return;
+        sentenceState.complexity = btn.getAttribute("data-complexity");
+        setChipActive(sentenceComplexity, "data-complexity", sentenceState.complexity);
     });
 
-  sentenceTextarea &&
+    sentenceTextarea &&
     sentenceTextarea.addEventListener("input", () => {
-      sentenceState.sentence = sentenceTextarea.value;
-      sentenceState.result = null;
-      sentenceUpdateUI();
-    });
-
-  sentenceCheckBtn &&
-    sentenceCheckBtn.addEventListener("click", () => {
-      if (!sentenceState.sentence.trim() || sentenceState.loading) return;
-
-      sentenceState.loading = true;
-      sentenceState.result = null;
-      sentenceUpdateUI();
-
-      // Simulate API call (как в TSX)
-      setTimeout(() => {
-        sentenceState.result = {
-          original: sentenceState.sentence,
-          corrected: "Мен кофе ішемін.",
-          errors: [
-            {
-              text: "кафе → кофе",
-              explanation: "В казахском языке используется слово 'кофе', а не 'кафе'",
-            },
-          ],
-          rule:
-            "В казахском языке заимствованные слова часто сохраняют звучание близкое к оригиналу. Слово 'кофе' пришло из европейских языков.",
-          examples: [
-            "Мен таңертең кофе ішемін (Я пью кофе утром)",
-            "Ол кофені жақсы көреді (Он любит кофе)",
-            "Кофе дайындаймын (Готовлю кофе)",
-          ],
-          exercise: "Перефразируй это предложение в прошедшем времени",
-        };
-        sentenceState.loading = false;
+        sentenceState.sentence = sentenceTextarea.value;
+        sentenceState.result = null;
         sentenceUpdateUI();
-      }, 1000);
     });
 
-  // -----------------------------
-  // Dialog mode
-  // -----------------------------
-  const dialogScenario = $("#dialogScenario");
-  const dialogLevel = $("#dialogLevel");
-  const dialogTone = $("#dialogTone");
-  const dialogStartBtn = $("#dialogStartBtn");
-  const dialogMessages = $("#dialogMessages");
-  const dialogInput = $("#dialogInput");
-  const dialogSendBtn = $("#dialogSendBtn");
-  const dialogEmpty = $("#dialogEmpty");
-  const dialogHintBtn = $("#dialogHintBtn");
+    sentenceCheckBtn &&
+    sentenceCheckBtn.addEventListener("click", async () => {
+        if (!sentenceState.sentence.trim() || sentenceState.loading) return;
 
-  const scenarios = [
-    { value: "cafe", label: "Кафе", icon: "☕" },
-    { value: "taxi", label: "Такси", icon: "🚕" },
-    { value: "shop", label: "Магазин", icon: "🛒" },
-    { value: "university", label: "Универ", icon: "🎓" },
-    { value: "meet", label: "Знакомство", icon: "👋" },
-  ];
+        sentenceState.loading = true;
+        sentenceState.result = null;
+        sentenceUpdateUI();
 
-  let dialogState = {
-    scenario: "cafe",
-    level: "A1",
-    tone: "friendly",
-    started: false,
-    messages: [],
-  };
+        try {
+            const prompt = [
+                "Режим: Проверка предложения (казахский язык).",
+                `Уровень ученика: ${sentenceState.level}.`,
+                `Сложность объяснений: ${sentenceState.complexity === "detailed" ? "подробно" : "просто"}.`,
+                "Пользователь написал предложение на казахском. Проверь и исправь.",
+                "Ответь СТРОГО в JSON без лишнего текста и без markdown.",
+                "Формат:",
+                '{"corrected":"...","errors":[{"text":"...","explanation":"..."}],"rule":"...","examples":["..."],"exercise":"..."}',
+                "Требования:",
+                "- corrected: исправленный вариант на казахском",
+                "- errors: 0..5 ключевых ошибок (если нет — пустой массив)",
+                "- rule: короткое правило/объяснение (русский)",
+                "- examples: 2..4 примера (казахский + в скобках русский)",
+                "- exercise: 1 задание для закрепления (русский)",
+                "Предложение пользователя:",
+                sentenceState.sentence,
+            ].join("\n");
 
-  function renderDialogScenarios() {
-    if (!dialogScenario) return;
-    dialogScenario.innerHTML = scenarios
-      .map((s) => {
-        const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
-        return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
-      })
-      .join("");
-  }
+            const reply = await aiChat(prompt);
+            const json = extractJsonFromText(reply);
+            if (!json || typeof json !== "object") throw new Error("parse");
 
-  function renderChatBubble({ isAI, message, feedback, timestamp }) {
-    const rootCls = isAI ? "bubble" : "bubble bubble--user";
-    const avatarCls = isAI ? "bubble__avatar bubble__avatar--ai" : "bubble__avatar bubble__avatar--user";
-    const msgCls = isAI ? "bubble__msg bubble__msg--ai" : "bubble__msg bubble__msg--user";
+            sentenceState.result = {
+                original: sentenceState.sentence,
+                corrected: json.corrected || "",
+                errors: Array.isArray(json.errors) ? json.errors : [],
+                rule: json.rule || "",
+                examples: Array.isArray(json.examples) ? json.examples : [],
+                exercise: json.exercise || "",
+            };
+        } catch (e) {
+            console.error(e);
+            toast("Ошибка ИИ. Попробуйте ещё раз");
+        } finally {
+            sentenceState.loading = false;
+            sentenceUpdateUI();
+        }
+    });
 
-    return `
+    // -----------------------------
+    // Dialog mode
+    // -----------------------------
+    const dialogScenario = $("#dialogScenario");
+    const dialogLevel = $("#dialogLevel");
+    const dialogTone = $("#dialogTone");
+    const dialogStartBtn = $("#dialogStartBtn");
+    const dialogMessages = $("#dialogMessages");
+    const dialogInput = $("#dialogInput");
+    const dialogSendBtn = $("#dialogSendBtn");
+    const dialogEmpty = $("#dialogEmpty");
+    const dialogHintBtn = $("#dialogHintBtn");
+
+    const scenarios = [
+        { value: "cafe", label: "Кафе", icon: "☕" },
+        { value: "taxi", label: "Такси", icon: "🚕" },
+        { value: "shop", label: "Магазин", icon: "🛒" },
+        { value: "university", label: "Универ", icon: "🎓" },
+        { value: "meet", label: "Знакомство", icon: "👋" },
+    ];
+
+    let dialogState = {
+        scenario: "cafe",
+        level: "A1",
+        tone: "friendly",
+        started: false,
+        messages: [],
+    };
+
+    function renderDialogScenarios() {
+        if (!dialogScenario) return;
+        dialogScenario.innerHTML = scenarios
+            .map((s) => {
+                const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
+                return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
+            })
+            .join("");
+    }
+
+    function renderChatBubble({ isAI, message, feedback, timestamp }) {
+        const rootCls = isAI ? "bubble" : "bubble bubble--user";
+        const avatarCls = isAI ? "bubble__avatar bubble__avatar--ai" : "bubble__avatar bubble__avatar--user";
+        const msgCls = isAI ? "bubble__msg bubble__msg--ai" : "bubble__msg bubble__msg--user";
+
+        return `
       <div class="${rootCls}">
         <div class="${avatarCls}" aria-hidden="true">${isAI ? "🤖" : "👤"}</div>
         <div class="bubble__col">
           <div class="${msgCls}">${escapeHtml(message)}</div>
           ${
             feedback
-              ? `<div class="bubble__feedback">
+                ? `<div class="bubble__feedback">
                   <div style="display:flex;flex-direction:column;gap:4px">
                     <div style="font-weight:600;color:#15803D">✓ Отлично!</div>
                     <div style="font-size:12px;color:#4B5563">${escapeHtml(feedback)}</div>
                   </div>
                 </div>`
-              : ""
-          }
+                : ""
+        }
           ${timestamp ? `<div class="bubble__time">${escapeHtml(timestamp)}</div>` : ""}
         </div>
       </div>
     `;
-  }
-
-  function dialogUpdateUI() {
-    if (!dialogInput || !dialogSendBtn || !dialogMessages || !dialogEmpty) return;
-
-    dialogInput.disabled = !dialogState.started;
-    dialogSendBtn.disabled = !dialogState.started || !dialogInput.value.trim();
-
-    if (!dialogState.started) {
-      dialogMessages.innerHTML = dialogEmpty.outerHTML;
-      return;
     }
 
-    dialogMessages.innerHTML = dialogState.messages.map(renderChatBubble).join("");
-    dialogMessages.scrollTop = dialogMessages.scrollHeight;
-  }
+    function dialogUpdateUI() {
+        if (!dialogInput || !dialogSendBtn || !dialogMessages || !dialogEmpty) return;
 
-  renderDialogScenarios();
+        dialogInput.disabled = !dialogState.started;
+        dialogSendBtn.disabled = !dialogState.started || !dialogInput.value.trim();
 
-  dialogScenario &&
+        if (!dialogState.started) {
+            dialogMessages.innerHTML = dialogEmpty.outerHTML;
+            return;
+        }
+
+        dialogMessages.innerHTML = dialogState.messages.map(renderChatBubble).join("");
+        dialogMessages.scrollTop = dialogMessages.scrollHeight;
+    }
+
+    renderDialogScenarios();
+
+    dialogScenario &&
     dialogScenario.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-scenario]");
-      if (!btn) return;
-      dialogState.scenario = btn.getAttribute("data-scenario");
-      renderDialogScenarios();
+        const btn = e.target.closest("button[data-scenario]");
+        if (!btn) return;
+        dialogState.scenario = btn.getAttribute("data-scenario");
+        renderDialogScenarios();
     });
 
-  dialogLevel &&
+    dialogLevel &&
     dialogLevel.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-level]");
-      if (!btn) return;
-      dialogState.level = btn.getAttribute("data-level");
-      setChipActive(dialogLevel, "data-level", dialogState.level);
+        const btn = e.target.closest("button[data-level]");
+        if (!btn) return;
+        dialogState.level = btn.getAttribute("data-level");
+        setChipActive(dialogLevel, "data-level", dialogState.level);
     });
 
-  dialogTone &&
+    dialogTone &&
     dialogTone.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-tone]");
-      if (!btn) return;
-      dialogState.tone = btn.getAttribute("data-tone");
-      setChipActive(dialogTone, "data-tone", dialogState.tone);
+        const btn = e.target.closest("button[data-tone]");
+        if (!btn) return;
+        dialogState.tone = btn.getAttribute("data-tone");
+        setChipActive(dialogTone, "data-tone", dialogState.tone);
     });
 
-  dialogStartBtn &&
-    dialogStartBtn.addEventListener("click", () => {
-      dialogState.started = true;
-      dialogState.messages = [
-        {
-          id: "1",
-          isAI: true,
-          message: "Сәлеметсіз бе! Не тапсырыс бересіз?\n(Здравствуйте! Что будете заказывать?)",
-          timestamp: nowTimeRU(),
-        },
-      ];
-      if (dialogInput) dialogInput.value = "";
-      dialogUpdateUI();
+    dialogStartBtn &&
+    dialogStartBtn.addEventListener("click", async () => {
+        dialogState.started = true;
+        dialogState.messages = [];
+        if (dialogInput) dialogInput.value = "";
+        dialogUpdateUI();
+
+        try {
+            const scenarioLabel = scenarios.find((s) => s.value === dialogState.scenario)?.label || dialogState.scenario;
+            const prompt = [
+                "Режим: Диалог для практики казахского языка.",
+                `Сценарий: ${scenarioLabel}.`,
+                `Уровень ученика: ${dialogState.level}.`,
+                `Тон: ${dialogState.tone === "formal" ? "официальный" : "дружелюбный"}.`,
+                "Начни диалог с приветствия и первым вопросом.",
+                "Формат ответа: одна реплика на казахском + в скобках русский перевод.",
+            ].join("\n");
+
+            const reply = await aiChat(prompt);
+            dialogState.messages.push({
+                id: "1",
+                isAI: true,
+                message: reply,
+                timestamp: nowTimeRU(),
+            });
+        } catch (e) {
+            console.error(e);
+            toast("Не удалось начать диалог");
+            dialogState.started = false;
+        } finally {
+            dialogUpdateUI();
+        }
     });
 
-  dialogInput &&
+    dialogInput &&
     dialogInput.addEventListener("input", () => {
-      dialogUpdateUI();
+        dialogUpdateUI();
     });
 
-  function dialogSend() {
-    if (!dialogInput || !dialogInput.value.trim() || !dialogState.started) return;
+    async function dialogSend() {
+        if (!dialogInput || !dialogInput.value.trim() || !dialogState.started) return;
 
-    const text = dialogInput.value;
-    dialogState.messages.push({
-      id: String(Date.now()),
-      isAI: false,
-      message: text,
-      timestamp: nowTimeRU(),
-    });
-    dialogInput.value = "";
-    dialogUpdateUI();
+        const text = dialogInput.value;
+        dialogState.messages.push({
+            id: String(Date.now()),
+            isAI: false,
+            message: text,
+            timestamp: nowTimeRU(),
+        });
+        dialogInput.value = "";
+        dialogUpdateUI();
 
-    // Simulate AI response (как в TSX)
-    setTimeout(() => {
-      dialogState.messages.push({
-        id: String(Date.now() + 1),
-        isAI: true,
-        message: "Жақсы, бір американо әкелемін. Тағы не керек?\n(Хорошо, принесу один американо. Что-то ещё нужно?)",
-        feedback: 'Вы правильно использовали форму "бір" для обозначения количества',
-        timestamp: nowTimeRU(),
-      });
-      dialogUpdateUI();
-    }, 1000);
-  }
+        try {
+            const hist = dialogState.messages
+                .slice(-10)
+                .map((m) => `${m.isAI ? "AI" : "USER"}: ${m.message}`)
+                .join("\n");
 
-  dialogSendBtn && dialogSendBtn.addEventListener("click", dialogSend);
-  dialogInput &&
+            const scenarioLabel = scenarios.find((s) => s.value === dialogState.scenario)?.label || dialogState.scenario;
+
+            const prompt = [
+                "Режим: Диалог для практики казахского языка.",
+                `Сценарий: ${scenarioLabel}.`,
+                `Уровень ученика: ${dialogState.level}.`,
+                `Тон: ${dialogState.tone === "formal" ? "официальный" : "дружелюбный"}.`,
+                "Ты играешь роль собеседника по выбранному сценарию.",
+                "Отвечай коротко на казахском + в скобках русский перевод.",
+                "Также дай ОДНУ короткую подсказку/правку по фразе ученика (русский).",
+                "Ответь СТРОГО в JSON без markdown:",
+                '{"reply":"...","feedback":"..."}',
+                "История диалога:",
+                hist,
+                "Ответь на последнее сообщение пользователя и продолжи разговор одним вопросом.",
+            ].join("\n");
+
+            const reply = await aiChat(prompt);
+            const json = extractJsonFromText(reply) || {};
+            const aiMsg = String(json.reply || reply || "").trim();
+            const fb = json.feedback ? String(json.feedback).trim() : "";
+
+            dialogState.messages.push({
+                id: String(Date.now() + 1),
+                isAI: true,
+                message: aiMsg,
+                feedback: fb,
+                timestamp: nowTimeRU(),
+            });
+        } catch (e) {
+            console.error(e);
+            toast("Ошибка ИИ. Попробуйте ещё раз");
+        } finally {
+            dialogUpdateUI();
+        }
+    }
+
+    dialogSendBtn && dialogSendBtn.addEventListener("click", dialogSend);
+    dialogInput &&
     dialogInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") dialogSend();
+        if (e.key === "Enter") dialogSend();
     });
 
-  dialogHintBtn &&
+    dialogHintBtn &&
     dialogHintBtn.addEventListener("click", () => {
-      toast("Подсказка: попробуй ответить коротко (мысалы: «Бір американо, өтінемін.»)");
+        toast("Подсказка: попробуй ответить коротко (мысалы: «Бір американо, өтінемін.»)");
     });
 
-  // -----------------------------
-  // Tutor mode
-  // -----------------------------
-  const tutorMessages = $("#tutorMessages");
-  const tutorInput = $("#tutorInput");
-  const tutorSendBtn = $("#tutorSendBtn");
+    // -----------------------------
+    // Tutor mode
+    // -----------------------------
+    const tutorMessages = $("#tutorMessages");
+    const tutorInput = $("#tutorInput");
+    const tutorSendBtn = $("#tutorSendBtn");
 
-  const lessonTrigger = $("#lessonTrigger");
-  const lessonMenu = $("#lessonMenu");
-  const lessonValue = $("#lessonValue");
+    const lessonTrigger = $("#lessonTrigger");
+    const lessonMenu = $("#lessonMenu");
+    const lessonValue = $("#lessonValue");
 
-  const lessons = [
-    { value: "current", label: "Текущий урок (Урок 12 — Келер шақ)" },
-    { value: "lesson1", label: "Урок 1 — Приветствия" },
-    { value: "lesson2", label: "Урок 2 — Местоимения" },
-    { value: "lesson5", label: "Урок 5 — Настоящее время" },
-    { value: "lesson8", label: "Урок 8 — Прошедшее время" },
-  ];
+    const lessons = [
+        { value: "current", label: "Текущий урок (Урок 12 — Келер шақ)" },
+        { value: "lesson1", label: "Урок 1 — Приветствия" },
+        { value: "lesson2", label: "Урок 2 — Местоимения" },
+        { value: "lesson5", label: "Урок 5 — Настоящее время" },
+        { value: "lesson8", label: "Урок 8 — Прошедшее время" },
+    ];
 
-  let tutorState = {
-    lesson: "current",
-    messages: [
-      {
-        id: "1",
-        isAI: true,
-        message:
-          "Сәлеметсіз! Я ваш AI-репетитор. Задавайте вопросы по уроку 'Келер шақ' (будущее время). Я помогу разобраться с темой подробно и структурированно.",
-        timestamp: nowTimeRU(),
-      },
-    ],
-  };
+    let tutorState = {
+        lesson: "current",
+        messages: [
+            {
+                id: "1",
+                isAI: true,
+                message:
+                    "Сәлеметсіз! Я ваш AI-репетитор. Задавайте вопросы по уроку 'Келер шақ' (будущее время). Я помогу разобраться с темой подробно и структурированно.",
+                timestamp: nowTimeRU(),
+            },
+        ],
+    };
 
-  function renderLessons() {
-    if (!lessonMenu) return;
-    lessonMenu.innerHTML = lessons
-      .map((l) => {
-        const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
-        return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
-      })
-      .join("");
-  }
+    function renderLessons() {
+        if (!lessonMenu) return;
+        lessonMenu.innerHTML = lessons
+            .map((l) => {
+                const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
+                return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
+            })
+            .join("");
+    }
 
-  function updateLessonLabel() {
-    const found = lessons.find((l) => l.value === tutorState.lesson);
-    if (lessonValue) lessonValue.textContent = found ? found.label : lessons[0].label;
-  }
+    function updateLessonLabel() {
+        const found = lessons.find((l) => l.value === tutorState.lesson);
+        if (lessonValue) lessonValue.textContent = found ? found.label : lessons[0].label;
+    }
 
-  function openLessonMenu() {
-    if (!lessonMenu || !lessonTrigger) return;
-    lessonMenu.classList.add("select__menu--open");
-    lessonTrigger.setAttribute("aria-expanded", "true");
-    lessonMenu.setAttribute("aria-hidden", "false");
-  }
-  function closeLessonMenu() {
-    if (!lessonMenu || !lessonTrigger) return;
-    lessonMenu.classList.remove("select__menu--open");
-    lessonTrigger.setAttribute("aria-expanded", "false");
-    lessonMenu.setAttribute("aria-hidden", "true");
-  }
-  function toggleLessonMenu() {
-    if (!lessonMenu) return;
-    if (lessonMenu.classList.contains("select__menu--open")) closeLessonMenu();
-    else openLessonMenu();
-  }
+    function openLessonMenu() {
+        if (!lessonMenu || !lessonTrigger) return;
+        lessonMenu.classList.add("select__menu--open");
+        lessonTrigger.setAttribute("aria-expanded", "true");
+        lessonMenu.setAttribute("aria-hidden", "false");
+    }
+    function closeLessonMenu() {
+        if (!lessonMenu || !lessonTrigger) return;
+        lessonMenu.classList.remove("select__menu--open");
+        lessonTrigger.setAttribute("aria-expanded", "false");
+        lessonMenu.setAttribute("aria-hidden", "true");
+    }
+    function toggleLessonMenu() {
+        if (!lessonMenu) return;
+        if (lessonMenu.classList.contains("select__menu--open")) closeLessonMenu();
+        else openLessonMenu();
+    }
 
-  function tutorUpdateUI() {
-    if (!tutorMessages) return;
-    tutorMessages.innerHTML = tutorState.messages.map((m) => renderChatBubble(m)).join("");
-    tutorMessages.scrollTop = tutorMessages.scrollHeight;
+    function tutorUpdateUI() {
+        if (!tutorMessages) return;
+        tutorMessages.innerHTML = tutorState.messages.map((m) => renderChatBubble(m)).join("");
+        tutorMessages.scrollTop = tutorMessages.scrollHeight;
 
-    if (tutorSendBtn) tutorSendBtn.disabled = !tutorInput.value.trim();
-  }
+        if (tutorSendBtn) tutorSendBtn.disabled = !tutorInput.value.trim();
+    }
 
-  renderLessons();
-  updateLessonLabel();
-  tutorUpdateUI();
-
-  lessonTrigger && lessonTrigger.addEventListener("click", toggleLessonMenu);
-
-  lessonMenu &&
-    lessonMenu.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-lesson]");
-      if (!btn) return;
-      tutorState.lesson = btn.getAttribute("data-lesson");
-      renderLessons();
-      updateLessonLabel();
-      closeLessonMenu();
-      toast("Урок выбран");
-    });
-
-  document.addEventListener("click", (e) => {
-    // close select if click outside
-    const sel = $("#lessonSelect");
-    if (!sel) return;
-    if (sel.contains(e.target)) return;
-    closeLessonMenu();
-  });
-
-  function tutorSend() {
-    if (!tutorInput || !tutorInput.value.trim()) return;
-    const text = tutorInput.value;
-    tutorState.messages.push({ id: String(Date.now()), isAI: false, message: text, timestamp: nowTimeRU() });
-    tutorInput.value = "";
+    renderLessons();
+    updateLessonLabel();
     tutorUpdateUI();
 
-    // Simulate AI response
-    setTimeout(() => {
-      tutorState.messages.push({
-        id: String(Date.now() + 1),
-        isAI: true,
-        message:
-          "Хороший вопрос! Для «келер шақ» обычно используют конструкцию: етістік түбірі + -а/-е/-й + жатырымын/отырымын/тұрмын/жүрмін.\nНапример: «Мен бара жатырмын» — Я собираюсь идти / Я буду идти (в ближайшем будущем).",
-        timestamp: nowTimeRU(),
-      });
-      tutorUpdateUI();
-    }, 1000);
-  }
+    lessonTrigger && lessonTrigger.addEventListener("click", toggleLessonMenu);
 
-  tutorSendBtn && tutorSendBtn.addEventListener("click", tutorSend);
-  tutorInput &&
-    tutorInput.addEventListener("input", () => tutorUpdateUI());
-  tutorInput &&
-    tutorInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") tutorSend();
+    lessonMenu &&
+    lessonMenu.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-lesson]");
+        if (!btn) return;
+        tutorState.lesson = btn.getAttribute("data-lesson");
+        renderLessons();
+        updateLessonLabel();
+        closeLessonMenu();
+        toast("Урок выбран");
     });
 
-  // -----------------------------
-  // Mobile settings sheet (bottom)
-  // -----------------------------
-  const mobileSettingsSheet = $("#mobileSettingsSheet");
-  const mobileSettingsBackdrop = $("#mobileSettingsBackdrop");
-  const mobileSettingsCloseBtn = $("#mobileSettingsCloseBtn");
-  const mobileSettingsBody = $("#mobileSettingsBody");
+    document.addEventListener("click", (e) => {
+        const sel = $("#lessonSelect");
+        if (!sel) return;
+        if (sel.contains(e.target)) return;
+        closeLessonMenu();
+    });
 
-  const dialogMobileSettingsBtn = $("#dialogMobileSettingsBtn");
-  const tutorMobileSettingsBtn = $("#tutorMobileSettingsBtn");
+    async function tutorSend() {
+        if (!tutorInput || !tutorInput.value.trim()) return;
 
-  function openMobileSettings(fromMode) {
-    if (!mobileSettingsSheet || !mobileSettingsBody) return;
+        const text = tutorInput.value;
+        tutorState.messages.push({ id: String(Date.now()), isAI: false, message: text, timestamp: nowTimeRU() });
+        tutorInput.value = "";
+        tutorUpdateUI();
 
-    // Clone the settings panel from the corresponding mode to keep layout identical
-    mobileSettingsBody.innerHTML = "";
-    if (fromMode === "dialog") {
-      const src = $("#dialogSettings");
-      if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
-    } else if (fromMode === "tutor") {
-      const src = $("#tutorSettings");
-      if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
-    } else {
-      // sentence doesn't have mobile trigger in this simplified build
+        try {
+            const lessonLabel = lessons.find((l) => l.value === tutorState.lesson)?.label || "Текущий урок";
+            const hist = tutorState.messages
+                .slice(-12)
+                .map((m) => `${m.isAI ? "AI" : "USER"}: ${m.message}`)
+                .join("\n");
+
+            const prompt = [
+                "Режим: Репетитор по уроку на платформе AnaTil.",
+                `Выбран урок/тема: ${lessonLabel}.`,
+                "Отвечай по-русски, структурированно, короткими шагами.",
+                "Если уместно — дай 1-2 примера на казахском с переводом.",
+                "История переписки:",
+                hist,
+                "Ответь на последнее сообщение пользователя.",
+            ].join("\n");
+
+            const reply = await aiChat(prompt);
+            tutorState.messages.push({
+                id: String(Date.now() + 1),
+                isAI: true,
+                message: reply,
+                timestamp: nowTimeRU(),
+            });
+        } catch (e) {
+            console.error(e);
+            toast("Ошибка ИИ. Попробуйте ещё раз");
+        } finally {
+            tutorUpdateUI();
+        }
     }
 
-    // Re-bind interactions inside cloned node (chips/select)
-    rebindMobileSettings(fromMode);
+    tutorSendBtn && tutorSendBtn.addEventListener("click", tutorSend);
+    tutorInput && tutorInput.addEventListener("input", () => tutorUpdateUI());
+    tutorInput &&
+    tutorInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") tutorSend();
+    });
 
-    mobileSettingsSheet.classList.add("sheet--open");
-    mobileSettingsSheet.setAttribute("aria-hidden", "false");
-  }
+    // -----------------------------
+    // Mobile settings sheet (bottom)
+    // -----------------------------
+    const mobileSettingsSheet = $("#mobileSettingsSheet");
+    const mobileSettingsBackdrop = $("#mobileSettingsBackdrop");
+    const mobileSettingsCloseBtn = $("#mobileSettingsCloseBtn");
+    const mobileSettingsBody = $("#mobileSettingsBody");
 
-  function closeMobileSettings() {
-    if (!mobileSettingsSheet) return;
-    mobileSettingsSheet.classList.remove("sheet--open");
-    mobileSettingsSheet.setAttribute("aria-hidden", "true");
-  }
+    const dialogMobileSettingsBtn = $("#dialogMobileSettingsBtn");
+    const tutorMobileSettingsBtn = $("#tutorMobileSettingsBtn");
 
-  function rebindMobileSettings(fromMode) {
-    // Important: cloned DOM must control SAME state objects
-    if (!mobileSettingsBody) return;
+    function openMobileSettings(fromMode) {
+        if (!mobileSettingsSheet || !mobileSettingsBody) return;
 
-    if (fromMode === "dialog") {
-      const sc = $(".chips--grid", mobileSettingsBody);
-      const lvl = $("#dialogLevel", mobileSettingsBody);
-      const tone = $("#dialogTone", mobileSettingsBody);
-      const start = $("#dialogStartBtn", mobileSettingsBody);
+        mobileSettingsBody.innerHTML = "";
+        if (fromMode === "dialog") {
+            const src = $("#dialogSettings");
+            if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
+        } else if (fromMode === "tutor") {
+            const src = $("#tutorSettings");
+            if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
+        }
 
-      // render scenarios inside cloned sheet
-      if (sc) {
-        sc.innerHTML = scenarios
-          .map((s) => {
-            const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
-            return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
-          })
-          .join("");
+        rebindMobileSettings(fromMode);
 
-        sc.addEventListener("click", (e) => {
-          const btn = e.target.closest("button[data-scenario]");
-          if (!btn) return;
-          dialogState.scenario = btn.getAttribute("data-scenario");
-          renderDialogScenarios(); // update desktop too
-          // update mobile too
-          rebindMobileSettings("dialog");
-        });
-      }
-
-      if (lvl) {
-        lvl.addEventListener("click", (e) => {
-          const btn = e.target.closest("button[data-level]");
-          if (!btn) return;
-          dialogState.level = btn.getAttribute("data-level");
-          setChipActive(dialogLevel, "data-level", dialogState.level);
-          // update cloned
-          setChipActive(lvl, "data-level", dialogState.level);
-        });
-      }
-
-      if (tone) {
-        tone.addEventListener("click", (e) => {
-          const btn = e.target.closest("button[data-tone]");
-          if (!btn) return;
-          dialogState.tone = btn.getAttribute("data-tone");
-          setChipActive(dialogTone, "data-tone", dialogState.tone);
-          setChipActive(tone, "data-tone", dialogState.tone);
-        });
-      }
-
-      if (start) {
-        start.addEventListener("click", () => {
-          dialogStartBtn && dialogStartBtn.click(); // trigger main handler
-          closeMobileSettings();
-        });
-      }
-
-      // sync active classes
-      if (lvl) setChipActive(lvl, "data-level", dialogState.level);
-      if (tone) setChipActive(tone, "data-tone", dialogState.tone);
+        mobileSettingsSheet.classList.add("sheet--open");
+        mobileSettingsSheet.setAttribute("aria-hidden", "false");
     }
 
-    if (fromMode === "tutor") {
-      // For tutor, easiest: just open menu works visually but we keep desktop select as source of truth
-      const trigger = $("#lessonTrigger", mobileSettingsBody);
-      const menu = $("#lessonMenu", mobileSettingsBody);
-      const value = $("#lessonValue", mobileSettingsBody);
-
-      if (value) value.textContent = lessonValue ? lessonValue.textContent : value.textContent;
-
-      if (menu) {
-        menu.innerHTML = lessons
-          .map((l) => {
-            const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
-            return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
-          })
-          .join("");
-      }
-
-      if (trigger && menu) {
-        trigger.addEventListener("click", () => {
-          menu.classList.toggle("select__menu--open");
-        });
-      }
-
-      if (menu) {
-        menu.addEventListener("click", (e) => {
-          const btn = e.target.closest("button[data-lesson]");
-          if (!btn) return;
-          const v = btn.getAttribute("data-lesson");
-          tutorState.lesson = v;
-          renderLessons();
-          updateLessonLabel();
-          tutorUpdateUI();
-
-          // update mobile UI
-          if (value) value.textContent = lessons.find((x) => x.value === v)?.label || value.textContent;
-          $$(".select__item", menu).forEach((b) => b.classList.toggle("select__item--active", b.getAttribute("data-lesson") === v));
-          menu.classList.remove("select__menu--open");
-
-          toast("Урок выбран");
-        });
-      }
+    function closeMobileSettings() {
+        if (!mobileSettingsSheet) return;
+        mobileSettingsSheet.classList.remove("sheet--open");
+        mobileSettingsSheet.setAttribute("aria-hidden", "true");
     }
-  }
 
-  mobileSettingsBackdrop && mobileSettingsBackdrop.addEventListener("click", closeMobileSettings);
-  mobileSettingsCloseBtn && mobileSettingsCloseBtn.addEventListener("click", closeMobileSettings);
+    function rebindMobileSettings(fromMode) {
+        if (!mobileSettingsBody) return;
 
-  dialogMobileSettingsBtn && dialogMobileSettingsBtn.addEventListener("click", () => openMobileSettings("dialog"));
-  tutorMobileSettingsBtn && tutorMobileSettingsBtn.addEventListener("click", () => openMobileSettings("tutor"));
+        if (fromMode === "dialog") {
+            const sc = $(".chips--grid", mobileSettingsBody);
+            const lvl = $("#dialogLevel", mobileSettingsBody);
+            const tone = $("#dialogTone", mobileSettingsBody);
+            const start = $("#dialogStartBtn", mobileSettingsBody);
 
-  // -----------------------------
-  // Initial route
-  // -----------------------------
-  showView(getRoute());
+            if (sc) {
+                sc.innerHTML = scenarios
+                    .map((s) => {
+                        const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
+                        return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
+                    })
+                    .join("");
 
-  // initial UI sync
-  sentenceUpdateUI();
-  dialogUpdateUI();
-  tutorUpdateUI();
+                sc.addEventListener("click", (e) => {
+                    const btn = e.target.closest("button[data-scenario]");
+                    if (!btn) return;
+                    dialogState.scenario = btn.getAttribute("data-scenario");
+                    renderDialogScenarios();
+                    rebindMobileSettings("dialog");
+                });
+            }
+
+            if (lvl) {
+                lvl.addEventListener("click", (e) => {
+                    const btn = e.target.closest("button[data-level]");
+                    if (!btn) return;
+                    dialogState.level = btn.getAttribute("data-level");
+                    setChipActive(dialogLevel, "data-level", dialogState.level);
+                    setChipActive(lvl, "data-level", dialogState.level);
+                });
+            }
+
+            if (tone) {
+                tone.addEventListener("click", (e) => {
+                    const btn = e.target.closest("button[data-tone]");
+                    if (!btn) return;
+                    dialogState.tone = btn.getAttribute("data-tone");
+                    setChipActive(dialogTone, "data-tone", dialogState.tone);
+                    setChipActive(tone, "data-tone", dialogState.tone);
+                });
+            }
+
+            if (start) {
+                start.addEventListener("click", () => {
+                    dialogStartBtn && dialogStartBtn.click();
+                    closeMobileSettings();
+                });
+            }
+
+            if (lvl) setChipActive(lvl, "data-level", dialogState.level);
+            if (tone) setChipActive(tone, "data-tone", dialogState.tone);
+        }
+
+        if (fromMode === "tutor") {
+            const trigger = $("#lessonTrigger", mobileSettingsBody);
+            const menu = $("#lessonMenu", mobileSettingsBody);
+            const value = $("#lessonValue", mobileSettingsBody);
+
+            if (value) value.textContent = lessonValue ? lessonValue.textContent : value.textContent;
+
+            if (menu) {
+                menu.innerHTML = lessons
+                    .map((l) => {
+                        const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
+                        return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
+                    })
+                    .join("");
+            }
+
+            if (trigger && menu) {
+                trigger.addEventListener("click", () => {
+                    menu.classList.toggle("select__menu--open");
+                });
+            }
+
+            if (menu) {
+                menu.addEventListener("click", (e) => {
+                    const btn = e.target.closest("button[data-lesson]");
+                    if (!btn) return;
+                    const v = btn.getAttribute("data-lesson");
+                    tutorState.lesson = v;
+                    renderLessons();
+                    updateLessonLabel();
+                    tutorUpdateUI();
+
+                    if (value) value.textContent = lessons.find((x) => x.value === v)?.label || value.textContent;
+                    $$(".select__item", menu).forEach((b) =>
+                        b.classList.toggle("select__item--active", b.getAttribute("data-lesson") === v)
+                    );
+                    menu.classList.remove("select__menu--open");
+                    toast("Урок выбран");
+                });
+            }
+        }
+    }
+
+    mobileSettingsBackdrop && mobileSettingsBackdrop.addEventListener("click", closeMobileSettings);
+    mobileSettingsCloseBtn && mobileSettingsCloseBtn.addEventListener("click", closeMobileSettings);
+
+    dialogMobileSettingsBtn && dialogMobileSettingsBtn.addEventListener("click", () => openMobileSettings("dialog"));
+    tutorMobileSettingsBtn && tutorMobileSettingsBtn.addEventListener("click", () => openMobileSettings("tutor"));
+
+    // -----------------------------
+    // Initial route
+    // -----------------------------
+    showView(getRoute());
+
+    // initial UI sync
+    sentenceUpdateUI();
+    dialogUpdateUI();
+    tutorUpdateUI();
 })();
