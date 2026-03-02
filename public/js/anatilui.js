@@ -662,9 +662,59 @@
         toast("Подсказка: попробуй ответить коротко (мысалы: «Бір американо, өтінемін.»)");
     });
 
+
     // -----------------------------
-    // Tutor mode
+// Tutor: DB lessons loader + cache
+// -----------------------------
+    const tutorLessonCache = new Map(); // lessonId -> { id, title, content }
+
+    async function apiGet(url) {
+        const out = await window.apiFetch(url, { method: "GET" });
+        if (!out || !out.data) throw new Error("Empty response");
+        if (out.data.success === false) throw new Error(out.data.message || "API error");
+        return out.data;
+    }
+
+    async function fetchLessonFromDb(lessonId) {
+        const id = Number(lessonId);
+        if (!id) throw new Error("Invalid lesson id");
+
+        if (tutorLessonCache.has(id)) return tutorLessonCache.get(id);
+
+        const data = await apiGet(`/api/lesson/${id}`);
+        if (!data.lesson) throw new Error("Lesson not found");
+
+        const lesson = {
+            id: data.lesson.id,
+            title: data.lesson.title || "",
+            content: data.lesson.content || "",
+        };
+
+        tutorLessonCache.set(id, lesson);
+        return lesson;
+    }
+
+    function flattenCourseLessons(modules) {
+        const out = [];
+        (modules || []).forEach((m) => {
+            (m.lessons || []).forEach((l) => {
+                out.push({
+                    id: String(l.id),
+                    // label красиво: "Модуль — Урок"
+                    label: `${m.title || "Модуль"} — ${l.title || "Урок"}`,
+                    moduleTitle: m.title || "",
+                    lessonTitle: l.title || "",
+                    locked: !!m.locked,
+                    completed: !!l.completed,
+                });
+            });
+        });
+        return out;
+    }
+
     // -----------------------------
+// Tutor mode (DB-based)
+// -----------------------------
     const tutorMessages = $("#tutorMessages");
     const tutorInput = $("#tutorInput");
     const tutorSendBtn = $("#tutorSendBtn");
@@ -673,22 +723,18 @@
     const lessonMenu = $("#lessonMenu");
     const lessonValue = $("#lessonValue");
 
-    const lessons = [
-        { value: "current", label: "Текущий урок (Урок 12 — Келер шақ)" },
-        { value: "lesson1", label: "Урок 1 — Приветствия" },
-        { value: "lesson2", label: "Урок 2 — Местоимения" },
-        { value: "lesson5", label: "Урок 5 — Настоящее время" },
-        { value: "lesson8", label: "Урок 8 — Прошедшее время" },
-    ];
+// динамически из БД
+    let tutorLessons = []; // [{id,label,locked,completed,...}]
+    let tutorCourse = null; // {slug,title,...}
 
     let tutorState = {
-        lesson: "current",
+        lessonId: null, // <- теперь lessonId из БД
         messages: [
             {
                 id: "1",
                 isAI: true,
                 message:
-                    "Сәлеметсіз! Я ваш AI-репетитор. Задавайте вопросы по уроку 'Келер шақ' (будущее время). Я помогу разобраться с темой подробно и структурированно.",
+                    "Сәлеметсіз! Я AI-репетитор AnaTil. Выберите урок и задайте вопрос — я буду объяснять по материалу урока.",
                 timestamp: nowTimeRU(),
             },
         ],
@@ -696,17 +742,32 @@
 
     function renderLessons() {
         if (!lessonMenu) return;
-        lessonMenu.innerHTML = lessons
+
+        if (!tutorLessons.length) {
+            lessonMenu.innerHTML = `<div style="padding:12px;color:#6B7280;font-size:12px">Уроки не найдены</div>`;
+            return;
+        }
+
+        lessonMenu.innerHTML = tutorLessons
             .map((l) => {
-                const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
-                return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
+                const isActive = String(l.id) === String(tutorState.lessonId);
+                const active = isActive ? "select__item select__item--active" : "select__item";
+                const lock = l.locked ? " 🔒" : "";
+                const done = l.completed ? " ✅" : "";
+                const label = `${l.label}${lock}${done}`;
+
+                // если locked — не даём выбрать
+                return `<button class="${active}" type="button" role="option" data-lesson-id="${l.id}" ${
+                    l.locked ? 'data-locked="1"' : ""
+                }>${escapeHtml(label)}</button>`;
             })
             .join("");
     }
 
     function updateLessonLabel() {
-        const found = lessons.find((l) => l.value === tutorState.lesson);
-        if (lessonValue) lessonValue.textContent = found ? found.label : lessons[0].label;
+        if (!lessonValue) return;
+        const found = tutorLessons.find((x) => String(x.id) === String(tutorState.lessonId));
+        lessonValue.textContent = found ? found.label : "Выберите урок";
     }
 
     function openLessonMenu() {
@@ -732,24 +793,78 @@
         tutorMessages.innerHTML = tutorState.messages.map((m) => renderChatBubble(m)).join("");
         tutorMessages.scrollTop = tutorMessages.scrollHeight;
 
-        if (tutorSendBtn) tutorSendBtn.disabled = !tutorInput.value.trim();
+        if (tutorSendBtn) {
+            const ok = !!tutorInput.value.trim() && !!tutorState.lessonId;
+            tutorSendBtn.disabled = !ok;
+        }
     }
 
-    renderLessons();
-    updateLessonLabel();
-    tutorUpdateUI();
+    async function initTutorFromDb() {
+        try {
+            // 1) Узнаём текущий курс и nextLesson/lastLesson
+            const prog = await apiGet("/api/lessons/progress/current");
+            tutorCourse = prog.course || null;
+
+            if (!tutorCourse?.slug) {
+                toast("Курс не найден для вашего уровня");
+                return;
+            }
+
+            // 2) Берём структуру курса: модули + уроки
+            const courseData = await apiGet(`/api/course/${encodeURIComponent(tutorCourse.slug)}`);
+            const modules = (courseData && courseData.modules) || [];
+            tutorLessons = flattenCourseLessons(modules);
+
+            // 3) Выбираем урок по умолчанию:
+            //    nextLesson -> lastLesson -> первый доступный (не locked) -> первый вообще
+            const nextId = prog.nextLesson?.id ? String(prog.nextLesson.id) : null;
+            const lastId = prog.lastLesson?.id ? String(prog.lastLesson.id) : null;
+
+            const firstUnlocked = tutorLessons.find((x) => !x.locked)?.id || null;
+            tutorState.lessonId = nextId || lastId || firstUnlocked || (tutorLessons[0] ? tutorLessons[0].id : null);
+
+            renderLessons();
+            updateLessonLabel();
+            tutorUpdateUI();
+
+            // 4) Подготовительно подкачиваем контент выбранного урока (кэш)
+            if (tutorState.lessonId) {
+                fetchLessonFromDb(tutorState.lessonId).catch(() => {});
+            }
+        } catch (e) {
+            console.error(e);
+            toast("Не удалось загрузить уроки из базы");
+        }
+    }
+
+// init once
+    initTutorFromDb();
 
     lessonTrigger && lessonTrigger.addEventListener("click", toggleLessonMenu);
 
     lessonMenu &&
-    lessonMenu.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-lesson]");
+    lessonMenu.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-lesson-id]");
         if (!btn) return;
-        tutorState.lesson = btn.getAttribute("data-lesson");
+
+        if (btn.getAttribute("data-locked") === "1") {
+            toast("Этот урок пока закрыт");
+            return;
+        }
+
+        tutorState.lessonId = btn.getAttribute("data-lesson-id");
         renderLessons();
         updateLessonLabel();
         closeLessonMenu();
-        toast("Урок выбран");
+        tutorUpdateUI();
+
+        // префетчим контент
+        try {
+            await fetchLessonFromDb(tutorState.lessonId);
+            toast("Урок выбран");
+        } catch {
+            toast("Не удалось загрузить урок");
+        }
     });
 
     document.addEventListener("click", (e) => {
@@ -761,6 +876,10 @@
 
     async function tutorSend() {
         if (!tutorInput || !tutorInput.value.trim()) return;
+        if (!tutorState.lessonId) {
+            toast("Сначала выберите урок");
+            return;
+        }
 
         const text = tutorInput.value;
         tutorState.messages.push({ id: String(Date.now()), isAI: false, message: text, timestamp: nowTimeRU() });
@@ -768,23 +887,33 @@
         tutorUpdateUI();
 
         try {
-            const lessonLabel = lessons.find((l) => l.value === tutorState.lesson)?.label || "Текущий урок";
+            const lesson = await fetchLessonFromDb(tutorState.lessonId);
+
             const hist = tutorState.messages
-                .slice(-12)
+                .slice(-10)
                 .map((m) => `${m.isAI ? "AI" : "USER"}: ${m.message}`)
                 .join("\n");
 
             const prompt = [
-                "Режим: Репетитор по уроку на платформе AnaTil.",
-                `Выбран урок/тема: ${lessonLabel}.`,
-                "Отвечай по-русски, структурированно, короткими шагами.",
-                "Если уместно — дай 1-2 примера на казахском с переводом.",
-                "История переписки:",
+                "Ты — AI-репетитор платформы AnaTil по казахскому языку.",
+                "Отвечай по-русски, но примеры давай на казахском с переводом.",
+                "Правила:",
+                "- Используй ТОЛЬКО материал урока ниже (если чего-то нет — скажи, что этого нет в уроке, и предложи спросить по теме урока).",
+                "- Объясняй пошагово, очень понятно.",
+                "- В конце дай 1 мини-упражнение по теме.",
+                "",
+                `УРОК: ${lesson.title}`,
+                "МАТЕРИАЛ УРОКА (как есть из базы):",
+                lesson.content || "(пусто)",
+                "",
+                "ИСТОРИЯ ЧАТА:",
                 hist,
-                "Ответь на последнее сообщение пользователя.",
+                "",
+                "ОТВЕТЬ НА ПОСЛЕДНИЙ ВОПРОС ПОЛЬЗОВАТЕЛЯ:",
             ].join("\n");
 
             const reply = await aiChat(prompt);
+
             tutorState.messages.push({
                 id: String(Date.now() + 1),
                 isAI: true,
