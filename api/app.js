@@ -57,6 +57,9 @@ const adminQuestionUpdate = require("../server/routes/admin/questionUpdate.js");
 const adminLibraryMaterials = require("../server/routes/admin/libraryMaterials.js");
 const adminLibraryMaterialUpdate = require("../server/routes/admin/libraryMaterialUpdate.js");
 
+const aiSessionStart = require("../server/routes/ai/sessionStart.js");
+const aiUsageToday = require("../server/routes/ai/usageToday.js");
+
 
 // ===== tiny router =====
 function matchPath(pathname, pattern) {
@@ -105,6 +108,8 @@ module.exports = async (req, res) => {
 
         // ===== AI =====
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
+        if (path === "/api/ai/session/start" && method === "POST") return aiSessionStart(req, res);
+        if (path === "/api/ai/usage/today" && method === "GET") return aiUsageToday(req, res);
 
         // ===== PROFILE =====
         if (path === "/api/profile" && (method === "GET" || method === "POST")) return profile(req, res);

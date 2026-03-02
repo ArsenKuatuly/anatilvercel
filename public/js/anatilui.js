@@ -35,26 +35,82 @@
     }
 
     // -----------------------------
+    // AI Session + Usage badge
+    // -----------------------------
+    let activeAiSessionId = null;
+
+    async function ensureSession(mode, meta = {}) {
+        if (activeAiSessionId) return activeAiSessionId;
+
+        if (typeof window.apiFetch !== "function") {
+            throw new Error("apiFetch is not available");
+        }
+
+        const out = await window.apiFetch("/api/ai/session/start", {
+            method: "POST",
+            body: JSON.stringify({ mode, ...meta }),
+        });
+
+        const d = out?.data;
+        if (!d?.success || !d?.session?.id) {
+            throw new Error(d?.message || "Session start failed");
+        }
+
+        activeAiSessionId = d.session.id;
+        return activeAiSessionId;
+    }
+
+    function resetSession() {
+        activeAiSessionId = null;
+    }
+
+    async function refreshAiUsageBadge() {
+        try {
+            if (typeof window.apiFetch !== "function") return;
+            const out = await window.apiFetch("/api/ai/usage/today", { method: "GET" });
+            const d = out?.data;
+            if (!d?.success) return;
+
+            const now = $("#messagesNow");
+            const max = $("#messagesMax");
+            if (now) now.textContent = String(d.used);
+            if (max) max.textContent = String(d.limit);
+        } catch {
+            // ignore
+        }
+    }
+
+    // -----------------------------
     // AI API (Vercel /api/ai/chat)
     // -----------------------------
-    async function aiChat(message) {
+    async function aiChat(message, sessionId) {
         // Prefer apiFetch if exists (common in your project), fallback to fetch
         if (typeof window.apiFetch === "function") {
             const out = await window.apiFetch("/api/ai/chat", {
                 method: "POST",
-                body: JSON.stringify({ message }),
+                body: JSON.stringify({ message, sessionId }),
             });
+
             const data = out && out.data;
             if (!data) throw new Error("Empty response");
             if (data.error) throw new Error(data.details || data.error);
             if (typeof data.reply !== "string") throw new Error("Bad AI response");
+
+            // Update badge if backend returns usage
+            if (data.usage) {
+                const now = $("#messagesNow");
+                const max = $("#messagesMax");
+                if (now) now.textContent = String(data.usage.used);
+                if (max) max.textContent = String(data.usage.limit);
+            }
+
             return data.reply;
         }
 
         const r = await fetch("/api/ai/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message }),
+            body: JSON.stringify({ message, sessionId }),
         });
         const data = await r.json().catch(() => null);
         if (!r.ok) throw new Error((data && (data.details || data.error)) || "Request failed");
@@ -120,6 +176,11 @@
     window.addEventListener("hashchange", () => {
         const route = getRoute();
         showView(route);
+
+        // New route => new session
+        resetSession();
+
+        // When opening dialog/tutor on mobile, ensure sheet closed
         closeMobileSettings();
     });
 
@@ -223,6 +284,7 @@
     }
     renderAchievements();
 
+    // Home mode cards navigation
     $$("#modesGrid [data-route]").forEach((btn) => {
         btn.addEventListener("click", () => {
             const r = btn.getAttribute("data-route");
@@ -230,6 +292,7 @@
         });
     });
 
+    // Back button
     backBtn && backBtn.addEventListener("click", () => go("home"));
 
     // -----------------------------
@@ -429,7 +492,9 @@
                 sentenceState.sentence,
             ].join("\n");
 
-            const reply = await aiChat(prompt);
+            const sid = await ensureSession("sentence");
+            const reply = await aiChat(prompt, sid);
+
             const json = extractJsonFromText(reply);
             if (!json || typeof json !== "object") throw new Error("parse");
 
@@ -574,7 +639,9 @@
                 "Формат ответа: одна реплика на казахском + в скобках русский перевод.",
             ].join("\n");
 
-            const reply = await aiChat(prompt);
+            const sid = await ensureSession("dialog", { scenario: dialogState.scenario });
+            const reply = await aiChat(prompt, sid);
+
             dialogState.messages.push({
                 id: "1",
                 isAI: true,
@@ -631,7 +698,9 @@
                 "Ответь на последнее сообщение пользователя и продолжи разговор одним вопросом.",
             ].join("\n");
 
-            const reply = await aiChat(prompt);
+            const sid = await ensureSession("dialog", { scenario: dialogState.scenario });
+            const reply = await aiChat(prompt, sid);
+
             const json = extractJsonFromText(reply) || {};
             const aiMsg = String(json.reply || reply || "").trim();
             const fb = json.feedback ? String(json.feedback).trim() : "";
@@ -662,10 +731,9 @@
         toast("Подсказка: попробуй ответить коротко (мысалы: «Бір американо, өтінемін.»)");
     });
 
-
     // -----------------------------
-// Tutor: DB lessons loader + cache
-// -----------------------------
+    // Tutor: DB lessons loader + cache
+    // -----------------------------
     const tutorLessonCache = new Map(); // lessonId -> { id, title, content }
 
     async function apiGet(url) {
@@ -700,7 +768,6 @@
             (m.lessons || []).forEach((l) => {
                 out.push({
                     id: String(l.id),
-                    // label красиво: "Модуль — Урок"
                     label: `${m.title || "Модуль"} — ${l.title || "Урок"}`,
                     moduleTitle: m.title || "",
                     lessonTitle: l.title || "",
@@ -713,8 +780,8 @@
     }
 
     // -----------------------------
-// Tutor mode (DB-based)
-// -----------------------------
+    // Tutor mode (DB-based)
+    // -----------------------------
     const tutorMessages = $("#tutorMessages");
     const tutorInput = $("#tutorInput");
     const tutorSendBtn = $("#tutorSendBtn");
@@ -723,12 +790,11 @@
     const lessonMenu = $("#lessonMenu");
     const lessonValue = $("#lessonValue");
 
-// динамически из БД
-    let tutorLessons = []; // [{id,label,locked,completed,...}]
-    let tutorCourse = null; // {slug,title,...}
+    let tutorLessons = [];
+    let tutorCourse = null;
 
     let tutorState = {
-        lessonId: null, // <- теперь lessonId из БД
+        lessonId: null,
         messages: [
             {
                 id: "1",
@@ -756,7 +822,6 @@
                 const done = l.completed ? " ✅" : "";
                 const label = `${l.label}${lock}${done}`;
 
-                // если locked — не даём выбрать
                 return `<button class="${active}" type="button" role="option" data-lesson-id="${l.id}" ${
                     l.locked ? 'data-locked="1"' : ""
                 }>${escapeHtml(label)}</button>`;
@@ -801,7 +866,6 @@
 
     async function initTutorFromDb() {
         try {
-            // 1) Узнаём текущий курс и nextLesson/lastLesson
             const prog = await apiGet("/api/lessons/progress/current");
             tutorCourse = prog.course || null;
 
@@ -810,13 +874,10 @@
                 return;
             }
 
-            // 2) Берём структуру курса: модули + уроки
             const courseData = await apiGet(`/api/course/${encodeURIComponent(tutorCourse.slug)}`);
             const modules = (courseData && courseData.modules) || [];
             tutorLessons = flattenCourseLessons(modules);
 
-            // 3) Выбираем урок по умолчанию:
-            //    nextLesson -> lastLesson -> первый доступный (не locked) -> первый вообще
             const nextId = prog.nextLesson?.id ? String(prog.nextLesson.id) : null;
             const lastId = prog.lastLesson?.id ? String(prog.lastLesson.id) : null;
 
@@ -827,7 +888,6 @@
             updateLessonLabel();
             tutorUpdateUI();
 
-            // 4) Подготовительно подкачиваем контент выбранного урока (кэш)
             if (tutorState.lessonId) {
                 fetchLessonFromDb(tutorState.lessonId).catch(() => {});
             }
@@ -837,7 +897,6 @@
         }
     }
 
-// init once
     initTutorFromDb();
 
     lessonTrigger && lessonTrigger.addEventListener("click", toggleLessonMenu);
@@ -858,10 +917,12 @@
         closeLessonMenu();
         tutorUpdateUI();
 
-        // префетчим контент
         try {
             await fetchLessonFromDb(tutorState.lessonId);
             toast("Урок выбран");
+
+            // new lesson -> new session
+            resetSession();
         } catch {
             toast("Не удалось загрузить урок");
         }
@@ -912,7 +973,8 @@
                 "ОТВЕТЬ НА ПОСЛЕДНИЙ ВОПРОС ПОЛЬЗОВАТЕЛЯ:",
             ].join("\n");
 
-            const reply = await aiChat(prompt);
+            const sid = await ensureSession("tutor", { lessonId: tutorState.lessonId });
+            const reply = await aiChat(prompt, sid);
 
             tutorState.messages.push({
                 id: String(Date.now() + 1),
@@ -949,6 +1011,7 @@
     function openMobileSettings(fromMode) {
         if (!mobileSettingsSheet || !mobileSettingsBody) return;
 
+        // Clone the settings panel from the corresponding mode to keep layout identical
         mobileSettingsBody.innerHTML = "";
         if (fromMode === "dialog") {
             const src = $("#dialogSettings");
@@ -958,6 +1021,7 @@
             if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
         }
 
+        // Re-bind interactions inside cloned node (chips/select)
         rebindMobileSettings(fromMode);
 
         mobileSettingsSheet.classList.add("sheet--open");
@@ -979,6 +1043,7 @@
             const tone = $("#dialogTone", mobileSettingsBody);
             const start = $("#dialogStartBtn", mobileSettingsBody);
 
+            // render scenarios inside cloned sheet
             if (sc) {
                 sc.innerHTML = scenarios
                     .map((s) => {
@@ -1023,11 +1088,13 @@
                 });
             }
 
+            // sync active classes
             if (lvl) setChipActive(lvl, "data-level", dialogState.level);
             if (tone) setChipActive(tone, "data-tone", dialogState.tone);
         }
 
         if (fromMode === "tutor") {
+            // Keep mobile tutor settings simple: open desktop select in main UI
             const trigger = $("#lessonTrigger", mobileSettingsBody);
             const menu = $("#lessonMenu", mobileSettingsBody);
             const value = $("#lessonValue", mobileSettingsBody);
@@ -1035,12 +1102,23 @@
             if (value) value.textContent = lessonValue ? lessonValue.textContent : value.textContent;
 
             if (menu) {
-                menu.innerHTML = lessons
-                    .map((l) => {
-                        const active = l.value === tutorState.lesson ? "select__item select__item--active" : "select__item";
-                        return `<button class="${active}" type="button" role="option" data-lesson="${l.value}">${escapeHtml(l.label)}</button>`;
-                    })
-                    .join("");
+                // Use DB lessons
+                if (!tutorLessons.length) {
+                    menu.innerHTML = `<div style="padding:12px;color:#6B7280;font-size:12px">Уроки не найдены</div>`;
+                } else {
+                    menu.innerHTML = tutorLessons
+                        .map((l) => {
+                            const isActive = String(l.id) === String(tutorState.lessonId);
+                            const active = isActive ? "select__item select__item--active" : "select__item";
+                            const lock = l.locked ? " 🔒" : "";
+                            const done = l.completed ? " ✅" : "";
+                            const label = `${l.label}${lock}${done}`;
+                            return `<button class="${active}" type="button" role="option" data-lesson-id="${l.id}" ${
+                                l.locked ? 'data-locked="1"' : ""
+                            }>${escapeHtml(label)}</button>`;
+                        })
+                        .join("");
+                }
             }
 
             if (trigger && menu) {
@@ -1050,21 +1128,38 @@
             }
 
             if (menu) {
-                menu.addEventListener("click", (e) => {
-                    const btn = e.target.closest("button[data-lesson]");
+                menu.addEventListener("click", async (e) => {
+                    const btn = e.target.closest("button[data-lesson-id]");
                     if (!btn) return;
-                    const v = btn.getAttribute("data-lesson");
-                    tutorState.lesson = v;
+
+                    if (btn.getAttribute("data-locked") === "1") {
+                        toast("Этот урок пока закрыт");
+                        return;
+                    }
+
+                    const v = btn.getAttribute("data-lesson-id");
+                    tutorState.lessonId = v;
+
                     renderLessons();
                     updateLessonLabel();
                     tutorUpdateUI();
 
-                    if (value) value.textContent = lessons.find((x) => x.value === v)?.label || value.textContent;
+                    if (value) value.textContent = tutorLessons.find((x) => String(x.id) === String(v))?.label || value.textContent;
+
                     $$(".select__item", menu).forEach((b) =>
-                        b.classList.toggle("select__item--active", b.getAttribute("data-lesson") === v)
+                        b.classList.toggle("select__item--active", b.getAttribute("data-lesson-id") === v)
                     );
                     menu.classList.remove("select__menu--open");
-                    toast("Урок выбран");
+
+                    // new lesson -> new session
+                    resetSession();
+
+                    try {
+                        await fetchLessonFromDb(v);
+                        toast("Урок выбран");
+                    } catch {
+                        toast("Не удалось загрузить урок");
+                    }
                 });
             }
         }
@@ -1085,4 +1180,7 @@
     sentenceUpdateUI();
     dialogUpdateUI();
     tutorUpdateUI();
+
+    // initial badge
+    refreshAiUsageBadge();
 })();
