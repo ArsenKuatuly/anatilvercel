@@ -185,3 +185,29 @@
         border-radius: 10px;
     }
 }
+
+.dash-header__container{
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+}
+
+
+.dash-header__nav{
+    justify-self: center;
+}
+
+
+.dash-header__actions{
+    justify-self: end;
+}
+
+
+.dash-header__logo{
+    justify-self: start;
+}
+
+.dash-header__logo-img{
+    height: 42px;
+}
