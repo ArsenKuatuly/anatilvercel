@@ -143,3 +143,16 @@
     .dash-header__btn{ display:none; } /* на мобиле профиль в меню */
     .dash-header__burger{ display:inline-flex; flex-direction: column; }
 }
+
+.dash-header__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.dash-header__logo-img {
+    height: 34px;
+    width: auto;
+    display: block;
+}
