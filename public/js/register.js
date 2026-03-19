@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
             setMessage("Регистрация успешна", "success");
 
             setTimeout(() => {
-                window.location.href = "/dashboard.html";
+                window.location.href = "/onboarding.html";
             }, 500);
 
         } catch (e) {
