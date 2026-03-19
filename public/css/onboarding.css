@@ -14,18 +14,30 @@
     --container: 1280px;
 }
 
-* { box-sizing: border-box; }
-html { font-size: 16px; }
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+}
+
 body {
     margin: 0;
     font-family: 'Inter', sans-serif;
     background: var(--bg);
     color: var(--text);
 }
-button, input, textarea {
+
+button,
+input,
+textarea {
     font: inherit;
 }
-button { cursor: pointer; }
+
+button {
+    cursor: pointer;
+}
 
 .onboarding {
     min-height: 100vh;
@@ -112,6 +124,7 @@ button { cursor: pointer; }
     color: var(--primary);
     flex-shrink: 0;
 }
+
 .benefit-card__icon svg,
 .mini-stat__icon svg,
 .result-badge__icon svg {
@@ -155,6 +168,7 @@ button { cursor: pointer; }
     background: #E2E8F0;
     overflow: hidden;
 }
+
 .progress-bar__value {
     width: 33.333%;
     height: 100%;
@@ -167,11 +181,15 @@ button { cursor: pointer; }
     padding: 28px;
     display: none;
 }
-.step-card--active { display: block; }
+
+.step-card--active {
+    display: block;
+}
 
 .step-card__head {
     margin-bottom: 24px;
 }
+
 .step-card__eyebrow {
     display: inline-block;
     margin-bottom: 10px;
@@ -181,6 +199,7 @@ button { cursor: pointer; }
     text-transform: uppercase;
     color: var(--primary);
 }
+
 .step-card__head h2 {
     font-size: clamp(1.65rem, 2vw, 2.25rem);
     line-height: 1.18;
@@ -197,17 +216,23 @@ button { cursor: pointer; }
     display: grid;
     gap: 8px;
 }
+
 .field__label {
     font-size: 0.97rem;
     font-weight: 600;
     color: var(--text);
 }
+
 .field__control {
     position: relative;
     display: flex;
     align-items: center;
 }
-.field__control--textarea { align-items: stretch; }
+
+.field__control--textarea {
+    align-items: stretch;
+}
+
 .field__icon {
     position: absolute;
     left: 18px;
@@ -218,7 +243,12 @@ button { cursor: pointer; }
     color: var(--muted);
     pointer-events: none;
 }
-.field__icon svg { width: 100%; height: 100%; }
+
+.field__icon svg {
+    width: 100%;
+    height: 100%;
+}
+
 .field input,
 .field textarea {
     width: 100%;
@@ -229,25 +259,30 @@ button { cursor: pointer; }
     outline: none;
     transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
+
 .field input {
     min-height: 58px;
     padding: 16px 18px 16px 50px;
 }
+
 .field textarea {
     padding: 16px 18px;
     resize: vertical;
     min-height: 120px;
 }
+
 .field input:focus,
 .field textarea:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px var(--ring);
 }
+
 .field input.field--invalid,
 .field textarea.field--invalid,
 .choice-grid.is-invalid {
     border-color: #EF4444;
 }
+
 .field__error {
     min-height: 18px;
     font-size: 0.84rem;
@@ -263,6 +298,7 @@ button { cursor: pointer; }
     border-radius: 18px;
     border: 1px solid rgba(37, 99, 235, 0.08);
 }
+
 .info-note p {
     margin: 0;
     color: var(--muted);
@@ -279,19 +315,31 @@ button { cursor: pointer; }
     font-size: 1rem;
     transition: transform .2s ease, background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
 }
-.btn:hover { transform: translateY(-1px); }
-.btn--full { width: 100%; }
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn--full {
+    width: 100%;
+}
+
 .btn--primary {
     background: var(--primary);
     color: #fff;
     box-shadow: 0 12px 28px rgba(37, 99, 235, 0.18);
 }
-.btn--primary:hover { background: var(--primary-dark); }
+
+.btn--primary:hover {
+    background: var(--primary-dark);
+}
+
 .btn--secondary {
     background: #F8FAFC;
     color: var(--muted);
     border: 2px solid var(--border);
 }
+
 .btn--secondary:hover {
     background: #F1F5F9;
     color: var(--text);
@@ -304,12 +352,14 @@ button { cursor: pointer; }
     border-radius: 22px;
     box-shadow: var(--shadow-sm);
 }
+
 .question-card__head {
     display: flex;
     gap: 14px;
     align-items: flex-start;
     margin-bottom: 16px;
 }
+
 .question-card__index {
     width: 34px;
     height: 34px;
@@ -330,11 +380,13 @@ button { cursor: pointer; }
     border: 2px solid transparent;
     border-radius: 18px;
 }
+
 .choice-grid--triple,
 .choice-grid--wide,
 .choice-grid--quad {
     grid-template-columns: repeat(1, minmax(0, 1fr));
 }
+
 .choice-btn {
     min-height: 54px;
     padding: 14px 16px;
@@ -345,10 +397,12 @@ button { cursor: pointer; }
     font-weight: 600;
     text-align: left;
 }
+
 .choice-btn:hover {
     border-color: rgba(37, 99, 235, 0.34);
     background: #F8FBFF;
 }
+
 .choice-btn.is-selected {
     border-color: var(--primary);
     background: #EFF6FF;
@@ -359,11 +413,15 @@ button { cursor: pointer; }
 .result-layout {
     display: grid;
     gap: 22px;
+    align-items: start;
 }
+
 .result-layout__main {
     display: grid;
     gap: 20px;
+    align-items: start;
 }
+
 .result-badge-wrap,
 .profile-preview,
 .trajectory-card,
@@ -374,21 +432,25 @@ button { cursor: pointer; }
     border: 1px solid rgba(148, 163, 184, 0.18);
     box-shadow: var(--shadow-sm);
 }
+
 .result-badge-wrap {
     text-align: center;
 }
+
 .result-badge__icon {
     margin: 0 auto 18px;
     width: 72px;
     height: 72px;
     border-radius: 999px;
 }
+
 .result-badge__label {
     margin: 0 0 12px;
     color: var(--text);
     font-size: 1.15rem;
     font-weight: 700;
 }
+
 .result-level {
     display: inline-flex;
     align-items: center;
@@ -403,6 +465,7 @@ button { cursor: pointer; }
     font-weight: 800;
     letter-spacing: -0.04em;
 }
+
 .result-level__text {
     margin: 14px 0 0;
     color: var(--muted);
@@ -413,6 +476,7 @@ button { cursor: pointer; }
     gap: 16px;
     align-items: center;
 }
+
 .profile-preview__avatar {
     width: 68px;
     height: 68px;
@@ -427,12 +491,28 @@ button { cursor: pointer; }
     flex-shrink: 0;
 }
 
+.trajectory-card,
+.roadmap-card {
+    display: flex;
+    flex-direction: column;
+}
+
 .trajectory-grid,
 .roadmap-list,
 .roadmap-actions {
     display: grid;
     gap: 14px;
 }
+
+.trajectory-grid {
+    padding: 12px 0 0;
+}
+
+.roadmap-list,
+.roadmap-actions {
+    padding: 12px 0 0;
+}
+
 .mini-stat {
     display: flex;
     gap: 14px;
@@ -441,17 +521,25 @@ button { cursor: pointer; }
     border-radius: 20px;
     background: #F8FAFC;
 }
+
 .trajectory-note {
     margin-top: 18px;
     padding: 16px 18px;
     border-radius: 18px;
     background: #F8FAFC;
 }
+
+.roadmap-card {
+    justify-content: space-between;
+    min-height: 100%;
+}
+
 .roadmap-item {
     display: flex;
     gap: 12px;
     align-items: center;
 }
+
 .roadmap-item__dot {
     width: 34px;
     height: 34px;
@@ -466,27 +554,36 @@ button { cursor: pointer; }
     font-weight: 700;
     flex-shrink: 0;
 }
+
 .roadmap-item--done .roadmap-item__dot {
     background: var(--primary);
     color: #fff;
     border-color: var(--primary);
 }
-.roadmap-item__dot svg { width: 18px; height: 18px; }
+
+.roadmap-item__dot svg {
+    width: 18px;
+    height: 18px;
+}
 
 @media (min-width: 768px) {
     .onboarding {
         padding: 32px;
     }
+
     .choice-grid--triple {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+
     .choice-grid--quad {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
     .form-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-items: start;
     }
+
     .form-grid .info-note,
     .form-grid .btn {
         grid-column: 1 / -1;
@@ -499,6 +596,7 @@ button { cursor: pointer; }
         gap: 32px;
         min-height: calc(100vh - 48px);
     }
+
     .onboarding__aside {
         position: sticky;
         top: 24px;
@@ -506,24 +604,73 @@ button { cursor: pointer; }
         justify-content: center;
         padding: 40px;
     }
+
     .step-card {
         padding: 34px;
     }
+
     .choice-grid--wide {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
     .result-layout {
-        grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.8fr);
+        grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+        gap: 18px;
         align-items: start;
+    }
+
+    .result-layout__main {
+        grid-template-columns: minmax(250px, 280px) minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+    }
+
+    .result-badge-wrap {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .profile-preview {
+        grid-column: 1;
+        grid-row: 2;
+        align-items: flex-start;
+    }
+
+    .trajectory-card {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        height: 100%;
+    }
+
+    .roadmap-card {
+        align-self: stretch;
+        height: 100%;
     }
 }
 
 @media (min-width: 1280px) {
-    .onboarding__aside { padding: 48px; }
-    .step-card { padding: 40px; }
-    .question-card { padding: 24px; }
+    .onboarding__aside {
+        padding: 48px;
+    }
+
+    .step-card {
+        padding: 40px;
+    }
+
+    .question-card {
+        padding: 24px;
+    }
+
     .choice-grid--quad {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .result-layout {
+        grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.85fr);
+    }
+
+    .result-layout__main {
+        grid-template-columns: minmax(270px, 300px) minmax(0, 1fr);
     }
 }
 
@@ -531,18 +678,32 @@ button { cursor: pointer; }
     .onboarding {
         padding: 14px;
     }
+
     .onboarding__aside,
     .step-card {
         border-radius: 22px;
     }
-    .onboarding__aside { padding: 22px; }
-    .step-card { padding: 20px; }
+
+    .onboarding__aside {
+        padding: 22px;
+    }
+
+    .step-card {
+        padding: 20px;
+    }
+
     .question-card,
     .result-badge-wrap,
     .profile-preview,
     .trajectory-card,
-    .roadmap-card { padding: 18px; }
-    .profile-preview { align-items: flex-start; }
+    .roadmap-card {
+        padding: 18px;
+    }
+
+    .profile-preview {
+        align-items: flex-start;
+    }
+
     .btn {
         min-height: 54px;
     }
