@@ -273,22 +273,25 @@ function showResult(score, level) {
 }
 
 async function saveResult(score, level) {
-  if (typeof window.authFetch !== "function") return;
-  try {
-    await window.authFetch("/api/save-result", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        totalScore: score,
-        level,
-        math: examState.math.score,
-        reading: examState.reading.score,
-        listening: examState.listening.score,
-      }),
-    });
-  } catch (e) {
-    console.error("Ошибка сохранения результата", e);
-  }
+    if (typeof window.authFetch !== "function") return;
+
+    try {
+        const { data } = await window.authFetch("/api/save-result", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                totalScore: score,
+                level,
+                math: examState.math.score,
+                reading: examState.reading.score,
+                listening: examState.listening.score,
+            }),
+        });
+
+        console.log("Результат сохранён:", data);
+    } catch (e) {
+        console.error("Ошибка сохранения результата", e);
+    }
 }
 
 function goToNextSubject() {
