@@ -111,7 +111,9 @@ module.exports = async (req, res) => {
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
         if (path === "/api/ai/session/start" && method === "POST") return aiSessionStart(req, res);
         if (path === "/api/ai/usage/today" && method === "GET") return aiUsageToday(req, res);
-        if (path === "/api/ai/test-writing-score" && method === "POST") return testWritingScore(req, res);
+        if (path === "/api/ai/test-writing-score" && method === "POST") {
+            return testWritingScore(req, res);
+        }
 
         // ===== PROFILE =====
         if (path === "/api/profile" && (method === "GET" || method === "POST")) return profile(req, res);
