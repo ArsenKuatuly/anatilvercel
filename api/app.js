@@ -59,7 +59,7 @@ const adminLibraryMaterialUpdate = require("../server/routes/admin/libraryMateri
 
 const aiSessionStart = require("../server/routes/ai/sessionStart.js");
 const aiUsageToday = require("../server/routes/ai/usageToday.js");
-const onboardingDiagnose = require("../server/routes/ai/onboardingDiagnose.js");
+
 
 
 // ===== tiny router =====
@@ -111,7 +111,7 @@ module.exports = async (req, res) => {
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
         if (path === "/api/ai/session/start" && method === "POST") return aiSessionStart(req, res);
         if (path === "/api/ai/usage/today" && method === "GET") return aiUsageToday(req, res);
-        if (path === "/api/onboarding-diagnose" && method === "POST") return onboardingDiagnose(req, res);
+
 
         // ===== PROFILE =====
         if (path === "/api/profile" && (method === "GET" || method === "POST")) return profile(req, res);
