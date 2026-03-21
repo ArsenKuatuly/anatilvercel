@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AnaTil — Персональная траектория</title>
+    <title>AnaTil — Onboarding</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,288 +14,170 @@
 <script src="/js/api.js"></script>
 
 <div class="onboarding" id="onboardingApp">
-    <div class="onboarding__shell">
-        <section class="onboarding__aside">
-            <div class="onboarding__pill" id="stepPill">Шаг 1 из 3</div>
+    <div class="onboarding__container">
+        <section class="onboarding__desktop-intro">
+            <div class="step-pill" id="stepPillDesktop">Шаг 1 из 2</div>
 
-            <div class="onboarding__hero" id="heroContent">
-                <h1 class="onboarding__hero-title">Добро пожаловать в AnaTil</h1>
-                <p class="onboarding__hero-text">
-                    Персонализированное обучение казахскому языку с современными методиками,
-                    AI-практикой и понятной траекторией роста.
-                </p>
+            <div class="hero-block step-hero step-hero--active" data-hero-step="1">
+                <h1>Добро пожаловать в AnaTil</h1>
+                <p>Персонализированное обучение казахскому языку с использованием современных методик и AI-технологий</p>
             </div>
 
-            <div class="onboarding__benefits" id="benefitsList">
-                <article class="benefit-card">
-                    <div class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div class="hero-block step-hero" data-hero-step="2">
+                <h1>Как вы хотите начать обучение?</h1>
+                <p>Выберите подходящий вариант, и мы подберём для вас лучший старт</p>
+            </div>
+
+            <div class="benefits-list step-benefits step-benefits--active" data-benefits-step="1">
+                <article class="benefit-item">
+                    <div class="benefit-item__icon">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M16.6667 5L7.50004 14.1667L3.33337 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                     <div>
                         <h3>Адаптивная программа</h3>
-                        <p>Курс подстраивается под ваш стартовый уровень и темп обучения.</p>
+                        <p>Подстраивается под ваш уровень и темп обучения</p>
                     </div>
                 </article>
 
-                <article class="benefit-card">
-                    <div class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <article class="benefit-item">
+                    <div class="benefit-item__icon">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M16.6667 5L7.50004 14.1667L3.33337 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                     <div>
                         <h3>AI-практика</h3>
-                        <p>Тренируйте предложения, диалоги и получайте объяснение ошибок.</p>
+                        <p>Практикуйте разговорный язык с AI-ассистентом</p>
                     </div>
                 </article>
 
-                <article class="benefit-card">
-                    <div class="benefit-card__icon">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <article class="benefit-item">
+                    <div class="benefit-item__icon">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M16.6667 5L7.50004 14.1667L3.33337 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
                     </div>
                     <div>
-                        <h3>Понятный прогресс</h3>
-                        <p>Видите свой уровень, достижения и следующие шаги обучения.</p>
+                        <h3>Отслеживание прогресса</h3>
+                        <p>Визуализация достижений и роста навыков</p>
                     </div>
                 </article>
             </div>
         </section>
 
-        <main class="onboarding__main">
-            <div class="progress-bar" aria-hidden="true">
-                <div class="progress-bar__value" id="topProgress"></div>
-            </div>
+        <main class="onboarding__content">
+            <section class="mobile-header">
+                <div class="step-pill" id="stepPillMobile">Шаг 1 из 2</div>
 
-            <section class="step-card step-card--active" data-step="1">
-                <div class="step-card__head">
-                    <span class="step-card__eyebrow">Профиль</span>
-                    <h2>Давайте настроим ваше персональное обучение</h2>
-                    <p>Сначала заполним данные, которые автоматически появятся в вашем профиле.</p>
+                <div class="hero-block step-hero step-hero--active" data-mobile-hero-step="1">
+                    <h1>Добро пожаловать в AnaTil</h1>
+                    <p>Персонализированное обучение казахскому языку с использованием современных методик и AI-технологий</p>
                 </div>
 
-                <form id="welcomeForm" class="form-grid" novalidate>
-                    <label class="field">
-                        <span class="field__label">Имя</span>
-                        <span class="field__control">
-                            <span class="field__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.418 0-8 1.79-8 4v1h16v-1c0-2.21-3.582-4-8-4Z" fill="currentColor"/></svg>
-                            </span>
-                            <input type="text" id="firstName" name="first_name" placeholder="Введите ваше имя" autocomplete="given-name" required />
-                        </span>
-                        <span class="field__error" data-error-for="first_name"></span>
-                    </label>
-
-                    <label class="field">
-                        <span class="field__label">Фамилия</span>
-                        <span class="field__control">
-                            <span class="field__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.418 0-8 1.79-8 4v1h16v-1c0-2.21-3.582-4-8-4Z" fill="currentColor"/></svg>
-                            </span>
-                            <input type="text" id="lastName" name="last_name" placeholder="Введите вашу фамилию" autocomplete="family-name" required />
-                        </span>
-                        <span class="field__error" data-error-for="last_name"></span>
-                    </label>
-
-                    <div class="info-note">
-                        <span>💡</span>
-                        <p>Эти данные будут автоматически отображаться в вашем профиле.</p>
-                    </div>
-
-                    <button type="submit" class="btn btn--primary btn--full">Продолжить</button>
-                </form>
+                <div class="hero-block step-hero" data-mobile-hero-step="2">
+                    <h1>Как вы хотите начать обучение?</h1>
+                    <p>Выберите подходящий вариант, и мы подберём для вас лучший старт</p>
+                </div>
             </section>
 
-            <section class="step-card" data-step="2">
-                <div class="step-card__head">
-                    <span class="step-card__eyebrow">Мини-диагностика</span>
-                    <h2>Определим ваш стартовый уровень</h2>
-                    <p>Ответьте на несколько вопросов. Это займёт всего 1–2 минуты.</p>
-                </div>
+            <section class="step-panel step-panel--active" data-step="1">
+                <div class="form-card">
+                    <div class="form-card__head">
+                        <h2>Давайте настроим ваше персональное обучение</h2>
+                        <p>Это займет всего пару минут</p>
+                    </div>
 
-                <form id="diagnosticForm" class="diagnostic-form" novalidate>
-                    <article class="question-card">
-                        <div class="question-card__head">
-                            <span class="question-card__index">1</span>
-                            <div>
-                                <h3>Знаете ли вы казахский алфавит?</h3>
-                                <p>Выберите вариант, который ближе всего к вашему уровню.</p>
-                            </div>
-                        </div>
-                        <div class="choice-grid choice-grid--triple" data-choice-group="alphabet">
-                            <button type="button" class="choice-btn" data-name="alphabet" data-value="yes" data-score="2">Да</button>
-                            <button type="button" class="choice-btn" data-name="alphabet" data-value="partial" data-score="1">Частично</button>
-                            <button type="button" class="choice-btn" data-name="alphabet" data-value="no" data-score="0">Нет</button>
-                        </div>
-                        <div class="field__error" data-error-for="alphabet"></div>
-                    </article>
-
-                    <article class="question-card">
-                        <div class="question-card__head">
-                            <span class="question-card__index">2</span>
-                            <div>
-                                <h3>Как хорошо вы понимаете простые фразы?</h3>
-                                <p>Например приветствие, вопрос о самочувствии, короткий ответ.</p>
-                            </div>
-                        </div>
-                        <div class="choice-grid" data-choice-group="understanding">
-                            <button type="button" class="choice-btn" data-name="understanding" data-value="good" data-score="2">Хорошо</button>
-                            <button type="button" class="choice-btn" data-name="understanding" data-value="little" data-score="1">Немного</button>
-                            <button type="button" class="choice-btn" data-name="understanding" data-value="none" data-score="0">Почти не понимаю</button>
-                        </div>
-                        <div class="field__error" data-error-for="understanding"></div>
-                    </article>
-
-                    <article class="question-card">
-                        <div class="question-card__head">
-                            <span class="question-card__index">3</span>
-                            <div>
-                                <h3>Выберите перевод слова «Кітап»</h3>
-                                <p>Небольшое задание на словарный запас.</p>
-                            </div>
-                        </div>
-                        <div class="choice-grid choice-grid--quad" data-choice-group="translation">
-                            <button type="button" class="choice-btn" data-name="translation" data-value="book" data-score="2">Книга</button>
-                            <button type="button" class="choice-btn" data-name="translation" data-value="pen" data-score="0">Ручка</button>
-                            <button type="button" class="choice-btn" data-name="translation" data-value="house" data-score="0">Дом</button>
-                            <button type="button" class="choice-btn" data-name="translation" data-value="window" data-score="0">Окно</button>
-                        </div>
-                        <div class="field__error" data-error-for="translation"></div>
-                    </article>
-
-                    <article class="question-card">
-                        <div class="question-card__head">
-                            <span class="question-card__index">4</span>
-                            <div>
-                                <h3>Расскажите про себя</h3>
-                                <p>Напишите максимально о себя. Мы поймём уровень даже по короткой фразе.</p>
-                            </div>
-                        </div>
+                    <form id="welcomeForm" class="onboarding-form" novalidate>
                         <label class="field">
-                            <span class="field__control field__control--textarea">
-                                <textarea id="selfDescription" name="selfDescription" rows="4" placeholder="Например: Менің атым Арсен. Мен оқушымын."></textarea>
+                            <span class="field__label">Имя</span>
+                            <span class="field__control">
+                                <span class="field__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M20 21C20 19.9391 19.5786 18.9217 18.8284 18.1716C18.0783 17.4214 17.0609 17 16 17H8C6.93913 17 5.92172 17.4214 5.17157 18.1716C4.42143 18.9217 4 19.9391 4 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        <path d="M12 13C14.2091 13 16 11.2091 16 9C16 6.79086 14.2091 5 12 5C9.79086 5 8 6.79086 8 9C8 11.2091 9.79086 13 12 13Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                </span>
+                                <input type="text" id="firstName" name="first_name" placeholder="Введите ваше имя" autocomplete="given-name" required />
                             </span>
+                            <span class="field__error" data-error-for="first_name"></span>
                         </label>
-                        <div class="field__error" data-error-for="selfDescription"></div>
-                    </article>
 
-                    <article class="question-card">
-                        <div class="question-card__head">
-                            <span class="question-card__index">5</span>
-                            <div>
-                                <h3>Насколько уверенно вы говорите на казахском?</h3>
-                                <p>Выберите вариант, который вам ближе.</p>
-                            </div>
-                        </div>
-                        <div class="choice-grid choice-grid--wide" data-choice-group="speaking">
-                            <button type="button" class="choice-btn" data-name="speaking" data-value="0" data-score="0">Никогда не говорил</button>
-                            <button type="button" class="choice-btn" data-name="speaking" data-value="1" data-score="1">Могу сказать базовые фразы</button>
-                            <button type="button" class="choice-btn" data-name="speaking" data-value="2" data-score="2">Могу поддержать простой диалог</button>
-                            <button type="button" class="choice-btn" data-name="speaking" data-value="3" data-score="3">Говорю уверенно</button>
-                        </div>
-                        <div class="field__error" data-error-for="speaking"></div>
-                    </article>
+                        <label class="field">
+                            <span class="field__label">Фамилия</span>
+                            <span class="field__control">
+                                <span class="field__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M4 4H20V20H4V4Z" stroke="none" fill="none"></path>
+                                        <path d="M4 8L12 13L20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        <rect x="4" y="6" width="16" height="12" rx="2" stroke="currentColor" stroke-width="2"></rect>
+                                    </svg>
+                                </span>
+                                <input type="text" id="lastName" name="last_name" placeholder="Введите вашу фамилию" autocomplete="family-name" required />
+                            </span>
+                            <span class="field__error" data-error-for="last_name"></span>
+                        </label>
 
-                    <button type="submit" class="btn btn--primary btn--full">Определить мой уровень</button>
-                </form>
+                        <div class="info-note">
+                            <p>💡 Эти данные будут автоматически отображаться в вашем профиле</p>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--full">Продолжить</button>
+                    </form>
+                </div>
             </section>
 
-            <section class="step-card" data-step="3">
-                <div class="result-layout">
-                    <div class="result-layout__main">
-                        <div class="result-badge-wrap">
-                            <div class="result-badge__icon">
-                                <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.47 6.03.88-4.36 4.25 1.03 6.01L12 16.77 6.6 19.6l1.03-6.01L3.27 9.35l6.03-.88L12 3Z" fill="currentColor"/></svg>
+            <section class="step-panel" data-step="2">
+                <div class="choices-layout">
+                    <article class="choice-card">
+                        <div class="choice-card__inner">
+                            <div class="choice-card__icon-wrap">
+                                <svg class="choice-card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M22 10V6C22 5.46957 21.7893 4.96086 21.4142 4.58579C21.0391 4.21071 20.5304 4 20 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    <path d="M12 14L9 11M12 14L15 11M12 14V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
                             </div>
-                            <p class="result-badge__label">Ваш стартовый уровень</p>
-                            <div class="result-level" id="resultLevel">A1</div>
-                            <p class="result-level__text" id="resultLevelText">Начальный уровень</p>
+                            <div class="choice-card__text">
+                                <h2>Проверить свой уровень</h2>
+                                <p>Пройдите тест, чтобы точно определить ваш текущий уровень казахского языка</p>
+                            </div>
+                            <div class="choice-card__note">
+                                <p>💡 Подходит, если вы уже изучали казахский</p>
+                            </div>
+                            <button type="button" class="btn btn--primary btn--full" id="chooseTestBtn">Пройти тест</button>
                         </div>
+                    </article>
 
-                        <div class="profile-preview">
-                            <div class="profile-preview__avatar" id="profileInitials">АК</div>
-                            <div>
-                                <h3 id="resultFullName">Арсен К.</h3>
-                                <p>Эти данные будут автоматически перенесены в ваш профиль.</p>
+                    <article class="choice-card">
+                        <div class="choice-card__inner">
+                            <div class="choice-card__icon-wrap">
+                                <svg class="choice-card__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M12 3L13.09 8.26L18 9L13.09 9.74L12 15L10.91 9.74L6 9L10.91 8.26L12 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    <path d="M19 14L19.62 16.38L22 17L19.62 17.62L19 20L18.38 17.62L16 17L18.38 16.38L19 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    <path d="M5 14L5.62 16.38L8 17L5.62 17.62L5 20L4.38 17.62L2 17L4.38 16.38L5 14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                                </svg>
                             </div>
+                            <div class="choice-card__text">
+                                <h2>Начать с нуля</h2>
+                                <p>Сразу начните обучение с базового уровня A1 без прохождения теста</p>
+                            </div>
+                            <div class="choice-card__note">
+                                <p>🎯 Подходит для новичков</p>
+                            </div>
+                            <button type="button" class="btn btn--primary btn--full" id="chooseA1Btn">Начать с A1</button>
                         </div>
+                    </article>
+                </div>
 
-                        <div class="trajectory-card">
-                            <div class="trajectory-card__head">
-                                <h2>Персональная траектория обучения</h2>
-                                <p>Мы подготовили индивидуальный маршрут на основе ваших ответов.</p>
-                            </div>
-
-                            <div class="trajectory-grid">
-                                <article class="mini-stat">
-                                    <div class="mini-stat__icon">
-                                        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5v-17A2.5 2.5 0 0 1 6.5 2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-                                    </div>
-                                    <div>
-                                        <h4>Первый модуль</h4>
-                                        <p id="firstModule">Приветствие и знакомство</p>
-                                    </div>
-                                </article>
-
-                                <article class="mini-stat">
-                                    <div class="mini-stat__icon">
-                                        <svg viewBox="0 0 24 24"><path d="M3 17 9 11l4 4 8-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 7h7v7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                    </div>
-                                    <div>
-                                        <h4>Рекомендуемый темп</h4>
-                                        <p id="learningPace">3 урока в неделю</p>
-                                    </div>
-                                </article>
-
-                                <article class="mini-stat">
-                                    <div class="mini-stat__icon">
-                                        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-                                    </div>
-                                    <div>
-                                        <h4>Цель на неделю</h4>
-                                        <p id="weeklyGoal">2 урока + 1 AI-практика</p>
-                                    </div>
-                                </article>
-                            </div>
-
-                            <div class="trajectory-note">
-                                На основе ваших ответов мы подобрали стартовую программу, чтобы обучение было комфортным и эффективным.
-                            </div>
-                        </div>
-                    </div>
-
-                    <aside class="roadmap-card">
-                        <h3>Ваш путь обучения</h3>
-                        <div class="roadmap-list">
-                            <div class="roadmap-item roadmap-item--done">
-                                <span class="roadmap-item__dot">
-                                    <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                </span>
-                                <span>Диагностика</span>
-                            </div>
-                            <div class="roadmap-item">
-                                <span class="roadmap-item__dot">2</span>
-                                <span>Стартовый модуль</span>
-                            </div>
-                            <div class="roadmap-item">
-                                <span class="roadmap-item__dot">3</span>
-                                <span>Практика с AI</span>
-                            </div>
-                            <div class="roadmap-item">
-                                <span class="roadmap-item__dot">4</span>
-                                <span>Повторение и рост уровня</span>
-                            </div>
-                        </div>
-
-                        <div class="roadmap-actions">
-                            <button class="btn btn--primary btn--full" id="startLearningBtn" type="button">Начать обучение</button>
-                            <button class="btn btn--secondary btn--full" id="retakeBtn" type="button">Пройти диагностику заново</button>
-                        </div>
-                    </aside>
+                <div class="bottom-note">
+                    <p>ℹ️ Вы всегда сможете пройти полный тест позже и уточнить свой уровень</p>
                 </div>
             </section>
         </main>
     </div>
 </div>
 
-<script src="/js/authFetch.js"></script>
 <script src="/js/onboarding.js"></script>
 </body>
 </html>
