@@ -604,3 +604,158 @@ body{
   .exam__finish{ padding: 10px 12px; }
   .exam__logo{ font-size: 16px; }
 }
+
+
+/* ===== Writing task ===== */
+.writing-task{
+  display:grid;
+  gap:16px;
+}
+
+.writing-task__top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.writing-task__title{
+  margin:0 0 6px;
+  font-size:20px;
+  font-weight:700;
+}
+
+.writing-task__hint{
+  margin:0;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+.writing-task__badge{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  padding:8px 12px;
+  border-radius:999px;
+  background:var(--blue-50);
+  color:var(--blue);
+  border:1px solid #DBEAFE;
+  font-weight:700;
+}
+
+.writing-task__label{
+  font-size:14px;
+  font-weight:600;
+}
+
+.writing-task__textarea{
+  width:100%;
+  min-height:220px;
+  resize:vertical;
+  border:2px solid var(--border);
+  border-radius:20px;
+  padding:18px 18px;
+  font:inherit;
+  line-height:1.7;
+  color:var(--text);
+  outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+
+.writing-task__textarea:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+.writing-task__meta{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.writing-task__tips{
+  background:#F8FAFC;
+  border:1px solid var(--border-soft);
+  border-radius:18px;
+  padding:16px;
+}
+
+.writing-task__tips span{
+  display:block;
+  margin-bottom:8px;
+  font-weight:600;
+}
+
+.writing-task__tips ul{
+  margin:0;
+  padding-left:20px;
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.writing-task__status{
+  display:none;
+  padding:14px 16px;
+  border-radius:16px;
+  background:var(--blue-50);
+  border:1px solid #DBEAFE;
+  color:var(--blue);
+  font-weight:600;
+}
+
+.writing-task__status.is-visible{ display:block; }
+.writing-task__status.is-error{
+  background:var(--red-50);
+  border-color:var(--red-200);
+  color:var(--red);
+}
+
+.writing-result{
+  display:none;
+  padding:18px;
+  border-radius:20px;
+  border:1px solid #BBF7D0;
+  background:var(--green-50);
+}
+
+.writing-result.is-visible{ display:block; }
+
+.writing-result__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.writing-result__score{
+  font-size:28px;
+  font-weight:800;
+  color:var(--green);
+}
+
+.writing-result__label{
+  color:#166534;
+  font-weight:700;
+}
+
+.writing-result__text{
+  margin:0;
+  color:#166534;
+  line-height:1.7;
+}
+
+@media (max-width: 767px){
+  .writing-task__top,
+  .writing-result__head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .writing-task__textarea{
+    min-height:180px;
+  }
+}

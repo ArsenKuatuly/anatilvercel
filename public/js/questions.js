@@ -46,7 +46,7 @@ export const subjects = {
       { question: "Аулада не бар?", answers: ["Тек гараж", "Бассейн мен ағаш", "Дүкен"], correct: 1 },
     ],
     // для удобства (можешь поменять путь)
-    globalAudioSrc: "audio/textexam.mp3",
+    globalAudioSrc: "assets/audio/textexam.mp3",
   },
 };
 
