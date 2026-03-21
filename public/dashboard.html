@@ -259,14 +259,44 @@
     </div>
 </div>
 
-<div class="modal" id="confirmModal">
+<div class="modal" id="confirmModal" aria-hidden="true">
     <div class="modal__overlay" id="cancelBtn"></div>
-    <div class="modal__window" role="dialog" aria-modal="true" aria-label="Подтверждение">
-        <h3 class="modal__title">Начать тест?</h3>
-        <p class="modal__text">Тест займёт около 15 минут.</p>
-        <div class="modal__actions">
-            <button class="btn" type="button" id="cancelBtn2">Отмена</button>
-            <button class="btn btn--primary" type="button" id="confirmBtn">Да, начать</button>
+    <div class="modal__window modal__window--start" role="dialog" aria-modal="true" aria-labelledby="startTestTitle">
+        <div class="modal__badge">Тест на уровень</div>
+        <div class="modal__hero">
+            <div class="modal__icon modal__icon--primary" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                    <path d="M8 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M7 3h10v3a5 5 0 0 1-2.2 4.16L12 12l-2.8-1.84A5 5 0 0 1 7 6V3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <path d="M12 12v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M8 21h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <div>
+                <h3 class="modal__title" id="startTestTitle">Начать тест</h3>
+                <p class="modal__text">Проверьте свой уровень казахского языка. Тест состоит из трёх блоков и поможет подобрать подходящий курс.</p>
+            </div>
+        </div>
+
+        <div class="modal__info-card">
+            <div class="modal__info-item">
+                <span class="modal__info-label">Формат</span>
+                <strong class="modal__info-value">30 заданий</strong>
+            </div>
+            <div class="modal__info-item">
+                <span class="modal__info-label">Время</span>
+                <strong class="modal__info-value">около 15–20 минут</strong>
+            </div>
+        </div>
+
+        <div class="modal__notice">
+            <span class="modal__notice-icon" aria-hidden="true">i</span>
+            <p>После завершения вы увидите процент, уровень и результаты по каждому разделу: перевод слов, рассказ о себе и слушание.</p>
+        </div>
+
+        <div class="modal__actions modal__actions--split">
+            <button class="btn btn--ghost modal__btn-soft" type="button" id="cancelBtn2">Отмена</button>
+            <button class="btn btn--primary" type="button" id="confirmBtn">Начать тест</button>
         </div>
     </div>
 </div>

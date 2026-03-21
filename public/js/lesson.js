@@ -109,6 +109,9 @@ const modalTitle = document.getElementById("modalTitle");
 const modalText = document.getElementById("modalText");
 const goCourseBtn = document.getElementById("goCourseBtn");
 const goNextBtn = document.getElementById("goNextBtn");
+const modalBadge = document.getElementById("modalBadge");
+const modalStatus = document.getElementById("modalStatus");
+const modalNextStep = document.getElementById("modalNextStep");
 
 const modalOverlay = document.getElementById("modalOverlay");
 const modalCloseBtn = document.getElementById("modalCloseBtn");
@@ -177,10 +180,13 @@ completeBtn?.addEventListener("click", async () => {
         };
 
         if (data.courseCompleted) {
-            modalTitle.textContent = "Курс завершён 🎉";
+            modalTitle.textContent = "Курс завершён";
             modalText.textContent =
-                "Вы прошли все уроки. Теперь можно пройти итоговое задание." +
+                "Вы прошли все уроки курса. Теперь можно перейти к итоговому заданию." +
                 buildAchievementsText(data.unlocked);
+            if (modalBadge) modalBadge.textContent = "Поздравляем";
+            if (modalStatus) modalStatus.textContent = "Курс пройден";
+            if (modalNextStep) modalNextStep.textContent = "Открыть итоговое задание";
 
             goNextBtn.style.display = "inline-flex";
             goNextBtn.disabled = true;
@@ -199,12 +205,15 @@ completeBtn?.addEventListener("click", async () => {
             return;
         }
 
-        modalTitle.textContent = data.moduleCompleted ? "Модуль завершён 🏆" : "Урок завершён 🎉";
+        modalTitle.textContent = data.moduleCompleted ? "Модуль завершён" : "Урок завершён";
         modalText.textContent =
             (data.moduleCompleted
-                ? "Открыт следующий модуль. Перейти к следующему уроку?"
-                : "Перейти к следующему уроку?") +
+                ? "Отличная работа! Следующий модуль уже открыт."
+                : "Отличная работа! Можно перейти к следующему уроку.") +
             buildAchievementsText(data.unlocked);
+        if (modalBadge) modalBadge.textContent = data.moduleCompleted ? "Новый модуль открыт" : "Урок пройден";
+        if (modalStatus) modalStatus.textContent = data.moduleCompleted ? "Модуль завершён" : "Урок завершён";
+        if (modalNextStep) modalNextStep.textContent = "Перейти к следующему уроку";
 
         goNextBtn.style.display = "inline-flex";
         goNextBtn.disabled = true;

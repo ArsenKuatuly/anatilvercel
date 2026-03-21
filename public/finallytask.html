@@ -133,37 +133,45 @@
 
           <div class="ft-modal__actions">
               <button class="ft-btn ft-btn--outline" type="button" data-modal-close="confirmModal">Вернуться</button>
-              <button class="ft-btn ft-btn--primary" type="button" id="confirmSubmitBtn">Отправить</button>
+              <button class="ft-btn ft-btn--primary" type="button" id="confirmSubmitBtn">Завершить задание</button>
           </div>
       </div>
   </div>
 
   <div class="ft-modal ft-hidden" id="resultModal" aria-hidden="true">
       <div class="ft-modal__backdrop" data-modal-close="resultModal"></div>
-      <div class="ft-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
-          <div class="ft-modal__head">
+      <div class="ft-modal__dialog ft-modal__dialog--result" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+          <div class="ft-result-modal__status">
               <div class="ft-modal__icon ft-modal__icon--good ft-hidden" id="resultIconGood" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M20 6 9 17l-5-5"></path>
                   </svg>
               </div>
               <div class="ft-modal__icon ft-modal__icon--bad ft-hidden" id="resultIconBad" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M18 6 6 18"></path>
                       <path d="M6 6l12 12"></path>
                   </svg>
               </div>
-
-              <div>
-                  <h3 class="ft-modal__title" id="resultTitle">Результат</h3>
-                  <p class="ft-modal__text" id="resultModalText">—</p>
-              </div>
+              <h3 class="ft-modal__title" id="resultTitle">Результат итогового задания</h3>
+              <p class="ft-modal__text" id="resultModalText">—</p>
           </div>
 
-          <div class="ft-modal__actions">
+          <div class="ft-result-modal__score">
+              <p class="ft-result-modal__score-label">Итоговый балл</p>
+              <div class="ft-result-modal__score-value"><span id="resultScoreValue">0</span> <span>из</span> <span id="resultScoreTotal">0</span></div>
+              <div class="ft-result-modal__bar" aria-hidden="true">
+                  <div class="ft-result-modal__fill" id="resultPercentFill" style="width:0%"></div>
+              </div>
+              <p class="ft-result-modal__percent" id="resultPercentLabel">0%</p>
+          </div>
+
+          <div class="ft-result-modal__note" id="resultDetailNote">—</div>
+
+          <div class="ft-modal__actions ft-modal__actions--result">
               <button class="ft-btn ft-btn--outline" type="button" data-modal-close="resultModal" id="resultCloseBtn">Закрыть</button>
               <a class="ft-btn ft-btn--primary ft-hidden" href="/profile.html" id="resultToProfileBtn">В профиль</a>
-              <button class="ft-btn ft-btn--primary ft-hidden" type="button" id="resultRetryBtn">Попробовать снова</button>
+              <button class="ft-btn ft-btn--primary ft-hidden" type="button" id="resultRetryBtn">Работа над ошибками</button>
           </div>
       </div>
   </div>

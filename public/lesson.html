@@ -94,21 +94,33 @@
             </button>
 
             <div class="modal__body">
-                <div class="modal__icon" aria-hidden="true">
-
-                    <svg viewBox="0 0 24 24" width="40" height="40">
-                        <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                <div class="modal__hero">
+                    <div class="modal__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="40" height="40">
+                            <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="modal__hero-text">
+                        <div class="modal__badge" id="modalBadge">Прогресс обновлён</div>
+                        <h2 class="modal__title" id="modalTitle">Урок завершён</h2>
+                        <p class="modal__text" id="modalText">Перейти к следующему уроку?</p>
+                    </div>
                 </div>
 
-                <h2 class="modal__title" id="modalTitle">Урок завершён 🎉</h2>
-                <p class="modal__text" id="modalText">Перейти к следующему уроку?</p>
+                <div class="modal__stats">
+                    <div class="modal__stat">
+                        <span class="modal__stat-label">Статус</span>
+                        <strong class="modal__stat-value" id="modalStatus">Урок пройден</strong>
+                    </div>
+                    <div class="modal__stat">
+                        <span class="modal__stat-label">Следующий шаг</span>
+                        <strong class="modal__stat-value" id="modalNextStep">Открыть следующий урок</strong>
+                    </div>
+                </div>
 
                 <div class="modal__actions">
-
-                    <button class="btn btn--primary" id="goNextBtn" type="button">Следующий урок</button>
-
                     <button class="btn btn--ghost" id="goCourseBtn" type="button">К курсу</button>
+                    <button class="btn btn--primary" id="goNextBtn" type="button">Следующий урок</button>
                 </div>
             </div>
 

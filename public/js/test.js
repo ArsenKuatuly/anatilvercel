@@ -266,10 +266,16 @@ function showResult(score, level) {
   document.getElementById("mathScore").textContent = `${examState.math.score} / 10`;
   document.getElementById("readingScore").textContent = `${examState.reading.score} / 10`;
   document.getElementById("listeningScore").textContent = `${examState.listening.score} / 10`;
+  const summaryEl = document.getElementById("resultSummary");
+  const noteEl = document.getElementById("resultNote");
+  if (summaryEl) summaryEl.textContent = `Вы набрали ${percent}% и достигли уровня «${levelTitles[level] || level}».`;
+  if (noteEl) noteEl.textContent = percent >= 70
+    ? "Отличный результат. Переходите к рекомендованному курсу и продолжайте обучение."
+    : "Хорошее начало. Продолжайте практиковаться и укрепляйте базу вместе с курсами AnaTil.";
   openModal(resultModal);
   document.getElementById("goHome").onclick = () => (window.location.href = "/dashboard.html");
   document.getElementById("goProfile").onclick = () => (window.location.href = "/profile.html");
-  document.getElementById("goCourses").onclick = () => (window.location.href = "/profile.html#courses");
+  document.getElementById("goCourses").onclick = () => (window.location.href = "/courses");
 }
 
 async function saveResult(score, level) {

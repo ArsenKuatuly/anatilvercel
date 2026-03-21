@@ -53,26 +53,52 @@
 
 <div class="modal" id="finishModal" aria-hidden="true">
   <div class="modal__overlay" data-close="finish"></div>
-  <div class="modal__content" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
-    <h3 class="modal__title" id="finishTitle">Завершить тестирование?</h3>
-    <p class="modal__text">Вы уверены, что хотите завершить экзамен? Все ответы будут сохранены, таймер остановится.</p>
+  <div class="modal__content modal__content--finish" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+    <div class="modal__hero">
+      <div class="modal__icon modal__icon--warning" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 9v4"></path>
+          <path d="M12 17h.01"></path>
+          <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="modal__title" id="finishTitle">Завершить тест</h3>
+        <p class="modal__text">После завершения ответы будут отправлены на проверку. Изменить их будет нельзя.</p>
+      </div>
+    </div>
+    <div class="modal__info-box">
+      <span class="modal__info-box-icon" aria-hidden="true">i</span>
+      <p>Убедитесь, что вы ответили на все задания. После подтверждения откроется окно с результатом теста.</p>
+    </div>
     <div class="modal__actions">
       <button class="modal__btn modal__btn--cancel" id="cancelFinish" type="button">Отмена</button>
-      <button class="modal__btn modal__btn--confirm" id="confirmFinish" type="button">Завершить</button>
+      <button class="modal__btn modal__btn--confirm" id="confirmFinish" type="button">Завершить тест</button>
     </div>
   </div>
 </div>
 
 <div class="modal" id="resultModal" aria-hidden="true">
   <div class="modal__overlay" data-close="result"></div>
-  <div class="modal__content result__card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
-    <h2 class="result__title" id="resultTitle">Результаты тестирования</h2>
+  <div class="modal__content modal__content--result result__card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="result__status">
+      <div class="result__status-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 6 9 17l-5-5"></path>
+        </svg>
+      </div>
+      <h2 class="result__title" id="resultTitle">Результат теста</h2>
+      <p class="result__summary" id="resultSummary">Ваш текущий уровень определён по результатам трёх разделов.</p>
+    </div>
 
     <div class="result__score">
       <div class="result__circle" aria-label="Процент правильных ответов">
         <span id="resultPercent">0%</span>
       </div>
-      <p class="result__level" id="resultLevel"></p>
+      <div class="result__score-text">
+        <p class="result__label">Определённый уровень</p>
+        <p class="result__level" id="resultLevel"></p>
+      </div>
     </div>
 
     <div class="result__details">
@@ -81,7 +107,7 @@
         <b id="mathScore"></b>
       </div>
       <div>
-        <span>Грамотность</span>
+        <span>Рассказ о себе</span>
         <b id="readingScore"></b>
       </div>
       <div>
@@ -90,10 +116,12 @@
       </div>
     </div>
 
+    <div class="result__note" id="resultNote">Продолжайте обучение — мы уже подобрали для вас следующий шаг.</div>
+
     <div class="result__actions">
       <button id="goHome" class="btn btn--secondary" type="button">На главную</button>
       <button id="goProfile" class="btn btn--secondary" type="button">В профиль</button>
-      <button id="goCourses" class="btn btn--primary" type="button">Перейти к курсу</button>
+      <button id="goCourses" class="btn btn--primary" type="button">Подобрать курс</button>
     </div>
   </div>
 </div>

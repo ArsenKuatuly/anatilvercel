@@ -29,6 +29,11 @@ const resultIconBad = document.getElementById("resultIconBad");
 const resultToProfileBtn = document.getElementById("resultToProfileBtn");
 const resultRetryBtn = document.getElementById("resultRetryBtn");
 const resultCloseBtn = document.getElementById("resultCloseBtn");
+const resultScoreValue = document.getElementById("resultScoreValue");
+const resultScoreTotal = document.getElementById("resultScoreTotal");
+const resultPercentFill = document.getElementById("resultPercentFill");
+const resultPercentLabel = document.getElementById("resultPercentLabel");
+const resultDetailNote = document.getElementById("resultDetailNote");
 
 function pickPayload(x) {
     if (!x) return { ok: false, data: null };
@@ -384,9 +389,23 @@ function showResultModal(passed, data) {
     if (resultIconGood) resultIconGood.classList.toggle("ft-hidden", !passed);
     if (resultIconBad) resultIconBad.classList.toggle("ft-hidden", passed);
 
+    const score = Number(data?.score || 0);
+    const total = Number(data?.total || 0);
+    const percent = Number(data?.percent || 0);
+    const requiredCorrect = Number(data?.requiredCorrect || 0);
+
     if (resultModalText) {
-        if (passed) resultModalText.textContent = "Поздравляем! Вы прошли задание 🎉";
-        else resultModalText.textContent = "Задание не пройдено. Попробуйте снова.";
+        if (passed) resultModalText.textContent = "Поздравляем! Итоговое задание успешно пройдено.";
+        else resultModalText.textContent = "Задание пока не пройдено, но вы можете разобрать ошибки и попробовать снова.";
+    }
+    if (resultScoreValue) resultScoreValue.textContent = String(score);
+    if (resultScoreTotal) resultScoreTotal.textContent = String(total);
+    if (resultPercentFill) resultPercentFill.style.width = `${percent}%`;
+    if (resultPercentLabel) resultPercentLabel.textContent = `${percent}%`;
+    if (resultDetailNote) {
+        resultDetailNote.textContent = passed
+            ? `Вы набрали ${score} из ${total}. Курс завершён, а следующий уровень${data?.nextLevel ? ` — ${data.nextLevel}` : ""} уже доступен.`
+            : `Сейчас у вас ${score} из ${total}. Для прохождения нужно минимум ${requiredCorrect} правильных ответов.`;
     }
 
     if (resultToProfileBtn) resultToProfileBtn.classList.toggle("ft-hidden", !passed);

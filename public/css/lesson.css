@@ -427,3 +427,33 @@ body{
 .modal__text {
     white-space: pre-line;
 }
+
+
+/* ========== AnaTil modal redesign ========== */
+.modal__panel{
+    width:min(560px, 100%);
+    border-radius:28px 28px 0 0;
+    overflow:hidden;
+}
+@media (min-width:768px){
+    .modal__panel{ border-radius:28px; }
+}
+.modal__body{ padding:22px; text-align:left; }
+@media (min-width:768px){ .modal__body{ padding:28px; } }
+.modal__hero{ display:flex; align-items:flex-start; gap:16px; margin-bottom:20px; }
+.modal__hero-text{ flex:1 1 auto; }
+.modal__badge{ display:inline-flex; margin-bottom:10px; padding:8px 12px; border-radius:999px; background:#EFF6FF; color:var(--blue); font-size:13px; font-weight:800; }
+.modal__icon{ width:76px; height:76px; border-radius:24px; background:#EFF6FF; color:var(--blue); margin:0; }
+.modal__title{ font-size:28px; line-height:1.2; }
+.modal__text{ margin:0; }
+.modal__stats{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0 0 24px; }
+.modal__stat{ padding:16px; border-radius:18px; background:#F8FAFC; border:1px solid rgba(37,99,235,.12); display:grid; gap:6px; }
+.modal__stat-label{ color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.modal__stat-value{ color:var(--text); font-size:16px; font-weight:800; line-height:1.4; }
+.modal__actions{ flex-direction:row-reverse; justify-content:flex-start; flex-wrap:wrap; }
+.modal__actions > *{ flex:1 1 180px; }
+@media (max-width:560px){
+    .modal__hero{ flex-direction:column; }
+    .modal__stats{ grid-template-columns:1fr; }
+    .modal__actions{ flex-direction:column; }
+}

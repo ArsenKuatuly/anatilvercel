@@ -759,3 +759,39 @@ body{
     min-height:180px;
   }
 }
+
+
+/* ===== Modal redesign for AnaTil ===== */
+.modal__content{
+  width:min(620px, 100%);
+  border-radius:28px;
+  box-shadow:0 24px 80px rgba(2,6,23,.35);
+  padding:22px;
+}
+@media (min-width:768px){ .modal__content{ padding:28px; } }
+.modal__hero{ display:flex; gap:16px; align-items:flex-start; margin-bottom:18px; }
+.modal__icon{ width:56px; height:56px; border-radius:18px; display:grid; place-items:center; flex:0 0 auto; }
+.modal__icon--warning{ background:rgba(245,158,11,.12); color:#D97706; }
+.modal__info-box{ display:flex; gap:12px; align-items:flex-start; margin-bottom:20px; padding:14px 16px; border-radius:18px; border:1px solid rgba(37,99,235,.16); background:#F8FAFC; }
+.modal__info-box p{ margin:0; color:var(--text); line-height:1.6; font-size:14px; }
+.modal__info-box-icon{ width:24px; height:24px; border-radius:999px; display:grid; place-items:center; background:#DBEAFE; color:var(--blue); font-weight:800; flex:0 0 auto; }
+.modal__actions > *{ min-width:140px; }
+
+.result__card{ overflow:hidden; }
+.result__status{ text-align:center; margin-bottom:18px; }
+.result__status-icon{ width:86px; height:86px; border-radius:999px; display:grid; place-items:center; margin:0 auto 14px; background:rgba(34,197,94,.10); color:#16A34A; }
+.result__title{ margin:0 0 8px; font-size:26px; }
+.result__summary{ margin:0; color:var(--muted); line-height:1.6; }
+.result__score{ align-items:center; gap:18px; padding:18px; border-radius:24px; }
+.result__score-text{ display:grid; gap:6px; }
+.result__label{ margin:0; color:var(--muted); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.result__level{ margin:0; font-size:28px; font-weight:800; color:var(--text); }
+.result__details > div{ padding:14px 16px; border-radius:18px; }
+.result__details b{ font-size:18px; }
+.result__note{ margin-top:16px; padding:14px 16px; border-radius:18px; background:#F8FAFC; border:1px solid var(--border-soft); color:var(--text); line-height:1.6; }
+@media (max-width:560px){
+  .modal__hero{ flex-direction:column; }
+  .result__score{ flex-direction:column; text-align:center; }
+  .result__level{ font-size:24px; }
+  .result__actions > *{ flex:1 1 100%; }
+}

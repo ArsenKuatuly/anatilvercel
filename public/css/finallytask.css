@@ -308,3 +308,21 @@ body.ft-modal-open{overflow:hidden;}
     flex-wrap:wrap;
 }
 .ft-modal__actions .ft-btn{min-width:120px;}
+
+
+/* ===== Result modal redesign ===== */
+.ft-modal__dialog--result{ width:min(560px, 100%); padding:22px; }
+.ft-result-modal__status{ text-align:center; margin-bottom:18px; }
+.ft-result-modal__status .ft-modal__icon{ margin:0 auto 14px; width:72px; height:72px; border-radius:22px; }
+.ft-result-modal__score{ padding:18px; border-radius:20px; background:#F8FAFC; border:1px solid rgba(0,0,0,.08); text-align:center; }
+.ft-result-modal__score-label{ margin:0 0 10px; color:var(--muted); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+.ft-result-modal__score-value{ font-size:40px; line-height:1.1; font-weight:800; color:var(--text); }
+.ft-result-modal__score-value span:nth-child(2){ font-size:24px; color:var(--muted); font-weight:700; }
+.ft-result-modal__bar{ height:10px; border-radius:999px; background:rgba(15,23,42,.08); overflow:hidden; margin:14px 0 10px; }
+.ft-result-modal__fill{ height:100%; border-radius:999px; background:var(--primary); transition:width .25s ease; }
+.ft-result-modal__percent{ margin:0; color:var(--muted); font-weight:600; }
+.ft-result-modal__note{ margin-top:16px; padding:14px 16px; border-radius:18px; background:#F8FAFC; border:1px solid rgba(37,99,235,.12); color:var(--text); line-height:1.6; }
+.ft-modal__actions--result > *{ flex:1 1 160px; }
+@media (max-width:560px){
+  .ft-result-modal__score-value{ font-size:34px; }
+}
