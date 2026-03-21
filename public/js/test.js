@@ -303,44 +303,52 @@ function goToNextSubject() {
 }
 
 async function evaluateReadingText() {
-  const state = examState.reading;
-  const text = state.text.trim();
-  if (text.length < 30 || state.isEvaluating) return false;
+    const state = examState.reading;
+    const text = state.text.trim();
+    if (text.length < 30 || state.isEvaluating) return false;
 
-  state.isEvaluating = true;
-  renderReadingTask();
-
-  try {
-    const totalScoreWithoutWriting = Number(examState.math.score || 0) + Number(examState.listening.score || 0);
-    const response = await window.authFetch("/api/ai/test-writing-score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, totalScoreWithoutWriting }),
-    });
-
-    if (!response?.success) {
-      throw new Error(response?.message || "Не удалось оценить текст");
-    }
-
-    state.score = Number(response.score || 0);
-    state.feedback = String(response.feedback || "");
-    state.evaluated = true;
-    return true;
-  } catch (error) {
-    console.error(error);
-    state.score = 0;
-    state.feedback = "Не удалось получить оценку от ИИ. Попробуйте ещё раз.";
-    state.evaluated = false;
-    const status = document.getElementById("writingStatus");
-    if (status) {
-      status.textContent = state.feedback;
-      status.classList.add("is-visible", "is-error");
-    }
-    return false;
-  } finally {
-    state.isEvaluating = false;
+    state.isEvaluating = true;
     renderReadingTask();
-  }
+
+    try {
+        calculateScores();
+
+        const totalScoreWithoutWriting =
+            Number(examState.math.score || 0) + Number(examState.listening.score || 0);
+
+        const { data } = await window.authFetch("/api/ai/test-writing-score", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, totalScoreWithoutWriting }),
+        });
+
+        if (!data?.success) {
+            throw new Error(data?.message || "Не удалось оценить текст");
+        }
+
+        state.score = Number(data.score || 0);
+        state.feedback = String(data.feedback || "");
+        state.evaluated = true;
+
+        return true;
+    } catch (error) {
+        console.error("Ошибка оценки текста:", error);
+
+        state.score = 0;
+        state.feedback = "Не удалось получить оценку от ИИ. Попробуйте ещё раз.";
+        state.evaluated = false;
+
+        const status = document.getElementById("writingStatus");
+        if (status) {
+            status.textContent = state.feedback;
+            status.classList.add("is-visible", "is-error");
+        }
+
+        return false;
+    } finally {
+        state.isEvaluating = false;
+        renderReadingTask();
+    }
 }
 
 async function finishExam() {
