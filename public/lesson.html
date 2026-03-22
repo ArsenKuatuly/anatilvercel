@@ -1,183 +1,184 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Урок</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Урок</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="/css/lesson.css" />
-    <link rel="stylesheet" href="/css/chat.css" />
+  <link rel="stylesheet" href="/css/lesson.css" />
+  <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body class="lesson-page">
 
-
 <div class="lesson-progress" aria-hidden="true">
-    <div class="lesson-progress__bar" id="readingProgressBar"></div>
+  <div class="lesson-progress__bar" id="readingProgressBar"></div>
 </div>
-
 
 <header class="lesson-header" id="lessonHeader">
-    <div class="lesson-header__container">
-        <div class="lesson-header__row">
-            <button class="lesson-header__back" id="backBtn" type="button" aria-label="Назад к курсу">
-          <span class="lesson-header__back-icon" aria-hidden="true">
+  <div class="lesson-header__container">
+    <div class="lesson-header__top-row">
+      <button class="lesson-header__back" id="backBtn" type="button" aria-label="Назад к курсу">
+        <span class="lesson-header__back-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="lesson-header__back-text">Назад к курсу</span>
+      </button>
 
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-                <span class="lesson-header__back-text">Назад к курсу</span>
-            </button>
-
-            <div class="lesson-header__title-wrap">
-                <h1 class="lesson-header__title" id="lessonTitle">Урок</h1>
-            </div>
-        </div>
+      <button class="btn btn--primary lesson-header__complete-btn" id="headerCompleteBtn" type="button" disabled>
+        <span class="btn__text">Завершить урок</span>
+      </button>
     </div>
+
+    <div class="lesson-header__title-wrap">
+      <h1 class="lesson-header__title" id="lessonTitle">Урок</h1>
+      <p class="lesson-header__description" id="lessonDescription"></p>
+    </div>
+
+    <div class="lesson-steps" id="lessonSteps" hidden>
+      <div class="lesson-steps__bars" id="lessonStepsBars"></div>
+      <div class="lesson-steps__label" id="lessonStepsLabel">0/0</div>
+    </div>
+  </div>
 </header>
 
-
 <main class="lesson-main">
-    <div class="lesson-main__container">
-        <div class="lesson-card">
-            <article class="lesson-content" id="lessonContent">
-                <p>Загрузка...</p>
-            </article>
+  <div class="lesson-main__container">
+    <div class="lesson-layout">
+      <div class="lesson-card">
+        <article class="lesson-content" id="lessonContent">
+          <p>Загрузка...</p>
+        </article>
+      </div>
+
+      <aside class="lesson-sidebar" id="lessonSidebar" hidden>
+        <div class="lesson-sidebar__card">
+          <div class="lesson-sidebar__title">Прогресс урока</div>
+          <div class="lesson-sidebar__percent" id="sidebarPercent">0%</div>
+          <div class="lesson-sidebar__track">
+            <div class="lesson-sidebar__fill" id="sidebarFill"></div>
+          </div>
+          <ul class="lesson-sidebar__list" id="sidebarChecklist"></ul>
         </div>
+      </aside>
     </div>
+  </div>
 </main>
 
-
 <footer class="lesson-footer">
-    <div class="lesson-footer__container">
-        <div class="lesson-footer__inner">
-            <button class="btn btn--primary lesson-footer__btn" id="completeLessonBtn" type="button">
-          <span class="btn__icon" aria-hidden="true">
-
-            <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-check">
-              <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-
-            <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-loader" aria-hidden="true">
-              <path d="M12 2v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M12 18v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/>
-              <path d="M4.93 4.93l2.83 2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M16.24 16.24l2.83 2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/>
-              <path d="M2 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".6"/>
-              <path d="M18 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".25"/>
-              <path d="M4.93 19.07l2.83-2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
-              <path d="M16.24 7.76l2.83-2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </span>
-                <span class="btn__text" id="completeBtnText">Завершить урок</span>
-            </button>
-        </div>
+  <div class="lesson-footer__container">
+    <div class="lesson-footer__inner">
+      <button class="btn btn--primary lesson-footer__btn" id="completeLessonBtn" type="button" disabled>
+        <span class="btn__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-check">
+            <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg viewBox="0 0 24 24" width="20" height="20" class="btn__icon-loader" aria-hidden="true">
+            <path d="M12 2v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 18v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+            <path d="M4.93 4.93l2.83 2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16.24 16.24l2.83 2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+            <path d="M2 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".6"/>
+            <path d="M18 12h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".25"/>
+            <path d="M4.93 19.07l2.83-2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+            <path d="M16.24 7.76l2.83-2.83" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="btn__text" id="completeBtnText">Завершить урок</span>
+      </button>
     </div>
+  </div>
 </footer>
 
-
 <div class="modal hidden" id="completionModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal__overlay" id="modalOverlay"></div>
+  <div class="modal__overlay" id="modalOverlay"></div>
+  <div class="modal__wrap">
+    <div class="modal__panel" role="document">
+      <button class="modal__close" id="modalCloseBtn" type="button" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
 
-    <div class="modal__wrap">
-        <div class="modal__panel" role="document">
-            <button class="modal__close" id="modalCloseBtn" type="button" aria-label="Закрыть">
-
-                <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path d="M18 6L6 18M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </button>
-
-            <div class="modal__body">
-                <div class="modal__hero">
-                    <div class="modal__icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="40" height="40">
-                            <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="modal__hero-text">
-                        <div class="modal__badge" id="modalBadge">Прогресс обновлён</div>
-                        <h2 class="modal__title" id="modalTitle">Урок завершён</h2>
-                        <p class="modal__text" id="modalText">Перейти к следующему уроку?</p>
-                    </div>
-                </div>
-
-                <div class="modal__stats">
-                    <div class="modal__stat">
-                        <span class="modal__stat-label">Статус</span>
-                        <strong class="modal__stat-value" id="modalStatus">Урок пройден</strong>
-                    </div>
-                    <div class="modal__stat">
-                        <span class="modal__stat-label">Следующий шаг</span>
-                        <strong class="modal__stat-value" id="modalNextStep">Открыть следующий урок</strong>
-                    </div>
-                </div>
-
-                <div class="modal__actions">
-                    <button class="btn btn--ghost" id="goCourseBtn" type="button">К курсу</button>
-                    <button class="btn btn--primary" id="goNextBtn" type="button">Следующий урок</button>
-                </div>
-            </div>
-
-            <div class="modal__safe" aria-hidden="true"></div>
+      <div class="modal__body">
+        <div class="modal__hero">
+          <div class="modal__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="40" height="40">
+              <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="modal__hero-text">
+            <div class="modal__badge" id="modalBadge">Прогресс обновлён</div>
+            <h2 class="modal__title" id="modalTitle">Урок завершён</h2>
+            <p class="modal__text" id="modalText">Перейти к следующему уроку?</p>
+          </div>
         </div>
 
-
-    </div>
-    <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
-        <span class="fab-ping" aria-hidden="true"></span>
-        <span class="fab-circle">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-        <span class="fab-badge" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-    </button>
-
-    <div class="chat" id="chat" hidden>
-        <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-            <div class="chat-head">
-                <div class="chat-avatar">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                              stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-
-                <div class="chat-head-text">
-                    <div class="chat-title">AI Ассистент</div>
-                    <div class="chat-subtitle">Онлайн • Ответим быстро</div>
-                </div>
-
-                <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                    ✕
-                </button>
-            </div>
-
-            <div class="chat-body" id="chatBody"></div>
-
-            <div class="chat-input">
-                <div>
-                    <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                    <button class="chat-send" id="chatSend" type="button">➤</button>
-                </div>
-                <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
-            </div>
+        <div class="modal__stats">
+          <div class="modal__stat">
+            <span class="modal__stat-label">Статус</span>
+            <strong class="modal__stat-value" id="modalStatus">Урок пройден</strong>
+          </div>
+          <div class="modal__stat">
+            <span class="modal__stat-label">Следующий шаг</span>
+            <strong class="modal__stat-value" id="modalNextStep">Открыть следующий урок</strong>
+          </div>
         </div>
+
+        <div class="modal__actions">
+          <button class="btn btn--ghost" id="goCourseBtn" type="button">К курсу</button>
+          <button class="btn btn--primary" id="goNextBtn" type="button">Следующий урок</button>
+        </div>
+      </div>
+
+      <div class="modal__safe" aria-hidden="true"></div>
     </div>
+  </div>
+
+  <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+    <span class="fab-ping" aria-hidden="true"></span>
+    <span class="fab-circle">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    <span class="fab-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+    </span>
+  </button>
+
+  <div class="chat" id="chat" hidden>
+    <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+      <div class="chat-head">
+        <div class="chat-avatar">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="chat-head-text">
+          <div class="chat-title">AI Ассистент</div>
+          <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+        </div>
+        <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">✕</button>
+      </div>
+      <div class="chat-body" id="chatBody"></div>
+      <div class="chat-input">
+        <div>
+          <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+          <button class="chat-send" id="chatSend" type="button">➤</button>
+        </div>
+        <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+      </div>
+    </div>
+  </div>
 </div>
-
 
 <script src="/js/auth-guard.js"></script>
 <script src="/js/api.js"></script>
