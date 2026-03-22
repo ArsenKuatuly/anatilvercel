@@ -795,3 +795,40 @@ body{
   .result__level{ font-size:24px; }
   .result__actions > *{ flex:1 1 100%; }
 }
+
+
+/* ===== Mobile fix for finish/result modals ===== */
+@media (max-width: 767px){
+  .modal{
+    align-items:flex-end;
+    justify-content:stretch;
+    padding:0;
+  }
+
+  .modal__content{
+    width:100%;
+    max-width:none;
+    border-radius:28px 28px 0 0;
+    padding:20px;
+    max-height:min(92vh, 900px);
+    overflow-y:auto;
+  }
+
+  .modal__actions,
+  .result__actions{
+    flex-direction:column;
+  }
+
+  .modal__actions > *,
+  .result__actions > *,
+  .modal__btn,
+  .btn{
+    width:100%;
+    min-width:0;
+  }
+
+  .result__details > div{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}

@@ -457,3 +457,42 @@ body{
     .modal__stats{ grid-template-columns:1fr; }
     .modal__actions{ flex-direction:column; }
 }
+
+
+/* ========== Mobile fix for completion modal ========== */
+@media (max-width: 767px){
+    .modal__wrap{
+        align-items:flex-end;
+        padding:0;
+    }
+
+    .modal__panel{
+        width:100%;
+        max-width:none;
+        border-radius:28px 28px 0 0;
+        max-height:min(92vh, 900px);
+        overflow-y:auto;
+    }
+
+    .modal__body{
+        padding:20px;
+    }
+
+    .modal__hero{
+        flex-direction:column;
+    }
+
+    .modal__stats{
+        grid-template-columns:1fr;
+    }
+
+    .modal__actions{
+        flex-direction:column;
+    }
+
+    .modal__actions > *{
+        width:100%;
+        min-width:0;
+        flex:0 0 auto;
+    }
+}
