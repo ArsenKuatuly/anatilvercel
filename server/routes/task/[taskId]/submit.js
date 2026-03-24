@@ -29,52 +29,71 @@ module.exports = async (req, res) => {
             return res.status(400).json({ success: false, message: "No valid questionIds" });
         }
 
-
         const totalRes = await db.query(
             `SELECT COUNT(*)::int AS total FROM task_questions WHERE task_id = $1`,
             [taskId]
         );
         const total = Number(totalRes.rows[0]?.total || 0);
 
-
         const qRes = await db.query(
             `
-        SELECT id, correct_answer
-        FROM task_questions
-        WHERE task_id = $1 AND id = ANY($2::int[])
-      `,
+                SELECT id, question, correct_answer
+                FROM task_questions
+                WHERE task_id = $1 AND id = ANY($2::int[])
+            `,
             [taskId, qIds]
         );
 
-        const correctMap = new Map(
-            qRes.rows.map((r) => [Number(r.id), String(r.correct_answer ?? "")])
+        const questionMap = new Map(
+            qRes.rows.map((r) => [
+                Number(r.id),
+                {
+                    correctAnswer: String(r.correct_answer ?? "").trim(),
+                    question: String(r.question ?? "")
+                }
+            ])
         );
 
         const norm = (v) => String(v ?? "").trim();
 
         let score = 0;
+        const review = [];
+        let questionNumber = 0;
+
         for (const a of answers) {
             const qid = Number(a.questionId);
             const given = norm(a.answer);
-            const correct = correctMap.get(qid);
-            if (correct != null && given === norm(correct)) score += 1;
+            const entry = questionMap.get(qid);
+            if (!entry) continue;
+
+            questionNumber += 1;
+            const correct = norm(entry.correctAnswer);
+            const isCorrect = given === correct;
+            if (isCorrect) score += 1;
+
+            review.push({
+                questionId: qid,
+                questionNumber,
+                question: entry.question,
+                givenAnswer: given,
+                correctAnswer: correct,
+                isCorrect
+            });
         }
 
-        const answered = qIds.length;
-
+        const answered = review.length;
 
         const passScore = Number(task.pass_score || 0);
         const requiredCorrect = total > 0 ? Math.ceil((total * passScore) / 100) : 0;
         const percent = total > 0 ? Math.round((score / total) * 100) : 0;
         const passed = total > 0 ? score >= requiredCorrect : false;
 
-
         const upd = await db.query(
             `
-        UPDATE user_task_results
-        SET score = $3, passed = $4, completed_at = NOW()
-        WHERE user_id = $1 AND task_id = $2
-      `,
+                UPDATE user_task_results
+                SET score = $3, passed = $4, completed_at = NOW()
+                WHERE user_id = $1 AND task_id = $2
+            `,
             [userId, taskId, score, passed]
         );
 
@@ -91,7 +110,6 @@ module.exports = async (req, res) => {
         let nextLevel = null;
 
         if (passed) {
-
             const upCourse = await db.query(
                 `
                     UPDATE user_course_progress
@@ -114,7 +132,6 @@ module.exports = async (req, res) => {
                 );
             }
 
-
             const upUserCourses = await db.query(
                 `
                     UPDATE user_courses
@@ -129,14 +146,13 @@ module.exports = async (req, res) => {
             if (upUserCourses.rowCount === 0) {
                 await db.query(
                     `
-            INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at, completed_at)
-            VALUES ($1, $2, TRUE, TRUE, NOW(), NOW())
-          `,
+                        INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at, completed_at)
+                        VALUES ($1, $2, TRUE, TRUE, NOW(), NOW())
+                    `,
                     [userId, task.course_id]
                 );
             }
 
-            // найти следующий уровень и обновить current_level
             const cRes = await db.query(
                 `SELECT level FROM courses WHERE id = $1 LIMIT 1`,
                 [task.course_id]
@@ -151,7 +167,6 @@ module.exports = async (req, res) => {
                     nextLevel = nl;
                     await db.query(`UPDATE users SET current_level = $1 WHERE id = $2`, [nl, userId]);
 
-                    // добавить следующий курс (если есть)
                     const nextCourseRes = await db.query(
                         `SELECT id FROM courses WHERE level = $1 ORDER BY position ASC, id ASC LIMIT 1`,
                         [nextLevel]
@@ -166,9 +181,9 @@ module.exports = async (req, res) => {
                         if (nextUcUpd.rowCount === 0) {
                             await db.query(
                                 `
-                  INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at)
-                  VALUES ($1, $2, FALSE, FALSE, NOW())
-                `,
+                                    INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at)
+                                    VALUES ($1, $2, FALSE, FALSE, NOW())
+                                `,
                                 [userId, nextCourseId]
                             );
                         }
@@ -180,9 +195,9 @@ module.exports = async (req, res) => {
                         if (nextPUpd.rowCount === 0) {
                             await db.query(
                                 `
-                  INSERT INTO user_course_progress (user_id, course_id, completed, final_passed)
-                  VALUES ($1, $2, FALSE, FALSE)
-                `,
+                                    INSERT INTO user_course_progress (user_id, course_id, completed, final_passed)
+                                    VALUES ($1, $2, FALSE, FALSE)
+                                `,
                                 [userId, nextCourseId]
                             );
                         }
@@ -201,6 +216,7 @@ module.exports = async (req, res) => {
             requiredCorrect,
             percent,
             nextLevel,
+            review,
         });
     } catch (e) {
         console.error("task/submit error:", e);

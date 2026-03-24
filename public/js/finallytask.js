@@ -18,6 +18,10 @@ const progressFill = document.getElementById("progressFill");
 const answersCounter = document.getElementById("answersCounter");
 const navEl = document.getElementById("questionNav");
 
+const reviewPanel = document.getElementById("reviewPanel");
+const reviewText = document.getElementById("reviewText");
+const reviewStats = document.getElementById("reviewStats");
+
 const confirmModal = document.getElementById("confirmModal");
 const confirmSubmitBtn = document.getElementById("confirmSubmitBtn");
 const confirmText = document.getElementById("confirmText");
@@ -35,20 +39,15 @@ const resultPercentFill = document.getElementById("resultPercentFill");
 const resultPercentLabel = document.getElementById("resultPercentLabel");
 const resultDetailNote = document.getElementById("resultDetailNote");
 
-function pickPayload(x) {
-    if (!x) return { ok: false, data: null };
-    if (x.data !== undefined) return { ok: !!x.res?.ok, data: x.data };
-    return { ok: !!x.ok, data: null };
-}
-
-async function toJson(x) {
-    if (!x) return {};
-    if (x.data !== undefined) return x.data || {};
-    return await x.json().catch(() => ({}));
-}
-
 let totalQuestions = 0;
 let answeredCount = 0;
+let isReviewMode = false;
+
+function toJson(x) {
+    if (!x) return {};
+    if (x.data !== undefined) return x.data || {};
+    return x.json ? x.json().catch(() => ({})) : {};
+}
 
 function setSubmitDisabled(disabled) {
     if (submitBtn) submitBtn.disabled = disabled;
@@ -88,7 +87,7 @@ function updateProgress() {
         submitBtnMobile.textContent = `Отправить (${answeredCount}/${totalQuestions})`;
     }
 
-    setSubmitDisabled(answeredCount === 0);
+    setSubmitDisabled(answeredCount === 0 || isReviewMode);
 }
 
 function buildNav(count) {
@@ -243,6 +242,7 @@ async function loadQuestions(taskId) {
             const qCard = document.createElement("section");
             qCard.className = "ft-card ft-question";
             qCard.dataset.questionNumber = String(i + 1);
+            qCard.dataset.questionId = String(q.id);
 
             let options = [];
             if (Array.isArray(q.options)) options = q.options;
@@ -261,7 +261,7 @@ async function loadQuestions(taskId) {
             const optionsHtml = options
                 .map(
                     (o) => `
-            <label class="ft-option" data-selected="false">
+            <label class="ft-option" data-selected="false" data-value="${escapeHtml(o)}">
               <input class="ft-option__input" type="radio" name="${name}" value="${escapeHtml(o)}" />
               <span class="ft-option__box" aria-hidden="true"><span class="ft-option__tick"></span></span>
               <span class="ft-option__text">${escapeHtml(o)}</span>
@@ -283,20 +283,7 @@ async function loadQuestions(taskId) {
 
         questionsContainer.appendChild(frag);
 
-        questionsContainer.addEventListener("change", (e) => {
-            const input = e.target;
-            if (!input || !input.matches("input[type='radio']")) return;
-
-            const card = input.closest(".ft-question");
-            if (card) {
-                card.querySelectorAll(".ft-option").forEach((lab) => {
-                    const r = lab.querySelector("input[type='radio']");
-                    lab.setAttribute("data-selected", r && r.checked ? "true" : "false");
-                });
-            }
-
-            refreshCountsFromDOM();
-        });
+        questionsContainer.addEventListener("change", onQuestionsChange);
 
         answeredCount = 0;
         updateProgress();
@@ -307,6 +294,22 @@ async function loadQuestions(taskId) {
         questionsContainer.innerHTML = "<p class='ft-empty'>Ошибка загрузки вопросов</p>";
         setSubmitDisabled(true);
     }
+}
+
+function onQuestionsChange(e) {
+    const input = e.target;
+    if (!input || !input.matches("input[type='radio']")) return;
+    if (isReviewMode) return;
+
+    const card = input.closest(".ft-question");
+    if (card) {
+        card.querySelectorAll(".ft-option").forEach((lab) => {
+            const r = lab.querySelector("input[type='radio']");
+            lab.setAttribute("data-selected", r && r.checked ? "true" : "false");
+        });
+    }
+
+    refreshCountsFromDOM();
 }
 
 function collectAnswers() {
@@ -411,11 +414,114 @@ function showResultModal(passed, data) {
     if (resultToProfileBtn) resultToProfileBtn.classList.toggle("ft-hidden", !passed);
     if (resultRetryBtn) resultRetryBtn.classList.toggle("ft-hidden", passed);
 
+    resultRetryBtn.onclick = null;
+    if (resultRetryBtn) {
+        resultRetryBtn.onclick = () => {
+            closeModal(resultModal);
+            applyReviewMode(data);
+        };
+    }
+
     openModal(resultModal);
 
     if (passed) {
         setSubmitDisabled(true);
     }
+}
+
+function applyReviewMode(data) {
+    const review = Array.isArray(data?.review) ? data.review : [];
+
+    if (!review.length) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+    }
+
+    isReviewMode = true;
+
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    review.forEach((item) => {
+        const qEl = document.querySelector(`.ft-question[data-question-id='${item.questionId}']`);
+        if (!qEl) return;
+
+        const statusIsCorrect = !!item.isCorrect;
+        if (statusIsCorrect) correctCount += 1;
+        else wrongCount += 1;
+
+        qEl.classList.add("ft-question--review");
+        qEl.classList.toggle("ft-question--correct", statusIsCorrect);
+        qEl.classList.toggle("ft-question--incorrect", !statusIsCorrect);
+
+        qEl.querySelectorAll(".ft-option").forEach((label) => {
+            const input = label.querySelector("input[type='radio']");
+            const value = String(input?.value ?? "");
+            const isSelected = !!input?.checked;
+            const isCorrectOption = value === String(item.correctAnswer ?? "");
+
+            label.classList.add("ft-option--locked");
+            label.classList.toggle("ft-option--correct", isCorrectOption);
+            label.classList.toggle("ft-option--incorrect", isSelected && !statusIsCorrect);
+            label.classList.toggle("ft-option--muted", !isSelected && !isCorrectOption);
+
+            if (input) input.disabled = true;
+        });
+
+        let statusEl = qEl.querySelector(".ft-question__status");
+        if (!statusEl) {
+            statusEl = document.createElement("div");
+            statusEl.className = "ft-question__status";
+            qEl.appendChild(statusEl);
+        }
+        statusEl.className = `ft-question__status ${statusIsCorrect ? "ft-question__status--correct" : "ft-question__status--incorrect"}`;
+        statusEl.textContent = statusIsCorrect ? "Верно" : "Ошибка";
+
+        let hintEl = qEl.querySelector(".ft-question__hint");
+        if (!hintEl) {
+            hintEl = document.createElement("div");
+            hintEl.className = "ft-question__hint";
+            qEl.appendChild(hintEl);
+        }
+
+        if (statusIsCorrect) {
+            hintEl.innerHTML = `<strong>Правильный ответ:</strong> ${escapeHtml(item.correctAnswer || "—")}`;
+        } else {
+            hintEl.innerHTML = `
+                <strong>Твой ответ:</strong> ${escapeHtml(item.givenAnswer || "—")}<br>
+                <strong>Правильный ответ:</strong> ${escapeHtml(item.correctAnswer || "—")}
+            `;
+        }
+    });
+
+    if (reviewPanel) {
+        reviewPanel.classList.remove("ft-hidden");
+    }
+    if (reviewText) {
+        reviewText.textContent = wrongCount > 0
+            ? "Проверь свои ответы: правильные варианты подсвечены зелёным, а ошибки — красным. Сначала разбери их, потом можешь пройти задание снова."
+            : "Все ответы верные. Зелёным подсвечены правильные варианты.";
+    }
+    if (reviewStats) {
+        reviewStats.textContent = `${correctCount} правильных · ${wrongCount} ошибок`;
+    }
+
+    setSubmitDisabled(true);
+
+    if (submitBtn) submitBtn.classList.add("ft-hidden");
+    if (submitBtnMobile) submitBtnMobile.classList.add("ft-hidden");
+
+    const navButtons = navEl?.querySelectorAll(".ft-nav__btn");
+    navButtons?.forEach((btn) => {
+        const num = Number(btn.dataset.qnum);
+        const item = review.find((x) => Number(x.questionNumber) === num);
+        if (!item) return;
+        btn.classList.toggle("ft-nav__btn--answered", false);
+        btn.classList.toggle("ft-nav__btn--correct", !!item.isCorrect);
+        btn.classList.toggle("ft-nav__btn--incorrect", !item.isCorrect);
+    });
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 if (confirmSubmitBtn) {
