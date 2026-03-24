@@ -487,7 +487,7 @@ function buildAIMessage(aiBlock, userInput) {
     const topic = currentLessonData?.title || lessonTitle.textContent || 'урок';
     return `
 Ты — преподаватель казахского языка на платформе AnaTil.
-Проверь ответ ученика строго по теме урока.
+Проверь ответ ученика строго по теме урока и он должен написать на казахском.
 
 Тема урока: ${topic}
 Задание: ${aiBlock?.description || 'Проверь ответ по теме урока'}

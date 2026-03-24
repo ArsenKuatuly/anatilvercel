@@ -7,14 +7,11 @@
 
   <link rel="stylesheet" href="/css/courselvl.css" />
   <link rel="stylesheet" href="/css/headerdash.css" />
-    <link rel="stylesheet" href="/css/chat.css" />
+  <link rel="stylesheet" href="/css/chat.css" />
 </head>
 <body>
-
-
   <script src="/js/auth-guard.js"></script>
   <script src="/js/api.js"></script>
-
 
   <header class="dash-header" id="header">
       <div class="dash-header__container">
@@ -25,9 +22,7 @@
               <a class="dash-header__link" href="/myprogress.html">Мой прогресс</a>
               <a class="dash-header__link" href="/library.html">Библиотека</a>
               <a class="dash-header__link" href="/anatilui.html">AI практика</a>
-              <a class="dash-header__link" href="/admin" id="adminBtn" style="display:none">
-                  Админка
-              </a>
+              <a class="dash-header__link" href="/admin" id="adminBtn" style="display:none">Админка</a>
           </nav>
 
           <div class="dash-header__actions">
@@ -38,7 +33,6 @@
               </button>
           </div>
       </div>
-
 
       <div class="dash-header__mobile" data-mobile hidden>
           <a class="dash-header__m-link" href="/courses">Курсы</a>
@@ -52,119 +46,147 @@
   <main class="page">
     <div class="container">
       <div class="course">
-
         <section class="course-hero">
           <div class="course-hero__top">
-            <div class="course-hero__text">
+            <div class="course-hero__content">
               <h1 class="course-hero__title" id="courseTitle">Курс</h1>
               <p class="course-hero__desc">
                 Пройдите модули по порядку. Первый незавершённый урок будет доступен для продолжения.
               </p>
-            </div>
 
-            <div class="course-hero__stats">
-              <div class="stat">
-                <div class="stat__label">Модулей</div>
-                <div class="stat__value" id="moduleCount">—</div>
-              </div>
-              <div class="stat">
-                <div class="stat__label">Уроков</div>
-                <div class="stat__value" id="lessonCount">—</div>
-              </div>
-              <div class="stat">
-                <div class="stat__label">Прогресс</div>
-                <div class="stat__value"><span id="courseProgress">0</span>%</div>
+              <div class="course-hero__meta">
+                <div class="course-hero__meta-item">
+                  <span class="course-hero__meta-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M4 6.5C4 5.67 4.67 5 5.5 5h10A2.5 2.5 0 0 1 18 7.5V19H7.5A3.5 3.5 0 0 0 4 22V6.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                      <path d="M18 19V7.5A2.5 2.5 0 0 1 20.5 5H21v14h-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span><strong id="moduleCount">—</strong> модулей</span>
+                </div>
+
+                <div class="course-hero__meta-item">
+                  <span class="course-hero__meta-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/>
+                      <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span><strong id="lessonCount">—</strong> уроков</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="course-hero__progress">
-            <div class="progress">
-              <div class="progress__bar" id="progressBar" style="width: 0%"></div>
+          <div class="course-progress">
+            <div class="course-progress__head">
+              <span class="course-progress__label">Прогресс курса</span>
+              <span class="course-progress__value"><span id="courseProgress">0</span>%</span>
             </div>
 
-            <a class="course-hero__next" id="nextLessonBtn" href="#" aria-disabled="true">
-              Продолжить
+            <div class="course-progress__bar">
+              <div class="course-progress__fill" id="progressBar" style="width:0%"></div>
+            </div>
+
+            <div class="course-progress__text"><span id="completedLessons">0</span> из <span id="totalLessons">0</span> уроков пройдено</div>
+
+            <a class="course-progress__btn" id="nextLessonBtn" href="#" aria-disabled="true">
+              Продолжить обучение
+              <span aria-hidden="true">→</span>
             </a>
           </div>
         </section>
 
+        <section class="ai-card">
+          <div class="ai-card__glow" aria-hidden="true"></div>
+          <div class="ai-card__content">
+            <div class="ai-card__head">
+              <div class="ai-card__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h2 class="ai-card__title">Практиковаться с ИИ</h2>
+            </div>
+
+            <p class="ai-card__desc">Закрепи материал курса через диалог, проверку фраз и персональные задания</p>
+
+            <div class="ai-card__features">
+              <div class="ai-card__feature">Диалог на казахском</div>
+              <div class="ai-card__feature">Разбор ошибок</div>
+              <div class="ai-card__feature">Персональная практика</div>
+            </div>
+
+            <a class="ai-card__btn" id="aiPracticeBtn" href="/anatilui.html">
+              Начать практику
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </section>
 
         <div id="modules"></div>
 
-
         <div id="finalTask" class="final-task" style="display:none;">
-          <div class="final-task__head">
-            <div class="final-task__icon" aria-hidden="true">🏆</div>
-            <div class="final-task__title-wrap">
-              <div class="final-task__title">Итоговое задание</div>
+          <div class="final-task__icon" aria-hidden="true">🏆</div>
+          <div class="final-task__body">
+            <div class="final-task__title-row">
+              <h2 class="final-task__title">Итоговое задание</h2>
               <div class="final-task__badge" id="finalTaskBadge">—</div>
             </div>
+            <p class="final-task__desc" id="taskDescription"></p>
+            <button class="final-task__btn" id="startTaskBtn" type="button" disabled>Загрузка...</button>
           </div>
-
-          <p class="final-task__desc" id="taskDescription"></p>
-
-          <button class="final-task__btn" id="startTaskBtn" type="button" disabled>
-            Загрузка...
-          </button>
         </div>
       </div>
 
-        <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
-            <span class="fab-ping" aria-hidden="true"></span>
-            <span class="fab-circle">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-            <span class="fab-badge" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  </span>
-        </button>
+      <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+        <span class="fab-ping" aria-hidden="true"></span>
+        <span class="fab-circle">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="fab-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </button>
 
-        <div class="chat" id="chat" hidden>
-            <div class="chat-window" role="dialog" aria-label="AI Ассистент">
-                <div class="chat-head">
-                    <div class="chat-avatar">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
-                                  stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-
-                    <div class="chat-head-text">
-                        <div class="chat-title">AI Ассистент</div>
-                        <div class="chat-subtitle">Онлайн • Ответим быстро</div>
-                    </div>
-
-                    <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
-                        ✕
-                    </button>
-                </div>
-
-                <div class="chat-body" id="chatBody"></div>
-
-                <div class="chat-input">
-                    <div>
-                        <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
-                        <button class="chat-send" id="chatSend" type="button">➤</button>
-                    </div>
-                    <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
-                </div>
+      <div class="chat" id="chat" hidden>
+        <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+          <div class="chat-head">
+            <div class="chat-avatar">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
             </div>
-        </div>
 
+            <div class="chat-head-text">
+              <div class="chat-title">AI Ассистент</div>
+              <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+            </div>
+
+            <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">✕</button>
+          </div>
+
+          <div class="chat-body" id="chatBody"></div>
+
+          <div class="chat-input">
+            <div>
+              <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+              <button class="chat-send" id="chatSend" type="button">➤</button>
+            </div>
+            <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 
   <script src="/js/authFetch.js"></script>
   <script src="/js/coursemodul.js"></script>
   <script src="/js/chat.js"></script>
-
 
   <script>
     (function () {
