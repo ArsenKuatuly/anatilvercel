@@ -78,8 +78,10 @@ module.exports = async (req, res) => {
 
             review.push({
                 questionId: qid,
+                questionNumber: review.length + 1,
                 question: q.question,
                 selectedAnswer: given,
+                givenAnswer: given,
                 correctAnswer: q.correct,
                 isCorrect,
             });
