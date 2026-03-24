@@ -306,6 +306,7 @@ body.ft-modal-open{overflow:hidden;}
     gap:10px;
     justify-content:flex-end;
     flex-wrap:wrap;
+    margin-top: 10px;
 }
 .ft-modal__actions .ft-btn{min-width:120px;}
 

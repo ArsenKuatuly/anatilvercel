@@ -32,6 +32,7 @@ const courseTask = require("../server/routes/[courseId]/task.js");
 const taskGet = require("../server/routes/task/[taskId].js");
 const taskQuestions = require("../server/routes/task/[taskId]/questions.js");
 const taskSubmit = require("../server/routes/task/[taskId]/submit.js");
+const certificateByCourse = require("../server/routes/certificate/[courseId].js");
 
 const myAchievements = require("../server/routes/achievements/my");
 
@@ -290,6 +291,15 @@ module.exports = async (req, res) => {
                 req.query = req.query || {};
                 req.query.taskId = p.taskId;
                 return taskSubmit(req, res);
+            }
+        }
+
+        {
+            const p = matchPath(path, "/api/certificate/:courseId");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.courseId = p.courseId;
+                return certificateByCourse(req, res);
             }
         }
 
