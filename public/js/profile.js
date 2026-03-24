@@ -324,6 +324,80 @@
     }
 
     const testResultBlock = $("#testResultBlock");
+
+    const certificatesBlock = $("#certificatesBlock");
+    const certificatesCountBadge = $("#certificatesCountBadge");
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    async function loadCertificates() {
+        if (!certificatesBlock) return;
+
+        try {
+            const res = await apiFetch("/api/my-certificates");
+            const data = await safeJson(res);
+            const items = Array.isArray(data?.certificates) ? data.certificates : [];
+
+            if (certificatesCountBadge) {
+                certificatesCountBadge.textContent = `${items.length} ${items.length === 1 ? "сертификат" : items.length >= 2 && items.length <= 4 ? "сертификата" : "сертификатов"}`;
+            }
+
+            if (!items.length) {
+                certificatesBlock.innerHTML = `
+          <div class="profile-certificates__empty">
+            Пока сертификатов нет. Завершите курс, и сертификат автоматически появится здесь.
+          </div>
+        `;
+                return;
+            }
+
+            certificatesBlock.innerHTML = `
+        <div class="profile-certificates__list">
+          ${items.map((item) => `
+            <article class="profile-certificates__item">
+              <div class="profile-certificates__meta">
+                <div class="profile-certificates__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+                    <path d="M12 3l2.2 4.45 4.9.72-3.55 3.46.84 4.88L12 14.9 7.61 16.5l.84-4.88L4.9 8.17l4.9-.72L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+
+                <div>
+                  <h3 class="profile-certificates__title">${escapeHtml(item.courseTitle)}</h3>
+                  <p class="profile-certificates__text">Сертификат о завершении курса AnaTil автоматически сохранён в вашем профиле.</p>
+
+                  <div class="profile-certificates__chips">
+                    <span class="profile-certificates__chip">${escapeHtml(item.cefr || "—")}</span>
+                    <span class="profile-certificates__chip">${escapeHtml(item.levelLabel || item.level || "—")}</span>
+                    <span class="profile-certificates__chip">Выдан: ${escapeHtml(item.issuedAt || "—")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="profile-certificates__actions">
+                <a class="profile-certificates__btn profile-certificates__btn--ghost" href="${escapeHtml(item.url || `/certificate.html?courseId=${item.courseId}`)}" target="_blank" rel="noopener noreferrer">Открыть</a>
+                <a class="profile-certificates__btn" href="${escapeHtml(item.url || `/certificate.html?courseId=${item.courseId}`)}" target="_blank" rel="noopener noreferrer">Скачать / печать</a>
+              </div>
+            </article>
+          `).join("")}
+        </div>
+      `;
+        } catch (e) {
+            console.error("Ошибка загрузки сертификатов", e);
+            certificatesBlock.innerHTML = `
+        <div class="profile-certificates__empty">
+          Не удалось загрузить сертификаты.
+        </div>
+      `;
+        }
+    }
     const testActions = $("#testActions");
     const historyBlock = $("#historyBlock");
     const levelBadge = $("#levelBadge");
@@ -532,6 +606,7 @@
         await loadProfile();
         await loadMyResult();
         await loadCourseBlocks();
+        await loadCertificates();
     });
 
     window.addEventListener("hashchange", () => openPage(initialPageFromHash()));
