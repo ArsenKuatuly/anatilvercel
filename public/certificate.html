@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Сертификат</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/certificate.css" />
+</head>
+<body>
+  <script src="/js/auth-guard.js"></script>
+  <script src="/js/api.js"></script>
+
+  <main class="cert-page">
+    <div class="cert-page__container">
+      <div class="cert-page__topbar">
+        <a class="cert-page__back" href="/dashboard.html">← Назад</a>
+        <div class="cert-page__actions">
+          <button class="cert-page__btn cert-page__btn--ghost" type="button" id="downloadCertificateBtn">Скачать / Печать</button>
+          <a class="cert-page__btn cert-page__btn--primary" href="/dashboard.html" id="continueBtn">Перейти дальше</a>
+        </div>
+      </div>
+
+      <section class="certificate" id="certificateCard">
+        <div class="certificate__inner">
+          <p class="certificate__eyebrow">AnaTil</p>
+          <h1 class="certificate__title">Сертификат о завершении курса</h1>
+          <p class="certificate__subtitle">Подтверждает успешное прохождение курса на платформе AnaTil</p>
+
+          <div class="certificate__body">
+            <p class="certificate__label">Настоящий сертификат выдан</p>
+            <h2 class="certificate__name" id="certName">—</h2>
+            <p class="certificate__text">
+              за успешное завершение курса
+              <strong id="certCourse">—</strong>
+              и подтверждение уровня
+              <strong id="certLevel">—</strong>
+            </p>
+          </div>
+
+          <div class="certificate__meta">
+            <div class="certificate__meta-item">
+              <span class="certificate__meta-label">Уровень</span>
+              <strong class="certificate__meta-value" id="certLevelBadge">—</strong>
+            </div>
+            <div class="certificate__meta-item">
+              <span class="certificate__meta-label">Дата выдачи</span>
+              <strong class="certificate__meta-value" id="certDate">—</strong>
+            </div>
+            <div class="certificate__meta-item">
+              <span class="certificate__meta-label">Сертификат №</span>
+              <strong class="certificate__meta-value" id="certNumber">—</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/js/authFetch.js"></script>
+  <script src="/js/certificate.js"></script>
+</body>
+</html>

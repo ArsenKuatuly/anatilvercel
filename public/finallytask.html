@@ -61,28 +61,6 @@
             </div>
           </header>
 
-          <section class="ft-card ft-review ft-hidden" id="reviewPanel" aria-live="polite">
-            <div class="ft-review__head">
-              <div>
-                <h2 class="ft-review__title">Работа над ошибками</h2>
-                <p class="ft-review__text" id="reviewText">Проверь свои ответы: правильные варианты подсвечены зелёным, ошибки — красным.</p>
-              </div>
-              <span class="ft-review__badge" id="reviewStats">0 правильных · 0 ошибок</span>
-            </div>
-
-            <div class="ft-review__legend">
-              <span class="ft-review__legend-item">
-                <span class="ft-review__legend-dot ft-review__legend-dot--good"></span>
-                Правильный ответ
-              </span>
-              <span class="ft-review__legend-item">
-                <span class="ft-review__legend-dot ft-review__legend-dot--bad"></span>
-                Ошибка
-              </span>
-            </div>
-          </section>
-
-
 
           <div class="ft-questions" id="questionsContainer"></div>
 
@@ -192,6 +170,7 @@
 
           <div class="ft-modal__actions ft-modal__actions--result">
               <button class="ft-btn ft-btn--outline" type="button" data-modal-close="resultModal" id="resultCloseBtn">Закрыть</button>
+              <a class="ft-btn ft-btn--primary ft-hidden" href="/certificate.html" id="resultCertificateBtn">Получить сертификат</a>
               <a class="ft-btn ft-btn--primary ft-hidden" href="/profile.html" id="resultToProfileBtn">В профиль</a>
               <button class="ft-btn ft-btn--primary ft-hidden" type="button" id="resultRetryBtn">Работа над ошибками</button>
           </div>

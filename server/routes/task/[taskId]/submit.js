@@ -1,7 +1,14 @@
-// server/routes/task/[taskId]/submit.js
 const { requireUser } = require("../../../../lib/jwt");
 const db = require("../../../../lib/db");
 const { LEVELS } = require("../../../../backend_src/config/levels");
+
+const LEVEL_META = {
+    elementary: { cefr: "A1", label: "Элементарный уровень" },
+    basic: { cefr: "A2", label: "Базовый уровень" },
+    intermediate: { cefr: "B1", label: "Средний уровень" },
+    upper: { cefr: "B2", label: "Уровень выше среднего" },
+    advanced: { cefr: "C1", label: "Высокий уровень" },
+};
 
 module.exports = async (req, res) => {
     try {
@@ -37,9 +44,9 @@ module.exports = async (req, res) => {
 
         const qRes = await db.query(
             `
-                SELECT id, question, correct_answer
-                FROM task_questions
-                WHERE task_id = $1 AND id = ANY($2::int[])
+            SELECT id, question, options, correct_answer
+            FROM task_questions
+            WHERE task_id = $1 AND id = ANY($2::int[])
             `,
             [taskId, qIds]
         );
@@ -48,9 +55,10 @@ module.exports = async (req, res) => {
             qRes.rows.map((r) => [
                 Number(r.id),
                 {
-                    correctAnswer: String(r.correct_answer ?? "").trim(),
-                    question: String(r.question ?? "")
-                }
+                    question: String(r.question ?? ""),
+                    options: r.options,
+                    correct: String(r.correct_answer ?? ""),
+                },
             ])
         );
 
@@ -58,31 +66,26 @@ module.exports = async (req, res) => {
 
         let score = 0;
         const review = [];
-        let questionNumber = 0;
 
         for (const a of answers) {
             const qid = Number(a.questionId);
             const given = norm(a.answer);
-            const entry = questionMap.get(qid);
-            if (!entry) continue;
+            const q = questionMap.get(qid);
+            if (!q) continue;
 
-            questionNumber += 1;
-            const correct = norm(entry.correctAnswer);
-            const isCorrect = given === correct;
+            const isCorrect = given === norm(q.correct);
             if (isCorrect) score += 1;
 
             review.push({
                 questionId: qid,
-                questionNumber,
-                question: entry.question,
-                givenAnswer: given,
-                correctAnswer: correct,
-                isCorrect
+                question: q.question,
+                selectedAnswer: given,
+                correctAnswer: q.correct,
+                isCorrect,
             });
         }
 
-        const answered = review.length;
-
+        const answered = qIds.length;
         const passScore = Number(task.pass_score || 0);
         const requiredCorrect = total > 0 ? Math.ceil((total * passScore) / 100) : 0;
         const percent = total > 0 ? Math.round((score / total) * 100) : 0;
@@ -90,9 +93,9 @@ module.exports = async (req, res) => {
 
         const upd = await db.query(
             `
-                UPDATE user_task_results
-                SET score = $3, passed = $4, completed_at = NOW()
-                WHERE user_id = $1 AND task_id = $2
+            UPDATE user_task_results
+            SET score = $3, passed = $4, completed_at = NOW()
+            WHERE user_id = $1 AND task_id = $2
             `,
             [userId, taskId, score, passed]
         );
@@ -100,24 +103,26 @@ module.exports = async (req, res) => {
         if (upd.rowCount === 0) {
             await db.query(
                 `
-                    INSERT INTO user_task_results (user_id, task_id, score, passed, completed_at)
-                    VALUES ($1, $2, $3, $4, NOW())
+                INSERT INTO user_task_results (user_id, task_id, score, passed, completed_at)
+                VALUES ($1, $2, $3, $4, NOW())
                 `,
                 [userId, taskId, score, passed]
             );
         }
 
         let nextLevel = null;
+        let nextCourseSlug = null;
+        let certificate = null;
 
         if (passed) {
             const upCourse = await db.query(
                 `
-                    UPDATE user_course_progress
-                    SET final_passed = TRUE,
-                        completed = TRUE,
-                        final_score = $3,
-                        completed_at = NOW()
-                    WHERE user_id = $1 AND course_id = $2
+                UPDATE user_course_progress
+                SET final_passed = TRUE,
+                    completed = TRUE,
+                    final_score = $3,
+                    completed_at = NOW()
+                WHERE user_id = $1 AND course_id = $2
                 `,
                 [userId, task.course_id, percent]
             );
@@ -125,8 +130,8 @@ module.exports = async (req, res) => {
             if (upCourse.rowCount === 0) {
                 await db.query(
                     `
-                        INSERT INTO user_course_progress (user_id, course_id, completed, final_passed, final_score, completed_at)
-                        VALUES ($1, $2, TRUE, TRUE, $3, NOW())
+                    INSERT INTO user_course_progress (user_id, course_id, completed, final_passed, final_score, completed_at)
+                    VALUES ($1, $2, TRUE, TRUE, $3, NOW())
                     `,
                     [userId, task.course_id, percent]
                 );
@@ -134,11 +139,11 @@ module.exports = async (req, res) => {
 
             const upUserCourses = await db.query(
                 `
-                    UPDATE user_courses
-                    SET completed = TRUE,
-                        final_passed = TRUE,
-                        completed_at = NOW()
-                    WHERE user_id = $1 AND course_id = $2
+                UPDATE user_courses
+                SET completed = TRUE,
+                    final_passed = TRUE,
+                    completed_at = NOW()
+                WHERE user_id = $1 AND course_id = $2
                 `,
                 [userId, task.course_id]
             );
@@ -146,11 +151,51 @@ module.exports = async (req, res) => {
             if (upUserCourses.rowCount === 0) {
                 await db.query(
                     `
-                        INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at, completed_at)
-                        VALUES ($1, $2, TRUE, TRUE, NOW(), NOW())
+                    INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at, completed_at)
+                    VALUES ($1, $2, TRUE, TRUE, NOW(), NOW())
                     `,
                     [userId, task.course_id]
                 );
+            }
+
+            const certRes = await db.query(
+                `
+                SELECT
+                    c.id,
+                    c.slug,
+                    c.title,
+                    c.level,
+                    COALESCE(ucp.completed_at, uc.completed_at, NOW()) AS issued_at,
+                    COALESCE(NULLIF(TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))), ''), u.login) AS full_name
+                FROM courses c
+                LEFT JOIN user_course_progress ucp
+                    ON ucp.course_id = c.id AND ucp.user_id = $1
+                LEFT JOIN user_courses uc
+                    ON uc.course_id = c.id AND uc.user_id = $1
+                JOIN users u ON u.id = $1
+                LEFT JOIN user_profiles p ON p.user_id = u.id
+                WHERE c.id = $2
+                LIMIT 1
+                `,
+                [userId, task.course_id]
+            );
+
+            const certRow = certRes.rows[0];
+            if (certRow) {
+                const meta = LEVEL_META[certRow.level] || { cefr: String(certRow.level || "").toUpperCase(), label: certRow.level || "" };
+                certificate = {
+                    courseId: certRow.id,
+                    courseSlug: certRow.slug,
+                    courseTitle: certRow.title,
+                    level: certRow.level,
+                    levelLabel: meta.label,
+                    cefr: meta.cefr,
+                    fullName: certRow.full_name,
+                    score: percent,
+                    issuedAt: certRow.issued_at,
+                    certificateNumber: `ANATIL-${certRow.id}-${userId}`,
+                    url: `/certificate.html?courseId=${certRow.id}`,
+                };
             }
 
             const cRes = await db.query(
@@ -168,10 +213,11 @@ module.exports = async (req, res) => {
                     await db.query(`UPDATE users SET current_level = $1 WHERE id = $2`, [nl, userId]);
 
                     const nextCourseRes = await db.query(
-                        `SELECT id FROM courses WHERE level = $1 ORDER BY position ASC, id ASC LIMIT 1`,
+                        `SELECT id, slug FROM courses WHERE level = $1 ORDER BY position ASC, id ASC LIMIT 1`,
                         [nextLevel]
                     );
                     const nextCourseId = nextCourseRes.rows[0]?.id;
+                    nextCourseSlug = nextCourseRes.rows[0]?.slug || null;
 
                     if (nextCourseId) {
                         const nextUcUpd = await db.query(
@@ -181,8 +227,8 @@ module.exports = async (req, res) => {
                         if (nextUcUpd.rowCount === 0) {
                             await db.query(
                                 `
-                                    INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at)
-                                    VALUES ($1, $2, FALSE, FALSE, NOW())
+                                INSERT INTO user_courses (user_id, course_id, completed, final_passed, started_at)
+                                VALUES ($1, $2, FALSE, FALSE, NOW())
                                 `,
                                 [userId, nextCourseId]
                             );
@@ -195,14 +241,19 @@ module.exports = async (req, res) => {
                         if (nextPUpd.rowCount === 0) {
                             await db.query(
                                 `
-                                    INSERT INTO user_course_progress (user_id, course_id, completed, final_passed)
-                                    VALUES ($1, $2, FALSE, FALSE)
+                                INSERT INTO user_course_progress (user_id, course_id, completed, final_passed)
+                                VALUES ($1, $2, FALSE, FALSE)
                                 `,
                                 [userId, nextCourseId]
                             );
                         }
                     }
                 }
+            }
+
+            if (certificate && nextCourseSlug) {
+                certificate.nextCourseSlug = nextCourseSlug;
+                certificate.url = `/certificate.html?courseId=${certificate.courseId}&next=${encodeURIComponent(nextCourseSlug)}`;
             }
         }
 
@@ -216,7 +267,9 @@ module.exports = async (req, res) => {
             requiredCorrect,
             percent,
             nextLevel,
+            nextCourseSlug,
             review,
+            certificate,
         });
     } catch (e) {
         console.error("task/submit error:", e);
