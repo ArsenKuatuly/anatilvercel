@@ -22,7 +22,7 @@
       <a class="dash-header__link" href="/courses">Курсы</a>
       <a class="dash-header__link" href="/myprogress.html">Мой прогресс</a>
       <a class="dash-header__link" href="/library.html">Библиотека</a>
-      <a class="dash-header__link" href="/anatilui.html">AI практика</a>
+      <a class="dash-header__link dash-header__link--active" href="/anatilui.html">AI практика</a>
       <a class="dash-header__link" href="/admin" id="adminBtn" style="display:none">Админка</a>
     </nav>
     <div class="dash-header__actions">
@@ -60,18 +60,9 @@
           <div class="ai-balance__bar"><span id="dailyUsageBar" style="width:0%"></span></div>
         </div>
         <div class="ai-stats-card">
-          <div class="ai-stats-card__item">
-            <strong id="todayPracticeValue">0 мин</strong>
-            <span>Практика сегодня</span>
-          </div>
-          <div class="ai-stats-card__item">
-            <strong id="todayErrorsValue">0</strong>
-            <span>Исправлено ошибок</span>
-          </div>
-          <div class="ai-stats-card__item">
-            <strong id="todayWordsValue">0</strong>
-            <span>Новых слов</span>
-          </div>
+          <div class="ai-stats-card__item"><strong id="todayPracticeValue">0 мин</strong><span>Практика сегодня</span></div>
+          <div class="ai-stats-card__item"><strong id="todayErrorsValue">0</strong><span>Исправлено ошибок</span></div>
+          <div class="ai-stats-card__item"><strong id="todayWordsValue">0</strong><span>Новых слов</span></div>
         </div>
       </div>
     </section>
@@ -124,228 +115,340 @@
       </button>
     </section>
 
-    <section class="ai-workspace">
-      <aside class="ai-sidebar">
-        <div class="ai-panel ai-panel--active" data-settings="check">
-          <div class="ai-panel__head">
-            <h2 class="ai-panel__title">Настройки проверки</h2>
-            <p class="ai-panel__text">1–3 предложения на одну тему дадут лучший результат.</p>
+    <section class="ai-mode-stage">
+      <section class="ai-view ai-view--active" data-view="check">
+        <div class="ai-mode-head">
+          <div class="ai-mode-head__icon ai-mode-head__icon--blue">✍️</div>
+          <div>
+            <h2 class="ai-mode-head__title">Проверка предложения</h2>
+            <p class="ai-mode-head__text">Напишите фразу на казахском — ИИ исправит ошибки и объяснит правила.</p>
           </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Уровень</span>
-            <div class="ai-chips" data-chip-group="checkLevel">
-              <button class="ai-chip ai-chip--active" type="button" data-value="A1">A1</button>
-              <button class="ai-chip" type="button" data-value="A2">A2</button>
-              <button class="ai-chip" type="button" data-value="B1">B1</button>
-            </div>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Объяснение</span>
-            <div class="ai-chips" data-chip-group="checkExplain">
-              <button class="ai-chip ai-chip--active" type="button" data-value="simple">Просто</button>
-              <button class="ai-chip" type="button" data-value="full">Подробно</button>
-            </div>
-          </div>
-          <div class="ai-note">После проверки появятся ошибки, правило, примеры и мини-задание.</div>
         </div>
 
-        <div class="ai-panel" data-settings="dialog">
-          <div class="ai-panel__head">
-            <h2 class="ai-panel__title">Настройки диалога</h2>
-            <p class="ai-panel__text">Выбери сценарий, уровень и стиль общения.</p>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Сценарий</span>
-            <div class="ai-chips" data-chip-group="dialogScenario">
-              <button class="ai-chip ai-chip--active" type="button" data-value="Кафе">Кафе</button>
-              <button class="ai-chip" type="button" data-value="Магазин">Магазин</button>
-              <button class="ai-chip" type="button" data-value="Такси">Такси</button>
-              <button class="ai-chip" type="button" data-value="Универ">Универ</button>
-              <button class="ai-chip" type="button" data-value="Знакомство">Знакомство</button>
-            </div>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Уровень</span>
-            <div class="ai-chips" data-chip-group="dialogLevel">
-              <button class="ai-chip ai-chip--active" type="button" data-value="A1">A1</button>
-              <button class="ai-chip" type="button" data-value="A2">A2</button>
-              <button class="ai-chip" type="button" data-value="B1">B1</button>
-            </div>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Тональность</span>
-            <div class="ai-chips" data-chip-group="dialogTone">
-              <button class="ai-chip ai-chip--active" type="button" data-value="дружелюбно">Дружелюбно</button>
-              <button class="ai-chip" type="button" data-value="строго">Строго</button>
-              <button class="ai-chip" type="button" data-value="как экзамен">Как экзамен</button>
-            </div>
-          </div>
-          <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="startDialogBtn">Начать диалог</button>
-        </div>
+        <div class="ai-grid ai-grid--two ai-grid--start">
+          <div>
+            <div class="ai-card">
+              <h3 class="ai-card__title">Ваше предложение</h3>
+              <label class="ai-label" for="checkInput">Напишите фразу на казахском языке</label>
+              <textarea class="ai-textarea ai-textarea--lg" id="checkInput" placeholder="Мен мектепке барамын..."></textarea>
+              <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="checkSentenceBtn">Проверить предложение</button>
 
-        <div class="ai-panel" data-settings="tutor">
-          <div class="ai-panel__head">
-            <h2 class="ai-panel__title">Репетитор по уроку</h2>
-            <p class="ai-panel__text">ИИ отвечает по теме урока и объясняет как преподаватель.</p>
-          </div>
-          <div class="ai-context">
-            <span class="ai-context__badge">Контекст</span>
-            <strong class="ai-context__title" id="currentLessonTitle">Текущий урок загружается…</strong>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Выбрать урок</span>
-            <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" id="useCurrentLessonBtn">Использовать текущий урок</button>
-          </div>
-          <div class="ai-note">Этот режим не уходит в болтовню и держится в рамках темы.</div>
-        </div>
+              <div class="ai-inline-block">
+                <p class="ai-helper">Примеры для проверки:</p>
+                <div class="ai-quick-actions">
+                  <button class="ai-quick-btn" type="button" data-check-sample="Мен мектепке барамын">Мен мектепке барамын</button>
+                  <button class="ai-quick-btn" type="button" data-check-sample="Менің досым университетте оқиды">Менің досым университетте оқиды</button>
+                  <button class="ai-quick-btn" type="button" data-check-sample="Біз кафеге тамақ ішуге барамыз">Біз кафеге тамақ ішуге...</button>
+                </div>
+              </div>
+            </div>
 
-        <div class="ai-panel" data-settings="vocabulary">
-          <div class="ai-panel__head">
-            <h2 class="ai-panel__title">Словарь</h2>
-            <p class="ai-panel__text">Подбор слов по теме и короткое повторение.</p>
-          </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Тема</span>
-            <div class="ai-chips" data-chip-group="vocabularyTheme">
-              <button class="ai-chip ai-chip--active" type="button" data-value="Еда">Еда</button>
-              <button class="ai-chip" type="button" data-value="Работа">Работа</button>
-              <button class="ai-chip" type="button" data-value="Учёба">Учёба</button>
-              <button class="ai-chip" type="button" data-value="Путешествия">Путешествия</button>
+            <div class="ai-card ai-card--soft-blue">
+              <div class="ai-info-head"><span>💡</span><h4>Совет</h4></div>
+              <p class="ai-card__text">Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.</p>
             </div>
           </div>
-          <div class="ai-field">
-            <span class="ai-field__label">Количество</span>
-            <div class="ai-chips" data-chip-group="vocabularyCount">
-              <button class="ai-chip ai-chip--active" type="button" data-value="10">10 слов</button>
-              <button class="ai-chip" type="button" data-value="15">15 слов</button>
-              <button class="ai-chip" type="button" data-value="20">20 слов</button>
+
+          <div id="checkResultEmpty" class="ai-card ai-card--empty">
+            <div class="ai-empty__emoji">✍️</div>
+            <h3 class="ai-empty__title">Результат появится здесь</h3>
+            <p class="ai-empty__text">Напишите предложение и нажмите «Проверить»</p>
+          </div>
+
+          <div id="checkResult" class="ai-result-stack" hidden>
+            <div class="ai-correction-box">
+              <div class="ai-correction-box__head">✅ Исправленный вариант</div>
+              <div class="ai-correction-box__text" id="checkCorrected">—</div>
+              <div class="ai-row-gap">
+                <span class="ai-badge ai-badge--success">Готово</span>
+                <button class="ai-btn ai-btn--ghost" type="button" id="copyCorrectedBtn">Скопировать</button>
+              </div>
+            </div>
+
+            <div class="ai-card">
+              <h3 class="ai-card__title">Найденные ошибки</h3>
+              <ul class="ai-error-list" id="checkErrorsList"></ul>
+            </div>
+
+            <div class="ai-card">
+              <h3 class="ai-card__title">Правило</h3>
+              <p class="ai-card__text" id="checkRule">—</p>
+              <div class="ai-examples-box" id="checkExamples"></div>
+            </div>
+
+            <div class="ai-card">
+              <h3 class="ai-card__title">Мини-задание</h3>
+              <p class="ai-card__text" id="checkTask">—</p>
+              <div class="ai-quick-actions ai-quick-actions--mt">
+                <button class="ai-quick-btn" type="button" data-check-action="simpler">💡 Объяснить проще</button>
+                <button class="ai-quick-btn" type="button" data-check-action="examples">📝 Дай ещё примеры</button>
+                <button class="ai-quick-btn" type="button" data-check-action="harder">✏️ Упражнение по ошибке</button>
+              </div>
             </div>
           </div>
-          <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="generateWordsBtn">Сгенерировать слова</button>
         </div>
-      </aside>
+      </section>
 
-      <div class="ai-content">
-        <section class="ai-screen ai-screen--active" data-screen="check">
-          <div class="ai-screen__head">
+      <section class="ai-view" data-view="dialog">
+        <div id="dialogScenarioStep">
+          <div class="ai-mode-head">
+            <div class="ai-mode-head__icon ai-mode-head__icon--green">🗣️</div>
             <div>
-              <h2 class="ai-screen__title">Проверка предложения</h2>
-              <p class="ai-screen__text">Напиши фразу на казахском — ИИ исправит её и объяснит правило.</p>
+              <h2 class="ai-mode-head__title">Диалог с AI</h2>
+              <p class="ai-mode-head__text">Выберите сценарий и практикуйте казахский в реальных ситуациях.</p>
             </div>
           </div>
-          <div class="ai-editor">
-            <textarea class="ai-editor__input" id="checkInput" placeholder="Например: Мен кеше дүкенге барды"></textarea>
-            <div class="ai-editor__actions">
-              <button class="ai-btn ai-btn--primary" type="button" id="checkSentenceBtn">Проверить</button>
+
+          <div class="ai-grid ai-grid--two" id="dialogScenarioGrid"></div>
+
+          <div class="ai-card ai-card--soft-green">
+            <div class="ai-info-head"><span>✨</span><h4>Как работает диалог</h4></div>
+            <div class="ai-steps">
+              <p>1️⃣ <strong>AI играет роль</strong> — официанта, продавца, водителя или собеседника.</p>
+              <p>2️⃣ <strong>Вы общаетесь</strong> на казахском языке, как в реальной жизни.</p>
+              <p>3️⃣ <strong>Получаете подсказки</strong> если затрудняетесь с ответом.</p>
+              <p>4️⃣ <strong>После диалога</strong> — анализ ошибок и рекомендации.</p>
             </div>
           </div>
-          <div class="ai-result" id="checkResult" hidden>
-            <div class="ai-result__block">
-              <span class="ai-result__label">Исправленный вариант</span>
-              <div class="ai-result__answer" id="checkCorrected">—</div>
-              <button class="ai-btn ai-btn--ghost" type="button" id="copyCorrectedBtn">Скопировать</button>
+        </div>
+
+        <div id="dialogChatStep" hidden>
+          <button class="ai-btn ai-btn--ghost ai-btn--back" type="button" id="dialogBackBtn">← Назад к сценариям</button>
+
+          <div class="ai-dialog-hero">
+            <div class="ai-dialog-hero__main">
+              <div class="ai-mode-head__icon ai-mode-head__icon--green" id="dialogScenarioEmoji">☕</div>
+              <div>
+                <h3 class="ai-dialog-hero__title" id="dialogScenarioTitle">В кафе</h3>
+                <p class="ai-dialog-hero__text" id="dialogScenarioDescription">Заказ еды и напитков</p>
+              </div>
             </div>
-            <div class="ai-result__block">
-              <span class="ai-result__label">Ошибки</span>
-              <ul class="ai-list" id="checkErrorsList"></ul>
+            <div class="ai-badge ai-badge--success" id="dialogScenarioDifficulty">Лёгкий</div>
+          </div>
+
+          <div class="ai-dialog-goal">
+            <div class="ai-dialog-goal__title">🎯 Цель диалога:</div>
+            <p class="ai-dialog-goal__text" id="dialogGoalText">Заказать напиток и десерт, уточнить детали заказа, попросить счёт.</p>
+          </div>
+
+          <div class="ai-progress ai-progress--mode">
+            <div class="ai-progress__track"><span id="dialogProgressBar" style="width: 0%"></span></div>
+            <span class="ai-progress__meta" id="dialogProgressText">Прогресс диалога: 0%</span>
+          </div>
+
+          <div class="ai-grid ai-grid--two ai-grid--start">
+            <div class="ai-card ai-card--chat">
+              <div class="ai-chat-thread" id="dialogMessages"></div>
+              <div class="ai-inline-block">
+                <div class="ai-quick-actions">
+                  <button class="ai-quick-btn" type="button" id="showHintBtn">💡 Дай подсказку</button>
+                  <button class="ai-quick-btn" type="button" id="dialogExplainBtn">📖 Как сказать это лучше?</button>
+                  <button class="ai-quick-btn" type="button" id="dialogRepeatBtn">🔄 Повтори вопрос</button>
+                </div>
+              </div>
+              <div class="ai-chat-composer">
+                <textarea class="ai-textarea ai-textarea--chat" id="dialogInput" placeholder="Напишите ответ на казахском..."></textarea>
+                <button class="ai-btn ai-btn--primary" type="button" id="sendDialogBtn">Отправить</button>
+              </div>
             </div>
-            <div class="ai-result__block">
-              <span class="ai-result__label">Правило</span>
-              <p id="checkRule">—</p>
+
+            <div class="ai-stack">
+              <div class="ai-card">
+                <h3 class="ai-card__title">Полезные фразы</h3>
+                <div class="ai-phrase-list" id="dialogPhraseList"></div>
+              </div>
+              <div class="ai-card">
+                <h3 class="ai-card__title">Быстрая оценка</h3>
+                <div class="ai-meter">
+                  <div><span>Сообщений</span><strong id="dialogMessagesCount">0</strong></div>
+                  <div><span>Ошибок</span><strong id="dialogErrorsCount">0</strong></div>
+                  <div><span>Подсказок</span><strong id="dialogHintsCount">0</strong></div>
+                </div>
+              </div>
             </div>
-            <div class="ai-result__block">
-              <span class="ai-result__label">Примеры</span>
-              <div class="ai-examples" id="checkExamples"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ai-view" data-view="tutor">
+        <div class="ai-mode-head">
+          <div class="ai-mode-head__icon ai-mode-head__icon--orange">🧑‍🏫</div>
+          <div>
+            <h2 class="ai-mode-head__title">Репетитор по уроку</h2>
+            <p class="ai-mode-head__text">Задавайте вопросы по теме урока и получайте объяснение как от преподавателя.</p>
+          </div>
+        </div>
+
+        <div class="ai-lesson-banner">
+          <div>
+            <div class="ai-lesson-banner__label">Текущий урок</div>
+            <h3 class="ai-lesson-banner__title" id="currentLessonTitle">Текущий урок загружается…</h3>
+            <p class="ai-lesson-banner__text">AI учитывает контекст урока и отвечает по теме без лишней болтовни.</p>
+          </div>
+          <button class="ai-btn ai-btn--secondary" type="button" id="useCurrentLessonBtn">Использовать этот урок</button>
+        </div>
+
+        <div class="ai-grid ai-grid--two ai-grid--start">
+          <div>
+            <div class="ai-card">
+              <h3 class="ai-card__title">Ваш вопрос</h3>
+              <label class="ai-label" for="tutorInput">Спросите по теме урока</label>
+              <textarea class="ai-textarea ai-textarea--lg" id="tutorInput" placeholder="Например: Объясни разницу между -амын и -мақпын"></textarea>
+              <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="sendTutorBtn">Задать вопрос</button>
+
+              <div class="ai-inline-block">
+                <p class="ai-helper">Популярные вопросы:</p>
+                <div class="ai-quick-actions">
+                  <button class="ai-quick-btn" type="button" data-tutor-sample="Когда использовать барыс септік?">Когда использовать барыс септік?</button>
+                  <button class="ai-quick-btn" type="button" data-tutor-sample="В чём разница между -ке и -ға?">В чём разница между -ке и -ға?</button>
+                  <button class="ai-quick-btn" type="button" data-tutor-sample="Как определить падеж в предложении?">Как определить падеж в предложении?</button>
+                </div>
+              </div>
             </div>
-            <div class="ai-result__block">
-              <span class="ai-result__label">Мини-задание</span>
-              <p id="checkTask">—</p>
+
+            <div class="ai-card" id="tutorAnswerCard">
+              <div class="ai-answer-head"><span class="ai-answer-avatar">AI</span><h3 class="ai-card__title">Ответ AI</h3></div>
+              <div class="ai-answer-content" id="tutorMessages"></div>
+              <div class="ai-quick-actions ai-quick-actions--mt">
+                <button class="ai-quick-btn" type="button" data-tutor-action="simpler">💡 Объяснить проще</button>
+                <button class="ai-quick-btn" type="button" data-tutor-action="examples">📝 Дай больше примеров</button>
+                <button class="ai-quick-btn" type="button" data-tutor-action="check">✏️ Проверь, понял ли я</button>
+                <button class="ai-quick-btn" type="button" data-tutor-action="exercise">🎯 Дай упражнение</button>
+              </div>
             </div>
-            <div class="ai-actions-row">
-              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="harder">Сделать сложнее</button>
-              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="simpler">Сделать проще</button>
-              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="examples">Ещё 3 примера</button>
+
+            <div class="ai-card ai-card--soft-blue" id="tutorPracticeCard">
+              <div class="ai-info-head"><span>✅</span><h4>Мини-практика</h4></div>
+              <div id="tutorPractice"></div>
             </div>
+          </div>
+
+          <div class="ai-stack">
+            <div class="ai-card">
+              <h3 class="ai-card__title">Темы урока</h3>
+              <div class="ai-topic-list" id="tutorTopics"></div>
+            </div>
+            <div class="ai-card">
+              <h3 class="ai-card__title">Быстрые действия</h3>
+              <div class="ai-side-actions">
+                <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" data-tutor-sample="Объясни всю тему простыми словами">Объясни всю тему</button>
+                <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" data-tutor-sample="Проверь, понял ли я тему">Проверь, понял ли я</button>
+                <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" data-tutor-sample="Дай 5 вопросов по этой теме">Дай 5 вопросов</button>
+                <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" data-tutor-sample="Сделай мини-практику по этой теме">Мини-практика</button>
+              </div>
+            </div>
+            <div class="ai-card">
+              <h3 class="ai-card__title">Статистика урока</h3>
+              <div class="ai-lesson-stats">
+                <div><span>Вопросов задано</span><strong id="tutorQuestionsCount">0</strong></div>
+                <div><span>Практик выполнено</span><strong id="tutorPracticeCount">0/5</strong></div>
+                <div><span>Понимание темы</span><strong id="tutorUnderstanding">В процессе</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ai-view" data-view="vocabulary">
+        <div class="ai-mode-head">
+          <div class="ai-mode-head__icon ai-mode-head__icon--purple">📚</div>
+          <div>
+            <h2 class="ai-mode-head__title">Словарь</h2>
+            <p class="ai-mode-head__text">Изучайте слова по темам, сохраняйте и повторяйте.</p>
+          </div>
+        </div>
+
+        <section class="ai-stats-grid">
+          <div class="ai-stat-box"><strong id="vocabStatTotal">0</strong><span>Всего слов</span></div>
+          <div class="ai-stat-box"><strong id="vocabStatSaved">0</strong><span>Сохранено</span></div>
+          <div class="ai-stat-box"><strong id="vocabStatRepeat">0</strong><span>К повторению</span></div>
+          <div class="ai-stat-box"><strong id="vocabStatToday">0</strong><span>Выучено сегодня</span></div>
+        </section>
+
+        <section class="ai-card ai-card--toolbar">
+          <div class="ai-search-wrap">
+            <input type="text" class="ai-input" id="vocabularySearch" placeholder="Поиск слова...">
+          </div>
+          <div class="ai-tab-row">
+            <button class="ai-tab ai-tab--active" type="button" data-vocab-tab="all">Все слова</button>
+            <button class="ai-tab" type="button" data-vocab-tab="saved">Сохранённые</button>
+            <button class="ai-tab" type="button" data-vocab-tab="repeat">Повторить</button>
           </div>
         </section>
 
-        <section class="ai-screen" data-screen="dialog">
-          <div class="ai-screen__head">
-            <div>
-              <h2 class="ai-screen__title">Диалог</h2>
-              <p class="ai-screen__text">Разыграй ситуацию и получи мини-оценку после каждого ответа.</p>
+        <div class="ai-grid ai-grid--two ai-grid--start">
+          <div>
+            <div class="ai-section-top">
+              <h3 class="ai-card__title" id="vocabularyListTitle">Все слова</h3>
+              <span class="ai-section-top__meta" id="vocabularyCountMeta">0 слов</span>
             </div>
-            <button class="ai-btn ai-btn--secondary" type="button" id="showHintBtn">Показать подсказку</button>
+            <div class="ai-word-list" id="vocabularyWords"></div>
+            <div class="ai-card ai-card--empty" id="vocabularyEmpty" hidden>
+              <div class="ai-empty__emoji">📚</div>
+              <h3 class="ai-empty__title">Слова не найдены</h3>
+              <p class="ai-empty__text">Попробуйте изменить параметры поиска</p>
+            </div>
           </div>
-          <div class="ai-chat" id="dialogMessages"></div>
-          <div class="ai-chat-input">
-            <textarea class="ai-chat-input__field" id="dialogInput" placeholder="Введите ответ..."></textarea>
-            <button class="ai-btn ai-btn--primary" type="button" id="sendDialogBtn">Отправить</button>
-          </div>
-        </section>
 
-        <section class="ai-screen" data-screen="tutor">
-          <div class="ai-screen__head">
-            <div>
-              <h2 class="ai-screen__title">Репетитор по уроку</h2>
-              <p class="ai-screen__text">Задавай вопросы по теме и получай объяснение как от преподавателя.</p>
+          <div class="ai-stack">
+            <div class="ai-card">
+              <h3 class="ai-card__title">Темы</h3>
+              <div class="ai-category-list" id="vocabularyCategories"></div>
             </div>
-            <span class="ai-tag" id="tutorContextTag">Контекст: текущий урок</span>
-          </div>
-          <div class="ai-chat ai-chat--tutor" id="tutorMessages"></div>
-          <div class="ai-chat-input">
-            <textarea class="ai-chat-input__field" id="tutorInput" placeholder="Например: Объясни разницу между -амын и -мақпын"></textarea>
-            <button class="ai-btn ai-btn--primary" type="button" id="sendTutorBtn">Спросить</button>
-          </div>
-        </section>
-
-        <section class="ai-screen" data-screen="vocabulary">
-          <div class="ai-screen__head">
-            <div>
-              <h2 class="ai-screen__title">Словарь</h2>
-              <p class="ai-screen__text">Слова по темам, примеры употребления и мини-тест.</p>
+            <div class="ai-card ai-card--soft-blue">
+              <div class="ai-info-head"><span>➕</span><h4>Добавить слова по теме</h4></div>
+              <p class="ai-card__text">Сгенерируй подборку слов по нужной теме с примерами и мини-тестом.</p>
+              <div class="ai-inline-fields">
+                <div class="ai-chip-group" data-chip-group="vocabularyTheme">
+                  <button class="ai-chip ai-chip--active" type="button" data-value="Еда">Еда</button>
+                  <button class="ai-chip" type="button" data-value="Учёба">Учёба</button>
+                  <button class="ai-chip" type="button" data-value="Работа">Работа</button>
+                  <button class="ai-chip" type="button" data-value="Путешествия">Путешествия</button>
+                </div>
+                <div class="ai-chip-group" data-chip-group="vocabularyCount">
+                  <button class="ai-chip ai-chip--active" type="button" data-value="10">10 слов</button>
+                  <button class="ai-chip" type="button" data-value="15">15 слов</button>
+                  <button class="ai-chip" type="button" data-value="20">20 слов</button>
+                </div>
+              </div>
+              <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="generateWordsBtn">Сгенерировать слова</button>
+            </div>
+            <div class="ai-card" id="vocabularyTest" hidden>
+              <h3 class="ai-card__title">Мини-тест</h3>
+              <p class="ai-card__text" id="vocabularyQuestion">—</p>
+              <div class="ai-test-options" id="vocabularyOptions"></div>
             </div>
           </div>
-          <div class="ai-words" id="vocabularyWords"></div>
-          <div class="ai-mini-test" id="vocabularyTest" hidden>
-            <h3 class="ai-mini-test__title">Мини-тест</h3>
-            <p class="ai-mini-test__text" id="vocabularyQuestion">—</p>
-            <div class="ai-mini-test__options" id="vocabularyOptions"></div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </section>
 
     <section class="ai-bottom">
       <article class="ai-achievements">
         <div class="ai-block-head">
-          <h2 class="ai-block-head__title">Достижения</h2>
-          <p class="ai-block-head__text">Небольшие награды за регулярную практику.</p>
+          <div>
+            <h2 class="ai-block-head__title">Достижения</h2>
+            <p class="ai-block-head__text">Смотри, как растёт ежедневная практика.</p>
+          </div>
         </div>
         <div class="ai-achievements__grid">
-          <div class="ai-achievement">
-            <strong id="achievementChecks">0</strong>
-            <span>Проверил предложений</span>
-          </div>
-          <div class="ai-achievement">
-            <strong id="achievementDialogs">0</strong>
-            <span>Диалога подряд</span>
-          </div>
-          <div class="ai-achievement">
-            <strong id="achievementDays">0</strong>
-            <span>Дней практики</span>
-          </div>
+          <div class="ai-achievement-card"><strong id="achievementChecks">0</strong><span>Проверок</span></div>
+          <div class="ai-achievement-card"><strong id="achievementDialogs">0</strong><span>Диалогов</span></div>
+          <div class="ai-achievement-card"><strong id="achievementDays">0</strong><span>Дней подряд</span></div>
         </div>
       </article>
+
       <article class="ai-errors">
         <div class="ai-block-head">
-          <h2 class="ai-block-head__title">Практика по ошибкам</h2>
-          <p class="ai-block-head__text">Тема, в которой ты чаще всего ошибаешься.</p>
+          <div>
+            <h2 class="ai-block-head__title">На что обратить внимание</h2>
+            <p class="ai-block-head__text">Персональная подсказка по частым ошибкам.</p>
+          </div>
         </div>
         <div class="ai-errors__card">
-          <strong id="mistakeTopicTitle">Прошедшее время</strong>
-          <p id="mistakeTopicText">После нескольких проверок здесь появится твоя самая частая тема ошибок.</p>
-          <button class="ai-btn ai-btn--primary" type="button" id="practiceMistakeBtn">Потренировать тему</button>
+          <strong id="mistakeTopicTitle">Падежи и окончания</strong>
+          <p id="mistakeTopicText">Сейчас чаще всего встречаются ошибки по теме: падежи и окончания.</p>
+          <button class="ai-btn ai-btn--secondary" type="button" id="practiceMistakeBtn">Попрактиковать это</button>
         </div>
       </article>
     </section>
@@ -353,17 +456,19 @@
 </main>
 
 <div class="ai-history" id="historyDrawer" hidden>
-  <div class="ai-history__overlay" id="historyOverlay"></div>
+  <button class="ai-history__overlay" id="historyOverlay" type="button" aria-label="Закрыть историю"></button>
   <div class="ai-history__panel">
     <div class="ai-history__head">
-      <h2 class="ai-history__title">История сессий</h2>
-      <button class="ai-btn ai-btn--icon" type="button" id="closeHistoryBtn">✕</button>
+      <div>
+        <h2 class="ai-history__title">История AI-сессий</h2>
+        <p class="ai-history__text">Недавние проверки, диалоги и вопросы к репетитору.</p>
+      </div>
+      <button class="ai-btn ai-btn--icon" type="button" id="closeHistoryBtn" aria-label="Закрыть">✕</button>
     </div>
     <div class="ai-history__list" id="historyList"></div>
   </div>
 </div>
 
-<script src="/js/authFetch.js"></script>
 <script src="/js/anatilui.js"></script>
 </body>
 </html>
