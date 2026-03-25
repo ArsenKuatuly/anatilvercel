@@ -1,863 +1,818 @@
-(function () {
-  const STORAGE_KEY = 'anatil_ai_practice_state_v1';
-  const DEFAULT_DAILY_LIMIT = 50;
+(() => {
+    "use strict";
 
-  const state = {
-    mode: 'check',
-    user: null,
-    currentLesson: null,
-    summaryPercent: 0,
-    usage: { used: 0, total: DEFAULT_DAILY_LIMIT },
-    sessionStats: { minutes: 0, errors: 0, words: 0 },
-    achievements: { checks: 0, dialogs: 0, days: 1 },
-    history: [],
-    check: { lastInput: '', lastResult: null },
-    dialog: { started: false, messages: [] },
-    tutor: { messages: [] },
-    vocabulary: { words: [], test: null },
-    focusTopic: 'Прошедшее время'
-  };
-
-  const els = {
-    modeButtons: document.querySelectorAll('[data-mode]'),
-    settingsPanels: document.querySelectorAll('[data-settings]'),
-    screens: document.querySelectorAll('[data-screen]'),
-    openModeButtons: document.querySelectorAll('[data-open-mode]'),
-    openHistoryBtn: document.getElementById('openHistoryBtn'),
-    openLastSessionBtn: document.getElementById('openLastSessionBtn'),
-    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
-    historyDrawer: document.getElementById('historyDrawer'),
-    historyOverlay: document.getElementById('historyOverlay'),
-    historyList: document.getElementById('historyList'),
-    adminBtn: document.getElementById('adminBtn'),
-    currentLessonTitle: document.getElementById('currentLessonTitle'),
-    tutorContextTag: document.getElementById('tutorContextTag'),
-    summaryTitle: document.getElementById('summaryTitle'),
-    summaryText: document.getElementById('summaryText'),
-    summaryProgressBar: document.getElementById('summaryProgressBar'),
-    dailyUsage: document.getElementById('dailyUsage'),
-    dailyUsageBar: document.getElementById('dailyUsageBar'),
-    todayPracticeValue: document.getElementById('todayPracticeValue'),
-    todayErrorsValue: document.getElementById('todayErrorsValue'),
-    todayWordsValue: document.getElementById('todayWordsValue'),
-    lastSessionTitle: document.getElementById('lastSessionTitle'),
-    lastSessionMeta: document.getElementById('lastSessionMeta'),
-    lastSessionMessages: document.getElementById('lastSessionMessages'),
-    lastSessionWords: document.getElementById('lastSessionWords'),
-    lastSessionErrors: document.getElementById('lastSessionErrors'),
-    checkInput: document.getElementById('checkInput'),
-    checkSentenceBtn: document.getElementById('checkSentenceBtn'),
-    checkResult: document.getElementById('checkResult'),
-    checkCorrected: document.getElementById('checkCorrected'),
-    checkErrorsList: document.getElementById('checkErrorsList'),
-    checkRule: document.getElementById('checkRule'),
-    checkExamples: document.getElementById('checkExamples'),
-    checkTask: document.getElementById('checkTask'),
-    copyCorrectedBtn: document.getElementById('copyCorrectedBtn'),
-    checkActionButtons: document.querySelectorAll('[data-check-action]'),
-    startDialogBtn: document.getElementById('startDialogBtn'),
-    showHintBtn: document.getElementById('showHintBtn'),
-    dialogMessages: document.getElementById('dialogMessages'),
-    dialogInput: document.getElementById('dialogInput'),
-    sendDialogBtn: document.getElementById('sendDialogBtn'),
-    tutorMessages: document.getElementById('tutorMessages'),
-    tutorInput: document.getElementById('tutorInput'),
-    sendTutorBtn: document.getElementById('sendTutorBtn'),
-    useCurrentLessonBtn: document.getElementById('useCurrentLessonBtn'),
-    generateWordsBtn: document.getElementById('generateWordsBtn'),
-    vocabularyWords: document.getElementById('vocabularyWords'),
-    vocabularyTest: document.getElementById('vocabularyTest'),
-    vocabularyQuestion: document.getElementById('vocabularyQuestion'),
-    vocabularyOptions: document.getElementById('vocabularyOptions'),
-    achievementChecks: document.getElementById('achievementChecks'),
-    achievementDialogs: document.getElementById('achievementDialogs'),
-    achievementDays: document.getElementById('achievementDays'),
-    mistakeTopicTitle: document.getElementById('mistakeTopicTitle'),
-    mistakeTopicText: document.getElementById('mistakeTopicText'),
-    practiceMistakeBtn: document.getElementById('practiceMistakeBtn')
-  };
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object') return;
-      Object.assign(state.usage, parsed.usage || {});
-      Object.assign(state.sessionStats, parsed.sessionStats || {});
-      Object.assign(state.achievements, parsed.achievements || {});
-      state.history = Array.isArray(parsed.history) ? parsed.history : [];
-      state.focusTopic = parsed.focusTopic || state.focusTopic;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  function saveState() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          usage: state.usage,
-          sessionStats: state.sessionStats,
-          achievements: state.achievements,
-          history: state.history.slice(0, 20),
-          focusTopic: state.focusTopic
-        })
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  function escapeHtml(value) {
-    return String(value || '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
-
-  function getActiveChipValue(groupName) {
-    const active = document.querySelector('[data-chip-group="' + groupName + '"] .ai-chip--active');
-    return active ? active.dataset.value || active.textContent.trim() : '';
-  }
-
-  function bindChipGroups() {
-    document.querySelectorAll('[data-chip-group]').forEach((group) => {
-      group.addEventListener('click', (event) => {
-        const button = event.target.closest('.ai-chip');
-        if (!button) return;
-        group.querySelectorAll('.ai-chip').forEach((chip) => chip.classList.remove('ai-chip--active'));
-        button.classList.add('ai-chip--active');
-      });
-    });
-  }
-
-  function setMode(mode) {
-    state.mode = mode;
-    els.modeButtons.forEach((button) => {
-      button.classList.toggle('ai-mode--active', button.dataset.mode === mode);
-    });
-    els.settingsPanels.forEach((panel) => {
-      panel.classList.toggle('ai-panel--active', panel.dataset.settings === mode);
-    });
-    els.screens.forEach((screen) => {
-      screen.classList.toggle('ai-screen--active', screen.dataset.screen === mode);
-    });
-  }
-
-  function openHistory() {
-    renderHistory();
-    if (!els.historyDrawer) return;
-    els.historyDrawer.hidden = false;
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeHistory() {
-    if (!els.historyDrawer) return;
-    els.historyDrawer.hidden = true;
-    document.body.style.overflow = '';
-  }
-
-  function setUsage(used, total) {
-    state.usage.used = used;
-    state.usage.total = total || DEFAULT_DAILY_LIMIT;
-    const percent = Math.max(0, Math.min(100, Math.round((state.usage.used / state.usage.total) * 100)));
-    if (els.dailyUsage) els.dailyUsage.textContent = state.usage.used + ' / ' + state.usage.total;
-    if (els.dailyUsageBar) els.dailyUsageBar.style.width = percent + '%';
-  }
-
-  function increaseUsage(step) {
-    setUsage(Math.min(state.usage.total, state.usage.used + (step || 1)), state.usage.total);
-    saveState();
-  }
-
-  function updateStatsView() {
-    if (els.todayPracticeValue) els.todayPracticeValue.textContent = state.sessionStats.minutes + ' мин';
-    if (els.todayErrorsValue) els.todayErrorsValue.textContent = String(state.sessionStats.errors);
-    if (els.todayWordsValue) els.todayWordsValue.textContent = String(state.sessionStats.words);
-    if (els.achievementChecks) els.achievementChecks.textContent = String(state.achievements.checks);
-    if (els.achievementDialogs) els.achievementDialogs.textContent = String(state.achievements.dialogs);
-    if (els.achievementDays) els.achievementDays.textContent = String(state.achievements.days);
-    if (els.mistakeTopicTitle) els.mistakeTopicTitle.textContent = state.focusTopic;
-    if (els.mistakeTopicText) {
-      els.mistakeTopicText.textContent = 'Сейчас чаще всего встречаются ошибки по теме: ' + state.focusTopic + '. Открой практику и закрепи правило ещё раз.';
-    }
-  }
-
-  function updateLastSessionCard() {
-    const session = state.history[0];
-    if (!session) return;
-    if (els.lastSessionTitle) els.lastSessionTitle.textContent = session.title;
-    if (els.lastSessionMeta) els.lastSessionMeta.textContent = session.meta;
-    if (els.lastSessionMessages) els.lastSessionMessages.textContent = String(session.messages || 0);
-    if (els.lastSessionWords) els.lastSessionWords.textContent = String(session.words || 0);
-    if (els.lastSessionErrors) els.lastSessionErrors.textContent = String(session.errors || 0);
-  }
-
-  function pushHistory(entry) {
-    state.history.unshift(entry);
-    state.history = state.history.slice(0, 20);
-    updateLastSessionCard();
-    saveState();
-  }
-
-  function renderHistory() {
-    if (!els.historyList) return;
-    if (!state.history.length) {
-      els.historyList.innerHTML = '<div class="ai-note">Пока нет сохранённых сессий.</div>';
-      return;
-    }
-
-    els.historyList.innerHTML = state.history
-      .map((item, index) => {
-        return [
-          '<button class="ai-history-item" type="button" data-history-index="' + index + '">',
-          '  <span class="ai-history-item__mode">' + escapeHtml(item.modeLabel) + '</span>',
-          '  <strong class="ai-history-item__title">' + escapeHtml(item.title) + '</strong>',
-          '  <span class="ai-history-item__meta">' + escapeHtml(item.meta) + '</span>',
-          '</button>'
-        ].join('');
-      })
-      .join('');
-  }
-
-  function attachHistoryClicks() {
-    if (!els.historyList) return;
-    els.historyList.addEventListener('click', (event) => {
-      const item = event.target.closest('[data-history-index]');
-      if (!item) return;
-      const session = state.history[Number(item.dataset.historyIndex)];
-      if (!session) return;
-      closeHistory();
-      if (session.targetMode) setMode(session.targetMode);
-      if (session.targetMode === 'check' && session.payload?.corrected) {
-        renderCheckResult(session.payload);
-      }
-      if (session.targetMode === 'dialog' && session.payload?.messages) {
-        state.dialog.messages = session.payload.messages;
-        renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-      }
-      if (session.targetMode === 'tutor' && session.payload?.messages) {
-        state.tutor.messages = session.payload.messages;
-        renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
-      }
-      if (session.targetMode === 'vocabulary' && session.payload?.words) {
-        state.vocabulary.words = session.payload.words;
-        state.vocabulary.test = session.payload.test || null;
-        renderVocabulary();
-      }
-    });
-  }
-
-  function parseResponsePayload(payload) {
-    if (!payload) return null;
-    if (typeof payload === 'string') return payload;
-    if (typeof payload.reply === 'string') return payload.reply;
-    if (typeof payload.message === 'string') return payload.message;
-    if (typeof payload.text === 'string') return payload.text;
-    if (typeof payload.response === 'string') return payload.response;
-    if (typeof payload.result === 'string') return payload.result;
-    if (payload.data) return parseResponsePayload(payload.data);
-    if (Array.isArray(payload.choices) && payload.choices[0]?.message?.content) return payload.choices[0].message.content;
-    return null;
-  }
-
-  async function request(url, options) {
-    if (typeof authFetch === 'function') {
-      const out = await authFetch(url, options);
-      if (!out) return null;
-      if (out.data !== undefined) return out.data;
-      if (typeof out.json === 'function') return out.json();
-      return out;
-    }
-
-    const res = await fetch(url, Object.assign({ credentials: 'include' }, options || {}));
-    return res.json();
-  }
-
-  async function aiChat(promptPayload) {
-    const body = JSON.stringify(promptPayload);
-    const data = await request('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body
-    });
-    return parseResponsePayload(data) || '';
-  }
-
-  function extractJson(text) {
-    if (!text) return null;
-    const cleaned = text.replace(/^```json\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-    try {
-      return JSON.parse(cleaned);
-    } catch (error) {}
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (!match) return null;
-    try {
-      return JSON.parse(match[0]);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  function wordCount(text) {
-    return String(text || '').trim().split(/\s+/).filter(Boolean).length;
-  }
-
-  function setButtonLoading(button, loading, label) {
-    if (!button) return;
-    if (loading) {
-      button.dataset.initialLabel = button.textContent;
-      button.disabled = true;
-      button.textContent = label || 'Загрузка...';
-    } else {
-      button.disabled = false;
-      if (button.dataset.initialLabel) button.textContent = button.dataset.initialLabel;
-    }
-  }
-
-  function renderCheckResult(result) {
-    if (!els.checkResult) return;
-    els.checkResult.hidden = false;
-    if (els.checkCorrected) els.checkCorrected.textContent = result.corrected || '—';
-    if (els.checkRule) els.checkRule.textContent = result.rule || '—';
-    if (els.checkTask) els.checkTask.textContent = result.task || '—';
-    if (els.checkErrorsList) {
-      const errors = Array.isArray(result.errors) && result.errors.length ? result.errors : ['Ошибки не найдены.'];
-      els.checkErrorsList.innerHTML = errors.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
-    }
-    if (els.checkExamples) {
-      const examples = Array.isArray(result.examples) && result.examples.length ? result.examples : ['Дополнительные примеры не получены.'];
-      els.checkExamples.innerHTML = examples.map((item) => '<div class="ai-example">' + escapeHtml(item) + '</div>').join('');
-    }
-  }
-
-  function fallbackCheckResult(text) {
-    return {
-      corrected: text,
-      errors: ['ИИ вернул общий ответ. Проверь формулировку и попробуй ещё раз.'],
-      rule: 'Структурированный ответ не получен, поэтому показываем общий результат.',
-      examples: ['Мен кеше дүкенге бардым.', 'Мен бүгін сабақ оқып отырмын.', 'Мен ертең досыммен кездесемін.'],
-      task: 'Сделай ещё одно предложение на ту же тему.'
+    const STORAGE_KEYS = {
+        history: "anatil_ai_history",
+        stats: "anatil_ai_stats",
+        credits: "anatil_ai_credits"
     };
-  }
 
-  async function handleCheck(customInstruction) {
-    const text = (els.checkInput?.value || '').trim();
-    if (!text) {
-      alert('Напиши предложение для проверки');
-      return;
-    }
-
-    setButtonLoading(els.checkSentenceBtn, true, 'Проверяем...');
-
-    try {
-      const level = getActiveChipValue('checkLevel') || 'A1';
-      const explainMode = getActiveChipValue('checkExplain') || 'simple';
-      const modifier = customInstruction ? ' Дополнительная команда: ' + customInstruction + '.' : '';
-      const prompt = [
-        'Ты — преподаватель казахского языка для русскоязычного ученика.',
-        'Проверь предложение и ответь только JSON-объектом со следующими ключами:',
-        'corrected (string), errors (array of strings), rule (string), examples (array of 3 strings), task (string).',
-        'Уровень ученика: ' + level + '.',
-        'Стиль объяснения: ' + explainMode + '.',
-        'Предложение: ' + text + '.',
-        modifier
-      ].join(' ');
-
-      const raw = await aiChat({
-        mode: 'sentence_check',
-        message: text,
-        prompt,
-        meta: { level, explainMode }
-      });
-
-      const parsed = extractJson(raw);
-      const result = parsed || fallbackCheckResult(raw || text);
-      state.check.lastInput = text;
-      state.check.lastResult = result;
-      renderCheckResult(result);
-      state.sessionStats.errors += Array.isArray(result.errors) ? result.errors.length : 0;
-      state.sessionStats.minutes += 2;
-      state.achievements.checks += 1;
-      if (Array.isArray(result.errors) && result.errors[0]) {
-        state.focusTopic = result.errors[0].split(':')[0].slice(0, 60) || state.focusTopic;
-      }
-      increaseUsage(1);
-      updateStatsView();
-      pushHistory({
-        modeLabel: 'Проверка предложения',
-        title: 'Проверка: ' + text.slice(0, 32),
-        meta: formatMeta('Сейчас', 1, 0, Array.isArray(result.errors) ? result.errors.length : 0),
-        messages: 1,
-        words: wordCount(text),
-        errors: Array.isArray(result.errors) ? result.errors.length : 0,
-        targetMode: 'check',
-        payload: result
-      });
-    } catch (error) {
-      console.error(error);
-      const fallback = fallbackCheckResult('Не удалось получить ответ от ИИ. Попробуй ещё раз.');
-      renderCheckResult(fallback);
-    } finally {
-      setButtonLoading(els.checkSentenceBtn, false);
-      saveState();
-    }
-  }
-
-  function appendMessage(list, role, text, meta, authorLabel) {
-    const message = { role, text, meta: meta || '' };
-    list.push(message);
-    return message;
-  }
-
-  function renderChat(container, messages, aiAuthor) {
-    if (!container) return;
-    container.innerHTML = messages
-      .map((message) => {
-        const isUser = message.role === 'user';
-        return [
-          '<div class="ai-bubble ' + (isUser ? 'ai-bubble--user' : 'ai-bubble--ai') + '">',
-          '  <span class="ai-bubble__author">' + (isUser ? 'Вы' : aiAuthor) + '</span>',
-          '  <p class="ai-bubble__text">' + escapeHtml(message.text) + '</p>',
-          message.meta ? '  <span class="ai-bubble__meta">' + escapeHtml(message.meta) + '</span>' : '',
-          '</div>'
-        ].join('');
-      })
-      .join('');
-    container.scrollTop = container.scrollHeight;
-  }
-
-  function buildDialogIntro() {
-    const scenario = getActiveChipValue('dialogScenario') || 'Кафе';
-    const level = getActiveChipValue('dialogLevel') || 'A1';
-    const tone = getActiveChipValue('dialogTone') || 'дружелюбно';
-    return { scenario, level, tone };
-  }
-
-  async function startDialog() {
-    setMode('dialog');
-    const setup = buildDialogIntro();
-    setButtonLoading(els.startDialogBtn, true, 'Запускаем...');
-
-    try {
-      const prompt = [
-        'Ты — ИИ для языковой практики казахского языка.',
-        'Начни короткий диалог на тему "' + setup.scenario + '".',
-        'Уровень ученика: ' + setup.level + '.',
-        'Тональность: ' + setup.tone + '.',
-        'Ответь 1 сообщением на казахском и в конце дай короткую русскую подсказку в формате: Ошибки: 0 • Правильно: ...'
-      ].join(' ');
-      const raw = await aiChat({ mode: 'dialog_start', prompt, meta: setup, message: 'Начать диалог' });
-      const first = raw || 'Сәлеметсіз бе! Бүгін не қалайсыз?';
-      state.dialog.started = true;
-      state.dialog.messages = [];
-      appendMessage(state.dialog.messages, 'assistant', first, 'Сценарий: ' + setup.scenario + ' • Уровень: ' + setup.level);
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-      increaseUsage(1);
-    } catch (error) {
-      console.error(error);
-      state.dialog.started = true;
-      state.dialog.messages = [];
-      appendMessage(state.dialog.messages, 'assistant', 'Сәлеметсіз бе! Бүгін не ішесіз?', 'Сценарий: ' + setup.scenario + ' • Уровень: ' + setup.level);
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-    } finally {
-      setButtonLoading(els.startDialogBtn, false);
-      saveState();
-    }
-  }
-
-  async function sendDialogMessage(withHint) {
-    if (!state.dialog.started) await startDialog();
-    const text = withHint ? 'Подскажи, что можно ответить в этой ситуации.' : (els.dialogInput?.value || '').trim();
-    if (!text) return;
-
-    if (!withHint) {
-      appendMessage(state.dialog.messages, 'user', text);
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-      els.dialogInput.value = '';
-    }
-
-    setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
-    if (els.showHintBtn) els.showHintBtn.disabled = true;
-
-    try {
-      const setup = buildDialogIntro();
-      const prompt = [
-        'Ты продолжаешь диалог по-казахски.',
-        'Сценарий: ' + setup.scenario + '.',
-        'Уровень: ' + setup.level + '.',
-        'Тональность: ' + setup.tone + '.',
-        'Если пользователь просит подсказку, дай короткий пример ответа и одно объяснение по-русски.',
-        'Если пользователь отвечает сам, продолжи разговор и в конце допиши: Ошибки: ... / Правильно: ...'
-      ].join(' ');
-      const raw = await aiChat({ mode: 'dialog', prompt, message: text, history: state.dialog.messages.slice(-6), meta: setup });
-      const reply = raw || 'Жақсы, тапсырысыңыз дайын болады.';
-      appendMessage(state.dialog.messages, 'assistant', reply);
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-      state.sessionStats.minutes += 2;
-      if (!withHint) state.achievements.dialogs += 1;
-      increaseUsage(1);
-      updateStatsView();
-      pushHistory({
-        modeLabel: 'Диалог',
-        title: 'Диалог: ' + setup.scenario,
-        meta: formatMeta('Сейчас', state.dialog.messages.length, 0, 0),
-        messages: state.dialog.messages.length,
-        words: wordCount(text),
-        errors: 0,
-        targetMode: 'dialog',
-        payload: { messages: state.dialog.messages.slice(-8) }
-      });
-    } catch (error) {
-      console.error(error);
-      appendMessage(state.dialog.messages, 'assistant', 'Кешіріңіз, жауап уақытша недоступен. Попробуй ещё раз.');
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-    } finally {
-      setButtonLoading(els.sendDialogBtn, false);
-      if (els.showHintBtn) els.showHintBtn.disabled = false;
-      saveState();
-    }
-  }
-
-  async function sendTutorMessage() {
-    const text = (els.tutorInput?.value || '').trim();
-    if (!text) return;
-
-    appendMessage(state.tutor.messages, 'user', text);
-    renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
-    els.tutorInput.value = '';
-    setButtonLoading(els.sendTutorBtn, true, 'Отвечаем...');
-
-    try {
-      const context = state.currentLesson ? state.currentLesson.title : 'Текущий урок';
-      const prompt = [
-        'Ты — строгий, но дружелюбный преподаватель казахского языка.',
-        'Контекст урока: ' + context + '.',
-        'Отвечай кратко, структурированно и по делу. Не уходи в общую болтовню.',
-        'Если уместно, дай 1 короткий пример на казахском и 1 короткое правило по-русски.'
-      ].join(' ');
-      const raw = await aiChat({ mode: 'lesson_tutor', prompt, message: text, context: { lesson: context }, history: state.tutor.messages.slice(-6) });
-      const reply = raw || 'Келер шақ показывает действие в будущем. Сначала смотри на основу глагола, затем на личное окончание.';
-      appendMessage(state.tutor.messages, 'assistant', reply);
-      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
-      state.sessionStats.minutes += 2;
-      increaseUsage(1);
-      updateStatsView();
-      pushHistory({
-        modeLabel: 'Репетитор',
-        title: 'Репетитор: ' + context,
-        meta: formatMeta('Сейчас', state.tutor.messages.length, 0, 0),
-        messages: state.tutor.messages.length,
-        words: wordCount(text),
-        errors: 0,
-        targetMode: 'tutor',
-        payload: { messages: state.tutor.messages.slice(-8) }
-      });
-    } catch (error) {
-      console.error(error);
-      appendMessage(state.tutor.messages, 'assistant', 'Не удалось получить объяснение. Попробуй переформулировать вопрос.');
-      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
-    } finally {
-      setButtonLoading(els.sendTutorBtn, false);
-      saveState();
-    }
-  }
-
-  function fallbackWords(theme, count) {
-    const base = {
-      'Еда': [
-        ['тағам', 'еда', 'Маған ыстық тағам керек.'],
-        ['тапсырыс', 'заказ', 'Мен тапсырыс бердім.'],
-        ['баға', 'цена', 'Бұл тағамның бағасы қымбат емес.'],
-        ['асхана', 'столовая', 'Біз асханаға барамыз.']
-      ],
-      'Работа': [
-        ['жұмыс', 'работа', 'Мен жаңа жұмыс іздеп жүрмін.'],
-        ['кеңсе', 'офис', 'Ол кеңседе істейді.'],
-        ['кездесу', 'встреча', 'Бүгін маңызды кездесу бар.'],
-        ['жоба', 'проект', 'Бұл жоба ертең бітеді.']
-      ],
-      'Учёба': [
-        ['сабақ', 'урок', 'Бүгін қазақ тілі сабағы бар.'],
-        ['мұғалім', 'учитель', 'Мұғалім ережені түсіндірді.'],
-        ['дәптер', 'тетрадь', 'Мен дәптерге жаздым.'],
-        ['емтихан', 'экзамен', 'Ертең емтихан тапсырамыз.']
-      ],
-      'Путешествия': [
-        ['сапар', 'поездка', 'Біз ұзақ сапарға шықтық.'],
-        ['әуежай', 'аэропорт', 'Әуежайға ерте келдік.'],
-        ['билет', 'билет', 'Мен билет сатып алдым.'],
-        ['қонақүй', 'отель', 'Қонақүй қала орталығында.']
-      ]
+    const state = {
+        user: null,
+        currentMode: "sentence",
+        currentLesson: null,
+        selectedScenario: "Кафе",
+        selectedLevel: "A1",
+        selectedTone: "Дружелюбно",
+        credits: 120,
+        dailyLimit: 50,
+        usedToday: 12,
+        sessionStats: {
+            minutes: 14,
+            mistakesFixed: 0,
+            newWords: 0
+        },
+        history: [],
+        pending: false
     };
-    const source = base[theme] || base['Еда'];
-    const words = [];
-    for (let i = 0; i < count; i += 1) {
-      const item = source[i % source.length];
-      words.push({ word: item[0], translation: item[1], example: item[2], topic: theme });
-    }
-    return words;
-  }
 
-  function renderVocabulary() {
-    if (els.vocabularyWords) {
-      els.vocabularyWords.innerHTML = state.vocabulary.words
-        .map((item) => {
-          return [
-            '<article class="ai-word">',
-            '  <div class="ai-word__top">',
-            '    <strong class="ai-word__main">' + escapeHtml(item.word) + '</strong>',
-            '    <span class="ai-tag">' + escapeHtml(item.topic || '') + '</span>',
-            '  </div>',
-            '  <p class="ai-word__translate">' + escapeHtml(item.translation) + '</p>',
-            '  <p class="ai-word__example">' + escapeHtml(item.example) + '</p>',
-            '</article>'
-          ].join('');
-        })
-        .join('');
-    }
+    const els = {
+        adminBtn: document.getElementById("adminBtn"),
 
-    if (els.vocabularyTest && els.vocabularyQuestion && els.vocabularyOptions) {
-      const test = state.vocabulary.test;
-      if (!test) {
-        els.vocabularyTest.hidden = true;
-        return;
-      }
-      els.vocabularyTest.hidden = false;
-      els.vocabularyQuestion.innerHTML = 'Как переводится слово <strong>' + escapeHtml(test.word) + '</strong>?';
-      els.vocabularyOptions.innerHTML = test.options
-        .map((item) => '<button class="ai-option" type="button" data-test-answer="' + escapeHtml(item) + '">' + escapeHtml(item) + '</button>')
-        .join('');
-    }
-  }
+        limitText: document.getElementById("aiLimitText"),
+        creditsText: document.getElementById("aiCreditsText"),
+        historyBtn: document.getElementById("aiHistoryBtn"),
+        historyDrawer: document.getElementById("aiHistoryDrawer"),
+        historyClose: document.getElementById("aiHistoryClose"),
+        historyList: document.getElementById("aiHistoryList"),
 
-  async function generateWords() {
-    const theme = getActiveChipValue('vocabularyTheme') || 'Еда';
-    const count = Number(getActiveChipValue('vocabularyCount') || 10);
-    setButtonLoading(els.generateWordsBtn, true, 'Генерируем...');
+        modeCards: document.querySelectorAll("[data-ai-mode]"),
+        modePanels: document.querySelectorAll("[data-ai-panel]"),
 
-    try {
-      const prompt = [
-        'Ты создаёшь словарь для изучения казахского языка.',
-        'Тема: ' + theme + '.',
-        'Количество слов: ' + count + '.',
-        'Ответь JSON-объектом с ключами words и test.',
-        'words — массив объектов {word, translation, example, topic}.',
-        'test — объект {word, options}. options — 3 варианта, один правильный.'
-      ].join(' ');
-      const raw = await aiChat({ mode: 'vocabulary', prompt, message: theme, meta: { count } });
-      const parsed = extractJson(raw);
-      if (parsed?.words?.length) {
-        state.vocabulary.words = parsed.words;
-        state.vocabulary.test = parsed.test || null;
-      } else {
-        state.vocabulary.words = fallbackWords(theme, count);
-        state.vocabulary.test = {
-          word: state.vocabulary.words[0].word,
-          options: [state.vocabulary.words[0].translation, 'машина', 'кітап']
-        };
-      }
-      renderVocabulary();
-      state.sessionStats.words += Math.min(count, state.vocabulary.words.length);
-      state.sessionStats.minutes += 2;
-      increaseUsage(1);
-      updateStatsView();
-      pushHistory({
-        modeLabel: 'Словарь',
-        title: 'Слова: ' + theme,
-        meta: formatMeta('Сейчас', 1, state.vocabulary.words.length, 0),
-        messages: 1,
-        words: state.vocabulary.words.length,
-        errors: 0,
-        targetMode: 'vocabulary',
-        payload: { words: state.vocabulary.words, test: state.vocabulary.test }
-      });
-    } catch (error) {
-      console.error(error);
-      state.vocabulary.words = fallbackWords(theme, count);
-      state.vocabulary.test = {
-        word: state.vocabulary.words[0].word,
-        options: [state.vocabulary.words[0].translation, 'машина', 'кітап']
-      };
-      renderVocabulary();
-    } finally {
-      setButtonLoading(els.generateWordsBtn, false);
-      saveState();
-    }
-  }
+        sentenceInput: document.getElementById("sentenceInput"),
+        sentenceCheckBtn: document.getElementById("sentenceCheckBtn"),
+        sentenceResult: document.getElementById("sentenceResult"),
+        sentenceHarderBtn: document.getElementById("sentenceHarderBtn"),
+        sentenceEasierBtn: document.getElementById("sentenceEasierBtn"),
+        sentenceExamplesBtn: document.getElementById("sentenceExamplesBtn"),
+        sentenceLevel: document.getElementById("sentenceLevel"),
+        sentenceExplain: document.getElementById("sentenceExplain"),
 
-  function formatMeta(prefix, messages, words, errors) {
-    return prefix + ' • ' + messages + ' сообщ. • ' + words + ' слов • ' + errors + ' ошибок';
-  }
+        dialogScenarioChips: document.querySelectorAll("[data-scenario]"),
+        dialogLevelChips: document.querySelectorAll("[data-dialog-level]"),
+        dialogToneChips: document.querySelectorAll("[data-dialog-tone]"),
+        dialogStartBtn: document.getElementById("dialogStartBtn"),
+        dialogHintBtn: document.getElementById("dialogHintBtn"),
+        dialogMessages: document.getElementById("dialogMessages"),
+        dialogInput: document.getElementById("dialogInput"),
+        dialogSendBtn: document.getElementById("dialogSendBtn"),
+        dialogMiniReview: document.getElementById("dialogMiniReview"),
 
-  async function hydrateUserData() {
-    try {
-      const me = await request('/api/auth/me', { method: 'GET', headers: {} });
-      const user = me?.user || me?.data?.user || (me?.success ? me.user : null);
-      if (user) {
-        state.user = user;
-        if (user.role === 'admin' && els.adminBtn) els.adminBtn.style.display = 'inline-block';
-      }
-    } catch (error) {
-      console.error(error);
-    }
+        tutorCurrentLessonBtn: document.getElementById("tutorCurrentLessonBtn"),
+        tutorLessonSelect: document.getElementById("tutorLessonSelect"),
+        tutorContextBadge: document.getElementById("tutorContextBadge"),
+        tutorMessages: document.getElementById("tutorMessages"),
+        tutorInput: document.getElementById("tutorInput"),
+        tutorSendBtn: document.getElementById("tutorSendBtn"),
 
-    try {
-      const progress = await request('/api/lessons/progress/current', { method: 'GET', headers: {} });
-      const data = progress?.data || progress;
-      if (data?.success && data.course) {
-        state.currentLesson = {
-          title: data.nextLesson?.title || data.lastLesson?.title || data.course.title,
-          courseTitle: data.course.title,
-          percent: Number(data.percent || 0)
-        };
-        if (els.currentLessonTitle) els.currentLessonTitle.textContent = state.currentLesson.title;
-        if (els.tutorContextTag) els.tutorContextTag.textContent = 'Контекст: ' + state.currentLesson.title;
-        if (els.summaryTitle) els.summaryTitle.textContent = 'Практика по курсу — ' + data.course.title;
-        if (els.summaryText) {
-          els.summaryText.textContent = data.nextLesson
-            ? 'Следующий урок: ' + data.nextLesson.title + '. Повтори тему с репетитором или начни диалог по теме курса.'
-            : 'Ты завершил почти весь курс. Закрепи тему с ИИ перед итоговым заданием.';
-        }
-        if (els.summaryProgressBar) els.summaryProgressBar.style.width = Math.max(0, Math.min(100, Number(data.percent || 0))) + '%';
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
+        vocabTopicInput: document.getElementById("vocabTopicInput"),
+        vocabGenerateBtn: document.getElementById("vocabGenerateBtn"),
+        vocabResult: document.getElementById("vocabResult"),
 
-  function seedInitialContent() {
-    if (!state.history.length) {
-      state.dialog.messages = [
-        { role: 'assistant', text: 'Сәлеметсіз бе! Кафеге қош келдіңіз. Не ішесіз?', meta: 'Ошибки: 0 • Правильно: приветствие и вежливое обращение' },
-        { role: 'user', text: 'Маған бір кофе беріңізші.' }
-      ];
-      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
-      state.tutor.messages = [
-        { role: 'assistant', text: 'Келер шақ показывает действие, которое произойдёт в будущем. Хочешь, объясню простую схему или сразу разберём пример?' }
-      ];
-      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
-      state.vocabulary.words = fallbackWords('Еда', 3);
-      state.vocabulary.test = { word: 'тағам', options: ['еда', 'школа', 'поезд'] };
-      renderVocabulary();
-    } else {
-      updateLastSessionCard();
-    }
-  }
+        statsMinutes: document.getElementById("aiStatsMinutes"),
+        statsMistakes: document.getElementById("aiStatsMistakes"),
+        statsWords: document.getElementById("aiStatsWords"),
 
-  function bindEvents() {
-    bindChipGroups();
+        sessionMode: document.getElementById("lastSessionMode"),
+        sessionTopic: document.getElementById("lastSessionTopic"),
+        sessionTime: document.getElementById("lastSessionTime")
+    };
 
-    els.modeButtons.forEach((button) => {
-      button.addEventListener('click', () => setMode(button.dataset.mode));
-    });
-
-    els.openModeButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        setMode(button.dataset.openMode);
-        document.querySelector('.ai-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-
-    if (els.openHistoryBtn) els.openHistoryBtn.addEventListener('click', openHistory);
-    if (els.openLastSessionBtn) els.openLastSessionBtn.addEventListener('click', openHistory);
-    if (els.closeHistoryBtn) els.closeHistoryBtn.addEventListener('click', closeHistory);
-    if (els.historyOverlay) els.historyOverlay.addEventListener('click', closeHistory);
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') closeHistory();
-    });
-
-    if (els.checkSentenceBtn) els.checkSentenceBtn.addEventListener('click', () => handleCheck(''));
-    if (els.copyCorrectedBtn) {
-      els.copyCorrectedBtn.addEventListener('click', async () => {
-        const text = els.checkCorrected?.textContent || '';
-        if (!text || text === '—') return;
+    function safeParse(value, fallback) {
         try {
-          await navigator.clipboard.writeText(text);
-          els.copyCorrectedBtn.textContent = 'Скопировано';
-          setTimeout(() => {
-            els.copyCorrectedBtn.textContent = 'Скопировать';
-          }, 1200);
-        } catch (error) {
-          console.error(error);
+            return JSON.parse(value);
+        } catch {
+            return fallback;
         }
-      });
     }
 
-    els.checkActionButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const action = button.dataset.checkAction;
-        const labelMap = {
-          harder: 'Сделай ответ чуть сложнее и дай новые примеры',
-          simpler: 'Сделай ответ проще и короче',
-          examples: 'Дай ещё 3 новых примера по этому же правилу'
+    function loadLocalState() {
+        state.history = safeParse(localStorage.getItem(STORAGE_KEYS.history), []);
+        const stats = safeParse(localStorage.getItem(STORAGE_KEYS.stats), null);
+        const credits = safeParse(localStorage.getItem(STORAGE_KEYS.credits), null);
+
+        if (stats && typeof stats === "object") {
+            state.sessionStats = {
+                minutes: Number(stats.minutes || 14),
+                mistakesFixed: Number(stats.mistakesFixed || 0),
+                newWords: Number(stats.newWords || 0)
+            };
+        }
+
+        if (credits && typeof credits === "object") {
+            state.credits = Number(credits.credits || 120);
+            state.usedToday = Number(credits.usedToday || 0);
+            state.dailyLimit = Number(credits.dailyLimit || 50);
+        }
+    }
+
+    function saveLocalState() {
+        localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history));
+        localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(state.sessionStats));
+        localStorage.setItem(
+            STORAGE_KEYS.credits,
+            JSON.stringify({
+                credits: state.credits,
+                usedToday: state.usedToday,
+                dailyLimit: state.dailyLimit
+            })
+        );
+    }
+
+    function renderTopInfo() {
+        if (els.limitText) {
+            els.limitText.textContent = `Сообщений сегодня: ${state.usedToday}/${state.dailyLimit}`;
+        }
+        if (els.creditsText) {
+            els.creditsText.textContent = `AI кредиты: ${state.credits}`;
+        }
+    }
+
+    function renderStats() {
+        if (els.statsMinutes) els.statsMinutes.textContent = `${state.sessionStats.minutes} минут`;
+        if (els.statsMistakes) els.statsMistakes.textContent = `${state.sessionStats.mistakesFixed}`;
+        if (els.statsWords) els.statsWords.textContent = `${state.sessionStats.newWords}`;
+    }
+
+    function renderLastSession() {
+        const last = state.history[0];
+        if (!last) return;
+
+        if (els.sessionMode) els.sessionMode.textContent = last.modeLabel || "—";
+        if (els.sessionTopic) els.sessionTopic.textContent = last.topic || "Без темы";
+        if (els.sessionTime) els.sessionTime.textContent = formatDateTime(last.createdAt);
+    }
+
+    function renderHistory() {
+        if (!els.historyList) return;
+
+        if (!state.history.length) {
+            els.historyList.innerHTML = `<div class="anatilui-history__empty">История пока пуста</div>`;
+            return;
+        }
+
+        els.historyList.innerHTML = state.history
+            .map(
+                (item, index) => `
+                <button class="anatilui-history__item" type="button" data-history-index="${index}">
+                    <div class="anatilui-history__meta">
+                        <span class="anatilui-history__mode">${escapeHtml(item.modeLabel || "AI Practice")}</span>
+                        <span class="anatilui-history__date">${escapeHtml(formatDateTime(item.createdAt))}</span>
+                    </div>
+                    <div class="anatilui-history__topic">${escapeHtml(item.topic || "Без темы")}</div>
+                </button>
+            `
+            )
+            .join("");
+
+        els.historyList.querySelectorAll("[data-history-index]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const idx = Number(btn.dataset.historyIndex);
+                const item = state.history[idx];
+                if (!item) return;
+
+                if (item.mode === "sentence" && els.sentenceResult) {
+                    switchMode("sentence");
+                    els.sentenceResult.innerHTML = item.html || "";
+                }
+
+                if (item.mode === "dialog" && els.dialogMessages) {
+                    switchMode("dialog");
+                    els.dialogMessages.innerHTML = item.html || "";
+                    if (els.dialogMiniReview) {
+                        els.dialogMiniReview.textContent = item.review || "";
+                    }
+                }
+
+                if (item.mode === "tutor" && els.tutorMessages) {
+                    switchMode("tutor");
+                    els.tutorMessages.innerHTML = item.html || "";
+                }
+
+                if (item.mode === "vocabulary" && els.vocabResult) {
+                    switchMode("vocabulary");
+                    els.vocabResult.innerHTML = item.html || "";
+                }
+
+                closeHistoryDrawer();
+            });
+        });
+    }
+
+    function openHistoryDrawer() {
+        if (!els.historyDrawer) return;
+        els.historyDrawer.classList.add("is-open");
+        els.historyDrawer.removeAttribute("hidden");
+    }
+
+    function closeHistoryDrawer() {
+        if (!els.historyDrawer) return;
+        els.historyDrawer.classList.remove("is-open");
+        els.historyDrawer.setAttribute("hidden", "hidden");
+    }
+
+    function switchMode(mode) {
+        state.currentMode = mode;
+
+        els.modeCards.forEach((card) => {
+            card.classList.toggle("is-active", card.dataset.aiMode === mode);
+        });
+
+        els.modePanels.forEach((panel) => {
+            panel.classList.toggle("is-active", panel.dataset.aiPanel === mode);
+            panel.hidden = panel.dataset.aiPanel !== mode;
+        });
+    }
+
+    function bindModeCards() {
+        els.modeCards.forEach((card) => {
+            card.addEventListener("click", () => {
+                const mode = card.dataset.aiMode;
+                if (!mode) return;
+                switchMode(mode);
+            });
+        });
+    }
+
+    function bindDialogChips() {
+        els.dialogScenarioChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                state.selectedScenario = chip.dataset.scenario || chip.textContent.trim();
+                els.dialogScenarioChips.forEach((x) => x.classList.remove("is-active"));
+                chip.classList.add("is-active");
+            });
+        });
+
+        els.dialogLevelChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                state.selectedLevel = chip.dataset.dialogLevel || chip.textContent.trim();
+                els.dialogLevelChips.forEach((x) => x.classList.remove("is-active"));
+                chip.classList.add("is-active");
+            });
+        });
+
+        els.dialogToneChips.forEach((chip) => {
+            chip.addEventListener("click", () => {
+                state.selectedTone = chip.dataset.dialogTone || chip.textContent.trim();
+                els.dialogToneChips.forEach((x) => x.classList.remove("is-active"));
+                chip.classList.add("is-active");
+            });
+        });
+    }
+
+    function addHistoryEntry(entry) {
+        state.history.unshift({
+            ...entry,
+            createdAt: new Date().toISOString()
+        });
+
+        state.history = state.history.slice(0, 20);
+        saveLocalState();
+        renderHistory();
+        renderLastSession();
+    }
+
+    function increaseUsage() {
+        state.usedToday += 1;
+        state.credits = Math.max(0, state.credits - 1);
+        saveLocalState();
+        renderTopInfo();
+    }
+
+    function updateStats(partial = {}) {
+        state.sessionStats.minutes = Number(partial.minutes ?? state.sessionStats.minutes);
+        state.sessionStats.mistakesFixed += Number(partial.mistakesFixed || 0);
+        state.sessionStats.newWords += Number(partial.newWords || 0);
+        saveLocalState();
+        renderStats();
+    }
+
+    function formatDateTime(value) {
+        if (!value) return "—";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "—";
+        return date.toLocaleString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
+
+    function escapeHtml(text) {
+        return String(text ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    async function request(url, options = {}) {
+        if (typeof authFetch === "function") {
+            try {
+                const out = await authFetch(url, options);
+                if (!out) return null;
+                if (out.data !== undefined) return out.data;
+                if (typeof out.json === "function") return await out.json();
+                return out;
+            } catch (e) {
+                console.error(e);
+                return null;
+            }
+        }
+
+        try {
+            const res = await fetch(url, {
+                credentials: "include",
+                ...options
+            });
+            return await res.json();
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    async function loadUser() {
+        const data = await request("/api/auth/me", { method: "GET" });
+        if (!data?.success || !data.user) return;
+
+        state.user = data.user;
+
+        if (state.user.role === "admin" && els.adminBtn) {
+            els.adminBtn.style.display = "inline-block";
+        }
+    }
+
+    async function loadCurrentLessonContext() {
+        const data = await request("/api/lessons/progress/current", { method: "GET" });
+        if (!data?.success) return;
+
+        const lesson = data.nextLesson || data.lastLesson || null;
+        const course = data.course || null;
+
+        if (lesson) {
+            state.currentLesson = {
+                id: lesson.id,
+                title: lesson.title,
+                courseTitle: course?.title || "",
+                slug: course?.slug || ""
+            };
+        }
+
+        if (els.tutorContextBadge && state.currentLesson) {
+            els.tutorContextBadge.textContent = `Контекст: ${state.currentLesson.title}`;
+        }
+
+        if (els.tutorLessonSelect && state.currentLesson) {
+            els.tutorLessonSelect.innerHTML = `
+                <option value="${state.currentLesson.id}">
+                    ${escapeHtml(state.currentLesson.title)}
+                </option>
+            `;
+        }
+    }
+
+    function parseResponsePayload(data) {
+        const fallback = {
+            text: "Ответ получен.",
+            corrected: "",
+            mistakes: [],
+            rule: "",
+            examples: [],
+            exercise: "",
+            review: "",
+            words: []
         };
-        handleCheck(labelMap[action] || '');
-      });
-    });
 
-    if (els.startDialogBtn) els.startDialogBtn.addEventListener('click', startDialog);
-    if (els.sendDialogBtn) els.sendDialogBtn.addEventListener('click', () => sendDialogMessage(false));
-    if (els.showHintBtn) els.showHintBtn.addEventListener('click', () => sendDialogMessage(true));
-    if (els.dialogInput) {
-      els.dialogInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-          sendDialogMessage(false);
+        if (!data) return fallback;
+
+        if (typeof data === "string") {
+            const json = extractJson(data);
+            if (json) return { ...fallback, ...json, text: json.text || json.reply || fallback.text };
+            return { ...fallback, text: data };
         }
-      });
-    }
 
-    if (els.sendTutorBtn) els.sendTutorBtn.addEventListener('click', sendTutorMessage);
-    if (els.tutorInput) {
-      els.tutorInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && !event.shiftKey) {
-          event.preventDefault();
-          sendTutorMessage();
+        if (typeof data === "object") {
+            const candidate =
+                data.result ||
+                data.response ||
+                data.message ||
+                data.reply ||
+                data.content ||
+                data.answer ||
+                data.data ||
+                data;
+
+            if (typeof candidate === "string") {
+                const json = extractJson(candidate);
+                if (json) return { ...fallback, ...json, text: json.text || json.reply || fallback.text };
+                return { ...fallback, text: candidate };
+            }
+
+            if (typeof candidate === "object" && candidate) {
+                return {
+                    ...fallback,
+                    ...candidate,
+                    text:
+                        candidate.text ||
+                        candidate.reply ||
+                        candidate.message ||
+                        candidate.content ||
+                        fallback.text
+                };
+            }
         }
-      });
+
+        return fallback;
     }
 
-    if (els.useCurrentLessonBtn) {
-      els.useCurrentLessonBtn.addEventListener('click', () => {
-        setMode('tutor');
-        document.querySelector('.ai-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
+    function extractJson(text) {
+        if (typeof text !== "string") return null;
 
-    if (els.generateWordsBtn) els.generateWordsBtn.addEventListener('click', generateWords);
-    if (els.vocabularyOptions) {
-      els.vocabularyOptions.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-test-answer]');
-        if (!button || !state.vocabulary.test) return;
-        const answer = button.getAttribute('data-test-answer');
-        const correct = state.vocabulary.test.options[0];
-        alert(answer === correct ? 'Верно ✅' : 'Неверно. Правильный ответ: ' + correct);
-      });
-    }
+        try {
+            return JSON.parse(text);
+        } catch {}
 
-    if (els.practiceMistakeBtn) {
-      els.practiceMistakeBtn.addEventListener('click', () => {
-        setMode('check');
-        if (els.checkInput) {
-          els.checkInput.value = 'Сделай упражнение на тему: ' + state.focusTopic;
-          els.checkInput.focus();
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) return null;
+
+        try {
+            return JSON.parse(match[0]);
+        } catch {
+            return null;
         }
-      });
     }
 
-    attachHistoryClicks();
-  }
+    async function aiChat(payload) {
+        if (state.pending) return null;
+        if (state.usedToday >= state.dailyLimit || state.credits <= 0) {
+            return {
+                text: "Лимит AI на сегодня исчерпан."
+            };
+        }
 
-  loadState();
-  setUsage(state.usage.used, state.usage.total);
-  updateStatsView();
-  updateLastSessionCard();
-  seedInitialContent();
-  bindEvents();
-  hydrateUserData();
+        state.pending = true;
+
+        const data = await request("/api/ai/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        state.pending = false;
+        increaseUsage();
+        return parseResponsePayload(data);
+    }
+
+    function renderSentenceResult(result) {
+        if (!els.sentenceResult) return;
+
+        const corrected = result.corrected || result.text || "—";
+        const mistakes = Array.isArray(result.mistakes) ? result.mistakes : [];
+        const examples = Array.isArray(result.examples) ? result.examples : [];
+
+        els.sentenceResult.innerHTML = `
+            <div class="anatilui-result-card">
+                <div class="anatilui-result-block">
+                    <div class="anatilui-result-label">Исправленный вариант</div>
+                    <div class="anatilui-result-value">${escapeHtml(corrected)}</div>
+                </div>
+
+                <div class="anatilui-result-block">
+                    <div class="anatilui-result-label">Ошибки</div>
+                    ${
+            mistakes.length
+                ? `<ul class="anatilui-result-list">${mistakes
+                    .map((item) => `<li>${escapeHtml(typeof item === "string" ? item : item.text || item.error || "")}</li>`)
+                    .join("")}</ul>`
+                : `<div class="anatilui-result-value">Ошибок почти нет</div>`
+        }
+                </div>
+
+                <div class="anatilui-result-block">
+                    <div class="anatilui-result-label">Правило</div>
+                    <div class="anatilui-result-value">${escapeHtml(result.rule || "Короткое объяснение отсутствует")}</div>
+                </div>
+
+                <div class="anatilui-result-block">
+                    <div class="anatilui-result-label">Примеры</div>
+                    ${
+            examples.length
+                ? `<ul class="anatilui-result-list">${examples
+                    .map((item) => `<li>${escapeHtml(item)}</li>`)
+                    .join("")}</ul>`
+                : `<div class="anatilui-result-value">Примеры не добавлены</div>`
+        }
+                </div>
+
+                <div class="anatilui-result-block">
+                    <div class="anatilui-result-label">Мини-задание</div>
+                    <div class="anatilui-result-value">${escapeHtml(result.exercise || "Перефразируй это в прошедшем времени")}</div>
+                </div>
+            </div>
+        `;
+
+        addHistoryEntry({
+            mode: "sentence",
+            modeLabel: "Проверка предложения",
+            topic: "Исправление фразы",
+            html: els.sentenceResult.innerHTML
+        });
+    }
+
+    async function handleSentenceCheck(extraInstruction = "") {
+        const text = els.sentenceInput?.value?.trim();
+        if (!text) return;
+
+        const level = els.sentenceLevel?.value || state.selectedLevel;
+        const explain = els.sentenceExplain?.value || "simple";
+
+        const response = await aiChat({
+            mode: "sentence_check",
+            text,
+            level,
+            explain,
+            instruction: extraInstruction
+        });
+
+        if (!response) return;
+
+        renderSentenceResult(response);
+
+        const mistakesCount = Array.isArray(response.mistakes) ? response.mistakes.length : 1;
+        updateStats({ mistakesFixed: mistakesCount });
+    }
+
+    function appendMessage(container, role, text) {
+        if (!container) return;
+
+        const item = document.createElement("div");
+        item.className = `anatilui-chat__message anatilui-chat__message--${role}`;
+        item.innerHTML = `<div class="anatilui-chat__bubble">${escapeHtml(text)}</div>`;
+        container.appendChild(item);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function startDialog() {
+        if (!els.dialogMessages) return;
+
+        els.dialogMessages.innerHTML = "";
+
+        const prompt = `Начни диалог на казахском. Сценарий: ${state.selectedScenario}. Уровень: ${state.selectedLevel}. Тональность: ${state.selectedTone}. Начни с одной короткой реплики и будь как преподаватель.`;
+
+        const response = await aiChat({
+            mode: "dialog_start",
+            scenario: state.selectedScenario,
+            level: state.selectedLevel,
+            tone: state.selectedTone,
+            prompt
+        });
+
+        const text = response?.text || `Сәлем! Бүгін біз "${state.selectedScenario}" тақырыбында сөйлесеміз.`;
+        appendMessage(els.dialogMessages, "ai", text);
+
+        addHistoryEntry({
+            mode: "dialog",
+            modeLabel: "Диалог",
+            topic: state.selectedScenario,
+            html: els.dialogMessages.innerHTML,
+            review: ""
+        });
+    }
+
+    async function sendDialogMessage() {
+        const text = els.dialogInput?.value?.trim();
+        if (!text || !els.dialogMessages) return;
+
+        appendMessage(els.dialogMessages, "user", text);
+        els.dialogInput.value = "";
+
+        const response = await aiChat({
+            mode: "dialog",
+            scenario: state.selectedScenario,
+            level: state.selectedLevel,
+            tone: state.selectedTone,
+            text
+        });
+
+        const aiText = response?.text || "Жақсы жауап. Жалғастырайық.";
+        appendMessage(els.dialogMessages, "ai", aiText);
+
+        const reviewText =
+            response?.review ||
+            response?.feedback ||
+            "Ошибки: 1–2. В целом ответ понятный.";
+        if (els.dialogMiniReview) {
+            els.dialogMiniReview.textContent = reviewText;
+        }
+
+        updateStats({ mistakesFixed: 1 });
+
+        addHistoryEntry({
+            mode: "dialog",
+            modeLabel: "Диалог",
+            topic: state.selectedScenario,
+            html: els.dialogMessages.innerHTML,
+            review: reviewText
+        });
+    }
+
+    async function showDialogHint() {
+        if (!els.dialogMiniReview) return;
+
+        const response = await aiChat({
+            mode: "dialog_hint",
+            scenario: state.selectedScenario,
+            level: state.selectedLevel,
+            tone: state.selectedTone,
+            text: "Дай короткую подсказку для ответа"
+        });
+
+        els.dialogMiniReview.textContent =
+            response?.text || "Подсказка: начни с короткой простой фразы.";
+    }
+
+    async function sendTutorMessage() {
+        const text = els.tutorInput?.value?.trim();
+        if (!text || !els.tutorMessages) return;
+
+        appendMessage(els.tutorMessages, "user", text);
+        els.tutorInput.value = "";
+
+        const lessonId = els.tutorLessonSelect?.value || state.currentLesson?.id || null;
+        const contextLabel = state.currentLesson?.title || "Текущий урок";
+
+        const response = await aiChat({
+            mode: "lesson_tutor",
+            lessonId,
+            context: contextLabel,
+            text
+        });
+
+        const aiText =
+            response?.text ||
+            `Давайте разберём это как учитель. Контекст: ${contextLabel}.`;
+        appendMessage(els.tutorMessages, "ai", aiText);
+
+        addHistoryEntry({
+            mode: "tutor",
+            modeLabel: "Репетитор по уроку",
+            topic: contextLabel,
+            html: els.tutorMessages.innerHTML
+        });
+    }
+
+    async function generateVocabulary() {
+        const topic = els.vocabTopicInput?.value?.trim();
+        if (!topic || !els.vocabResult) return;
+
+        const response = await aiChat({
+            mode: "vocabulary",
+            topic
+        });
+
+        let words = response?.words;
+        if (!Array.isArray(words) || !words.length) {
+            words = [
+                { word: "сөз", translation: "слово" },
+                { word: "сөйлем", translation: "предложение" },
+                { word: "дүкен", translation: "магазин" },
+                { word: "оқу", translation: "учиться" },
+                { word: "сұрақ", translation: "вопрос" }
+            ];
+        }
+
+        els.vocabResult.innerHTML = `
+            <div class="anatilui-vocab__grid">
+                ${words
+            .map((item) => {
+                if (typeof item === "string") {
+                    return `
+                                <div class="anatilui-vocab__card">
+                                    <div class="anatilui-vocab__word">${escapeHtml(item)}</div>
+                                </div>
+                            `;
+                }
+
+                return `
+                            <div class="anatilui-vocab__card">
+                                <div class="anatilui-vocab__word">${escapeHtml(item.word || "")}</div>
+                                <div class="anatilui-vocab__translation">${escapeHtml(item.translation || "")}</div>
+                            </div>
+                        `;
+            })
+            .join("")}
+            </div>
+        `;
+
+        updateStats({ newWords: words.length });
+
+        addHistoryEntry({
+            mode: "vocabulary",
+            modeLabel: "Словарь",
+            topic,
+            html: els.vocabResult.innerHTML
+        });
+    }
+
+    function bindActions() {
+        if (els.historyBtn) {
+            els.historyBtn.addEventListener("click", openHistoryDrawer);
+        }
+
+        if (els.historyClose) {
+            els.historyClose.addEventListener("click", closeHistoryDrawer);
+        }
+
+        if (els.sentenceCheckBtn) {
+            els.sentenceCheckBtn.addEventListener("click", () => handleSentenceCheck(""));
+        }
+
+        if (els.sentenceHarderBtn) {
+            els.sentenceHarderBtn.addEventListener("click", () =>
+                handleSentenceCheck("Сделай объяснение сложнее и добавь более трудное мини-задание")
+            );
+        }
+
+        if (els.sentenceEasierBtn) {
+            els.sentenceEasierBtn.addEventListener("click", () =>
+                handleSentenceCheck("Сделай объяснение проще и короче")
+            );
+        }
+
+        if (els.sentenceExamplesBtn) {
+            els.sentenceExamplesBtn.addEventListener("click", () =>
+                handleSentenceCheck("Дай ещё 3 примера")
+            );
+        }
+
+        if (els.dialogStartBtn) {
+            els.dialogStartBtn.addEventListener("click", startDialog);
+        }
+
+        if (els.dialogSendBtn) {
+            els.dialogSendBtn.addEventListener("click", sendDialogMessage);
+        }
+
+        if (els.dialogInput) {
+            els.dialogInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendDialogMessage();
+                }
+            });
+        }
+
+        if (els.dialogHintBtn) {
+            els.dialogHintBtn.addEventListener("click", showDialogHint);
+        }
+
+        if (els.tutorCurrentLessonBtn) {
+            els.tutorCurrentLessonBtn.addEventListener("click", () => {
+                if (els.tutorContextBadge && state.currentLesson) {
+                    els.tutorContextBadge.textContent = `Контекст: ${state.currentLesson.title}`;
+                }
+            });
+        }
+
+        if (els.tutorSendBtn) {
+            els.tutorSendBtn.addEventListener("click", sendTutorMessage);
+        }
+
+        if (els.tutorInput) {
+            els.tutorInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendTutorMessage();
+                }
+            });
+        }
+
+        if (els.vocabGenerateBtn) {
+            els.vocabGenerateBtn.addEventListener("click", generateVocabulary);
+        }
+    }
+
+    async function init() {
+        loadLocalState();
+        renderTopInfo();
+        renderStats();
+        renderHistory();
+        renderLastSession();
+
+        bindModeCards();
+        bindDialogChips();
+        bindActions();
+        switchMode("sentence");
+
+        await loadUser();
+        await loadCurrentLessonContext();
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
 })();
