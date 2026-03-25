@@ -378,12 +378,24 @@
     try { return JSON.parse(match[0]); } catch (error) { return null; }
   }
 
+  function normalizeSessionMode(mode) {
+    if (mode === 'sentence_check' || mode === 'check') return 'sentence';
+    if (mode === 'lesson_tutor' || mode === 'tutor') return 'tutor';
+    if (mode === 'dialog') return 'dialog';
+    return null;
+  }
+
   async function ensureSession(mode, meta) {
+    const sessionMode = normalizeSessionMode(mode);
+    if (!sessionMode) return null;
     try {
+      const body = { mode: sessionMode };
+      if (sessionMode === 'dialog' && meta && meta.scenario) body.scenario = meta.scenario;
+      if (sessionMode === 'tutor' && meta && meta.lessonId) body.lessonId = meta.lessonId;
       const response = await request('/api/ai/session/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: mode, meta: meta || {} })
+        body: JSON.stringify(body)
       });
       const session = response && (response.session || response.data && response.data.session || response.data || response);
       state.activeSessionId = session && (session.id || session.sessionId) ? (session.id || session.sessionId) : null;
@@ -395,12 +407,14 @@
 
   async function aiChat(payload) {
     const sessionId = state.activeSessionId || await ensureSession(payload.mode || state.mode, payload.meta || {});
+    const requestPayload = Object.assign({}, payload, sessionId ? { sessionId: sessionId } : {});
     const data = await request('/api/ai/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({}, payload, sessionId ? { sessionId: sessionId } : {}))
+      body: JSON.stringify(requestPayload)
     });
-    if (data && data.usage) setUsage(data.usage.used || state.usage.used, data.usage.limit || state.usage.total);
+    const usage = data && (data.usage || data.data && data.data.usage);
+    if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
     return parseResponsePayload(data) || '';
   }
 
@@ -434,15 +448,13 @@
     if (!text) return alert('Напиши предложение для проверки');
     setButtonLoading(els.checkSentenceBtn, true, 'Проверяем...');
     try {
-      const prompt = [
-        'Ты — преподаватель казахского языка для русскоязычного ученика.',
-        'Проверь предложение и ответь только JSON-объектом со следующими ключами:',
-        'corrected (string), errors (array of strings), rule (string), examples (array of 3 strings), task (string).',
-        state.currentLesson ? 'Текущий урок: ' + state.currentLesson.title + '.' : '',
-        extraInstruction ? 'Дополнительная команда: ' + extraInstruction + '.' : '',
-        'Предложение: ' + text + '.'
-      ].join(' ');
-      const raw = await aiChat({ mode: 'sentence_check', message: text, prompt: prompt });
+      const raw = await aiChat({
+        mode: 'sentence_check',
+        message: text,
+        lessonTitle: state.currentLesson ? state.currentLesson.title : '',
+        lessonCourseTitle: state.currentLesson ? state.currentLesson.courseTitle : '',
+        extraInstruction: extraInstruction || ''
+      });
       const parsed = extractJson(raw);
       const result = parsed || fallbackCheckResult(raw || text);
       renderCheckResult(result);
@@ -492,6 +504,7 @@
 
   function openDialogScenario(scenarioId) {
     const scenario = dialogScenarios.find(function (item) { return item.id === scenarioId; }) || dialogScenarios[0];
+    state.activeSessionId = null;
     state.dialog.scenarioId = scenario.id;
     state.dialog.started = true;
     state.dialog.messages = [{ role: 'assistant', text: scenario.name === 'В кафе' ? 'Сәлеметсіз бе! Не ішесіз?' : 'Сәлеметсіз бе! Бүгін сізге қалай көмектесе аламын?', meta: 'Сценарий: ' + scenario.name }];
@@ -537,9 +550,13 @@
     try {
       const raw = await aiChat({
         mode: 'dialog',
+        action: kind,
         message: text,
-        history: state.dialog.messages.slice(-6),
-        prompt: 'Ты продолжаешь диалог по-казахски. Сценарий: ' + scenario.name + '. Если это подсказка — дай короткий пример ответа и одно объяснение по-русски. Если это обычное сообщение — продолжи разговор и коротко отметь ошибки.',
+        history: state.dialog.messages.slice(-8),
+        scenario: scenario.name,
+        scenarioGoal: scenario.goal,
+        scenarioDifficulty: scenario.difficulty,
+        supportPhrases: scenario.phrases,
         meta: { scenario: scenario.name }
       });
       const reply = raw || 'Жақсы, жалғастырайық.';
