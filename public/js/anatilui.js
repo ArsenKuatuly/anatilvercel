@@ -489,22 +489,53 @@
     saveState();
   }
 
+  function ensureText(value, fallback) {
+    if (value == null) return fallback || '—';
+    if (typeof value === 'string') return value.trim() || (fallback || '—');
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'object') {
+      if (typeof value.text === 'string') return value.text.trim() || (fallback || '—');
+      if (typeof value.message === 'string') return value.message.trim() || (fallback || '—');
+      if (typeof value.title === 'string') return value.title.trim() || (fallback || '—');
+    }
+    return String(value);
+  }
+
+  function normalizeList(value, emptyText) {
+    if (Array.isArray(value) && value.length) return value.map(function (item) { return ensureText(item, emptyText); });
+    if (typeof value === 'string' && value.trim()) return [value.trim()];
+    return [emptyText];
+  }
+
+  function showCheckResult() {
+    if (els.checkResultEmpty) els.checkResultEmpty.hidden = true;
+    if (els.checkResult) {
+      els.checkResult.hidden = false;
+      els.checkResult.setAttribute('aria-hidden', 'false');
+      els.checkResult.classList.remove('ai-result-stack--hidden');
+    }
+  }
+
   function renderCheckResult(result) {
-    els.checkResult.hidden = false;
-    els.checkResultEmpty.hidden = true;
+    showCheckResult();
     if (els.checkAdviceCard) els.checkAdviceCard.hidden = false;
-    els.checkCorrected.textContent = result.corrected || '—';
-    const errors = Array.isArray(result.errors) && result.errors.length ? result.errors : ['Ошибки не найдены'];
-    els.checkErrorsList.innerHTML = errors.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
-    els.checkRule.textContent = result.rule || '—';
-    els.checkExamples.innerHTML = (result.examples || []).map(function (item) { return '<div class="ai-example">' + escapeHtml(item) + '</div>'; }).join('');
-    els.checkTask.textContent = result.task || '—';
-    if (els.checkAdviceText) els.checkAdviceText.textContent = result.advice || 'Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.';
+    if (els.checkCorrected) els.checkCorrected.textContent = ensureText(result && result.corrected, '—');
+    var errors = normalizeList(result && result.errors, 'Ошибки не найдены');
+    if (els.checkErrorsList) els.checkErrorsList.innerHTML = errors.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
+    if (els.checkRule) els.checkRule.textContent = ensureText(result && result.rule, '—');
+    var examples = normalizeList(result && result.examples, 'Примеров пока нет');
+    if (els.checkExamples) els.checkExamples.innerHTML = examples.map(function (item) { return '<div class="ai-example">' + escapeHtml(item) + '</div>'; }).join('');
+    if (els.checkTask) els.checkTask.textContent = ensureText(result && result.task, '—');
+    if (els.checkAdviceText) els.checkAdviceText.textContent = ensureText(result && result.advice, 'Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.');
   }
 
 
   function resetCheckResultView() {
-    if (els.checkResult) els.checkResult.hidden = true;
+    if (els.checkResult) {
+      els.checkResult.hidden = true;
+      els.checkResult.setAttribute('aria-hidden', 'true');
+      els.checkResult.classList.add('ai-result-stack--hidden');
+    }
     if (els.checkResultEmpty) els.checkResultEmpty.hidden = false;
     if (els.checkAdviceCard) els.checkAdviceCard.hidden = true;
   }
@@ -929,7 +960,7 @@
     if (els.historyOverlay) els.historyOverlay.addEventListener('click', closeHistory);
 
     document.querySelectorAll('[data-check-sample]').forEach(function (button) {
-      button.addEventListener('click', function () { els.checkInput.value = button.dataset.checkSample || ''; });
+      button.addEventListener('click', function () { els.checkInput.value = button.dataset.checkSample || ''; resetCheckResultView(); });
     });
     if (els.checkSentenceBtn) els.checkSentenceBtn.addEventListener('click', function () { handleCheck(''); });
     if (els.checkInput) els.checkInput.addEventListener('input', function () {

@@ -145,13 +145,14 @@
 
           </div>
 
+          <div class="ai-check-result-panel">
           <div id="checkResultEmpty" class="ai-card ai-card--empty">
             <div class="ai-empty__emoji">✍️</div>
             <h3 class="ai-empty__title">Результат появится здесь</h3>
             <p class="ai-empty__text">Напишите предложение и нажмите «Проверить»</p>
           </div>
 
-          <div id="checkResult" class="ai-result-stack" hidden>
+          <div id="checkResult" class="ai-result-stack ai-result-stack--hidden" hidden aria-hidden="true">
             <div class="ai-card ai-card--soft-blue" id="checkAdviceCard" hidden>
               <div class="ai-info-head"><span>💡</span><h4>Совет</h4></div>
               <p class="ai-card__text" id="checkAdviceText">Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.</p>
@@ -188,6 +189,7 @@
             </div>
           </div>
         </div>
+          </div>
       </section>
 
       <section class="ai-view" data-view="dialog">

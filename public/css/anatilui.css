@@ -1621,3 +1621,18 @@ button {
     padding: 18px;
   }
 }
+
+
+.ai-check-result-panel {
+  display: block;
+}
+
+.ai-result-stack--hidden {
+  display: none !important;
+}
+
+.ai-card--empty[hidden],
+.ai-result-stack[hidden],
+.ai-result-stack--hidden[hidden] {
+  display: none !important;
+}
