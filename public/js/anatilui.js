@@ -85,6 +85,8 @@
     history: [],
     focusTopic: 'Падежи и окончания',
     currentLesson: null,
+    courseLessons: [],
+    courseSlug: '',
     user: null,
     activeSessionId: null,
     dialog: { scenarioId: null, started: false, messages: [], hints: 0, errors: 0 },
@@ -128,6 +130,8 @@
     checkResult: document.getElementById('checkResult'),
     checkResultEmpty: document.getElementById('checkResultEmpty'),
     checkCorrected: document.getElementById('checkCorrected'),
+    checkAdviceCard: document.getElementById('checkAdviceCard'),
+    checkAdviceText: document.getElementById('checkAdviceText'),
     checkErrorsList: document.getElementById('checkErrorsList'),
     checkRule: document.getElementById('checkRule'),
     checkExamples: document.getElementById('checkExamples'),
@@ -157,6 +161,8 @@
     dialogHintsCount: document.getElementById('dialogHintsCount'),
 
     currentLessonTitle: document.getElementById('currentLessonTitle'),
+    currentLessonText: document.getElementById('currentLessonText'),
+    lessonSelect: document.getElementById('lessonSelect'),
     useCurrentLessonBtn: document.getElementById('useCurrentLessonBtn'),
     tutorInput: document.getElementById('tutorInput'),
     sendTutorBtn: document.getElementById('sendTutorBtn'),
@@ -208,6 +214,7 @@
       Object.assign(state.achievements, parsed.achievements || {});
       state.history = Array.isArray(parsed.history) ? parsed.history : [];
       state.focusTopic = parsed.focusTopic || state.focusTopic;
+      if (parsed.currentLesson && typeof parsed.currentLesson === 'object') state.currentLesson = parsed.currentLesson;
       if (parsed.vocabulary && Array.isArray(parsed.vocabulary.words)) state.vocabulary.words = parsed.vocabulary.words;
       if (parsed.vocabulary && parsed.vocabulary.test) state.vocabulary.test = parsed.vocabulary.test;
     } catch (error) {
@@ -223,6 +230,7 @@
         achievements: state.achievements,
         history: state.history.slice(0, 20),
         focusTopic: state.focusTopic,
+        currentLesson: state.currentLesson,
         vocabulary: { words: state.vocabulary.words, test: state.vocabulary.test }
       }));
     } catch (error) {
@@ -422,15 +430,83 @@
     return prefix + ' • ' + messages + ' сообщ. • ' + words + ' слов • ' + errors + ' ошибок';
   }
 
+  function stripHtml(html) {
+    return String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function updateLessonUi() {
+    const title = state.currentLesson && state.currentLesson.title ? state.currentLesson.title : 'Урок не выбран';
+    if (els.currentLessonTitle) els.currentLessonTitle.textContent = title;
+    if (els.currentLessonText) {
+      const moduleText = state.currentLesson && state.currentLesson.moduleTitle ? 'Модуль: ' + state.currentLesson.moduleTitle + '. ' : '';
+      const courseText = state.currentLesson && state.currentLesson.courseTitle ? 'Курс: ' + state.currentLesson.courseTitle + '. ' : '';
+      const info = state.currentLesson && state.currentLesson.isFallbackTitleOnly
+        ? 'Контекст урока ограничен: этот урок пока не открыт в основном курсе, поэтому AI использует название урока и курс.'
+        : 'AI учитывает тему выбранного урока и отвечает по ней без лишней болтовни.';
+      els.currentLessonText.textContent = moduleText + courseText + info;
+    }
+  }
+
+  function renderLessonOptions() {
+    if (!els.lessonSelect) return;
+    if (!state.courseLessons.length) {
+      els.lessonSelect.innerHTML = '<option value="">Уроки не найдены</option>';
+      return;
+    }
+    els.lessonSelect.innerHTML = state.courseLessons.map(function (lesson) {
+      const moduleTitle = lesson.moduleTitle ? lesson.moduleTitle + ' • ' : '';
+      const status = lesson.isDefault ? ' • текущий' : '';
+      return '<option value="' + lesson.id + '">' + escapeHtml(moduleTitle + lesson.title + status) + '</option>';
+    }).join('');
+    if (state.currentLesson && state.currentLesson.id) {
+      els.lessonSelect.value = String(state.currentLesson.id);
+    }
+  }
+
+  async function selectLessonById(lessonId, options) {
+    const lesson = state.courseLessons.find(function (item) { return Number(item.id) === Number(lessonId); });
+    if (!lesson) return;
+    const keepSession = !!(options && options.keepSession);
+    if (!keepSession) state.activeSessionId = null;
+    state.currentLesson = Object.assign({}, lesson);
+    try {
+      const detail = await request('/api/lesson/' + lesson.id, { method: 'GET' });
+      const payload = detail && detail.lesson ? detail.lesson : detail;
+      if (payload && payload.lesson) {
+        state.currentLesson.content = stripHtml(payload.lesson.content || '');
+      } else if (payload && payload.content != null) {
+        state.currentLesson.content = stripHtml(payload.content || '');
+      } else if (detail && detail.lesson && detail.lesson.content != null) {
+        state.currentLesson.content = stripHtml(detail.lesson.content || '');
+      }
+      state.currentLesson.isFallbackTitleOnly = false;
+    } catch (error) {
+      state.currentLesson.content = '';
+      state.currentLesson.isFallbackTitleOnly = true;
+    }
+    renderLessonOptions();
+    updateLessonUi();
+    saveState();
+  }
+
   function renderCheckResult(result) {
     els.checkResult.hidden = false;
     els.checkResultEmpty.hidden = true;
+    if (els.checkAdviceCard) els.checkAdviceCard.hidden = false;
     els.checkCorrected.textContent = result.corrected || '—';
     const errors = Array.isArray(result.errors) && result.errors.length ? result.errors : ['Ошибки не найдены'];
     els.checkErrorsList.innerHTML = errors.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
     els.checkRule.textContent = result.rule || '—';
     els.checkExamples.innerHTML = (result.examples || []).map(function (item) { return '<div class="ai-example">' + escapeHtml(item) + '</div>'; }).join('');
     els.checkTask.textContent = result.task || '—';
+    if (els.checkAdviceText) els.checkAdviceText.textContent = result.advice || 'Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.';
+  }
+
+
+  function resetCheckResultView() {
+    if (els.checkResult) els.checkResult.hidden = true;
+    if (els.checkResultEmpty) els.checkResultEmpty.hidden = false;
+    if (els.checkAdviceCard) els.checkAdviceCard.hidden = true;
   }
 
   function fallbackCheckResult(text) {
@@ -439,7 +515,8 @@
       errors: ['ИИ вернул общий ответ. Попробуй ещё раз или измени формулировку.'],
       rule: 'Структурированный ответ не получен, поэтому показываем общий результат.',
       examples: ['Мен кеше дүкенге бардым.', 'Мен бүгін сабақ оқып отырмын.', 'Мен ертең досыммен кездесемін.'],
-      task: 'Сделай ещё одно предложение на ту же тему.'
+      task: 'Сделай ещё одно предложение на ту же тему.',
+      advice: 'Сначала запомни исправленный вариант, потом составь похожую фразу с тем же правилом.'
     };
   }
 
@@ -453,7 +530,8 @@
         message: text,
         lessonTitle: state.currentLesson ? state.currentLesson.title : '',
         lessonCourseTitle: state.currentLesson ? state.currentLesson.courseTitle : '',
-        extraInstruction: extraInstruction || ''
+        extraInstruction: extraInstruction || '',
+        lessonContent: state.currentLesson ? state.currentLesson.content || '' : ''
       });
       const parsed = extractJson(raw);
       const result = parsed || fallbackCheckResult(raw || text);
@@ -613,8 +691,14 @@
       const raw = await aiChat({
         mode: 'lesson_tutor',
         message: text,
+        action: actionLabel || 'default',
+        lessonTitle: state.currentLesson ? state.currentLesson.title : '',
+        lessonCourseTitle: state.currentLesson ? state.currentLesson.courseTitle : '',
+        lessonProgress: state.currentLesson ? state.currentLesson.percent : 0,
+        lessonId: state.currentLesson ? state.currentLesson.id : null,
+        lessonContent: state.currentLesson ? state.currentLesson.content || '' : '',
         prompt: 'Ты — репетитор по уроку казахского языка. Объясняй коротко, понятно и по теме урока. В конце дай небольшое упражнение.',
-        meta: { lesson: state.currentLesson ? state.currentLesson.title : 'Текущий урок', action: actionLabel || 'default' }
+        meta: { lesson: state.currentLesson ? state.currentLesson.title : 'Текущий урок', lessonId: state.currentLesson ? state.currentLesson.id : null, action: actionLabel || 'default' }
       });
       const answer = raw || 'Барыс септік используется для направления движения и ответа на вопрос «куда?». Например: мектепке барамын.';
       renderTutorContent(answer, {
@@ -767,12 +851,53 @@
       const progress = await request('/api/lessons/progress/current', { method: 'GET' });
       const data = progress && progress.data ? progress.data : progress;
       if (data && data.course) {
-        const title = data.nextLesson && data.nextLesson.title || data.lastLesson && data.lastLesson.title || data.course.title;
-        state.currentLesson = { title: title, courseTitle: data.course.title, percent: Number(data.percent || 0) };
-        if (els.currentLessonTitle) els.currentLessonTitle.textContent = title;
+        state.courseSlug = data.course.slug || '';
+        const defaultLessonId = data.nextLesson && data.nextLesson.id || data.lastLesson && data.lastLesson.id || null;
+        const defaultLessonTitle = data.nextLesson && data.nextLesson.title || data.lastLesson && data.lastLesson.title || data.course.title;
+        state.currentLesson = {
+          id: defaultLessonId,
+          title: defaultLessonTitle,
+          courseTitle: data.course.title,
+          percent: Number(data.percent || 0),
+          isDefault: true,
+          moduleTitle: '',
+          content: ''
+        };
         if (els.summaryTitle) els.summaryTitle.textContent = 'Практика по курсу — ' + data.course.title;
-        if (els.summaryText) els.summaryText.textContent = data.nextLesson ? 'Следующий урок: ' + data.nextLesson.title + '. Повтори тему с репетитором или начни диалог по теме курса.' : 'Ты завершил почти весь курс. Закрепи тему с ИИ перед итоговым заданием.';
+        if (els.summaryText) els.summaryText.textContent = data.nextLesson ? 'По умолчанию выбран урок, на котором ты остановился: ' + data.nextLesson.title + '. При желании ниже можно переключить AI на любой урок твоего курса.' : 'Курс почти завершён. Ниже можно выбрать любой урок этого курса и закрепить тему с ИИ.';
         if (els.summaryProgressBar) els.summaryProgressBar.style.width = Math.max(0, Math.min(100, state.currentLesson.percent)) + '%';
+        updateLessonUi();
+
+        if (state.courseSlug) {
+          const courseData = await request('/api/course/' + encodeURIComponent(state.courseSlug), { method: 'GET' });
+          const coursePayload = courseData && courseData.data ? courseData.data : courseData;
+          const modules = Array.isArray(coursePayload && coursePayload.modules) ? coursePayload.modules : [];
+          state.courseLessons = [];
+          modules.forEach(function (module) {
+            (module.lessons || []).forEach(function (lesson) {
+              state.courseLessons.push({
+                id: lesson.id,
+                title: lesson.title,
+                moduleTitle: module.title,
+                courseTitle: data.course.title,
+                percent: Number(data.percent || 0),
+                completed: !!lesson.completed,
+                locked: !!module.locked,
+                isDefault: Number(lesson.id) === Number(defaultLessonId)
+              });
+            });
+          });
+          renderLessonOptions();
+          const savedLessonId = state.currentLesson && state.currentLesson.id ? Number(state.currentLesson.id) : 0;
+          const canUseSavedLesson = savedLessonId && state.courseLessons.some(function (item) { return Number(item.id) === savedLessonId; });
+          if (canUseSavedLesson) {
+            await selectLessonById(savedLessonId, { keepSession: true });
+          } else if (defaultLessonId) {
+            await selectLessonById(defaultLessonId, { keepSession: true });
+          } else if (state.courseLessons[0]) {
+            await selectLessonById(state.courseLessons[0].id, { keepSession: true });
+          }
+        }
       }
     } catch (error) {
       console.error(error);
@@ -807,6 +932,10 @@
       button.addEventListener('click', function () { els.checkInput.value = button.dataset.checkSample || ''; });
     });
     if (els.checkSentenceBtn) els.checkSentenceBtn.addEventListener('click', function () { handleCheck(''); });
+    if (els.checkInput) els.checkInput.addEventListener('input', function () {
+      if (!(els.checkResult && !els.checkResult.hidden)) return;
+      resetCheckResultView();
+    });
     document.querySelectorAll('[data-check-action]').forEach(function (button) {
       button.addEventListener('click', function () {
         const action = button.dataset.checkAction;
@@ -865,9 +994,24 @@
       });
     });
     if (els.sendTutorBtn) els.sendTutorBtn.addEventListener('click', function () { askTutor('', 'default'); });
+    if (els.lessonSelect) {
+      els.lessonSelect.addEventListener('change', function () {
+        const value = Number(els.lessonSelect.value || 0);
+        if (!value) return;
+        selectLessonById(value);
+      });
+    }
     if (els.useCurrentLessonBtn) els.useCurrentLessonBtn.addEventListener('click', function () {
+      const value = els.lessonSelect ? Number(els.lessonSelect.value || 0) : 0;
+      if (value) {
+        selectLessonById(value).then(function () {
+          setMode('tutor');
+          if (els.tutorInput) els.tutorInput.focus();
+        });
+        return;
+      }
       setMode('tutor');
-      els.tutorInput.focus();
+      if (els.tutorInput) els.tutorInput.focus();
     });
 
     document.querySelectorAll('[data-vocab-tab]').forEach(function (button) {

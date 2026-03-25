@@ -29,6 +29,7 @@ function buildMessages(body) {
   if (mode === "sentence_check") {
     const lesson = body?.lessonTitle ? `Текущий урок: ${body.lessonTitle}.` : "";
     const course = body?.lessonCourseTitle ? `Курс: ${body.lessonCourseTitle}.` : "";
+    const lessonContent = body?.lessonContent ? `Краткий материал урока: ${String(body.lessonContent).slice(0, 2500)}.` : "";
     const extra = body?.extraInstruction ? `Доп. инструкция: ${body.extraInstruction}.` : "";
     return [
       {
@@ -49,7 +50,7 @@ function buildMessages(body) {
       },
       {
         role: "user",
-        content: [lesson, course, extra, `Предложение ученика: ${message}`].filter(Boolean).join("\n"),
+        content: [lesson, course, lessonContent, extra, `Предложение ученика: ${message}`].filter(Boolean).join("\n"),
       },
     ];
   }
@@ -101,6 +102,7 @@ function buildMessages(body) {
     const course = body?.lessonCourseTitle || "не указан";
     const progress = Number(body?.lessonProgress || 0);
     const action = body?.action || "default";
+    const lessonContent = body?.lessonContent ? String(body.lessonContent).slice(0, 5000) : "";
 
     return [
       {
@@ -111,6 +113,7 @@ function buildMessages(body) {
           `Текущий урок: ${lesson}.`,
           `Курс: ${course}.`,
           `Прогресс по теме: ${progress}%.`,
+          lessonContent ? `Материал урока: ${lessonContent}.` : "",
           "Отвечай строго по теме текущего урока или максимально близко к ней.",
           "Структура ответа всегда такая:",
           "1. Короткое объяснение темы простыми словами.",

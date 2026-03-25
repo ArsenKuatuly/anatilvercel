@@ -1405,6 +1405,23 @@ button {
   line-height: 1.6;
 }
 
+.ai-label--sm {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.ai-select--full {
+  width: 100%;
+}
+
+.ai-lesson-banner__side {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .ai-answer-avatar {
   width: 36px;
   height: 36px;

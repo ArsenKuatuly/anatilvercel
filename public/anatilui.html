@@ -143,10 +143,6 @@
               </div>
             </div>
 
-            <div class="ai-card ai-card--soft-blue">
-              <div class="ai-info-head"><span>💡</span><h4>Совет</h4></div>
-              <p class="ai-card__text">Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.</p>
-            </div>
           </div>
 
           <div id="checkResultEmpty" class="ai-card ai-card--empty">
@@ -156,6 +152,11 @@
           </div>
 
           <div id="checkResult" class="ai-result-stack" hidden>
+            <div class="ai-card ai-card--soft-blue" id="checkAdviceCard" hidden>
+              <div class="ai-info-head"><span>💡</span><h4>Совет</h4></div>
+              <p class="ai-card__text" id="checkAdviceText">Пишите естественные предложения из жизни. ИИ поможет не только найти ошибки, но и предложит более естественные варианты фраз.</p>
+            </div>
+
             <div class="ai-correction-box">
               <div class="ai-correction-box__head">✅ Исправленный вариант</div>
               <div class="ai-correction-box__text" id="checkCorrected">—</div>
@@ -281,11 +282,17 @@
 
         <div class="ai-lesson-banner">
           <div>
-            <div class="ai-lesson-banner__label">Текущий урок</div>
+            <div class="ai-lesson-banner__label">Урок для AI-практики</div>
             <h3 class="ai-lesson-banner__title" id="currentLessonTitle">Текущий урок загружается…</h3>
-            <p class="ai-lesson-banner__text">AI учитывает контекст урока и отвечает по теме без лишней болтовни.</p>
+            <p class="ai-lesson-banner__text" id="currentLessonText">По умолчанию выбран урок, на котором ты остановился. Ниже можно выбрать любой урок из твоего курса уровня.</p>
           </div>
-          <button class="ai-btn ai-btn--secondary" type="button" id="useCurrentLessonBtn">Использовать этот урок</button>
+          <div class="ai-lesson-banner__side">
+            <label class="ai-label ai-label--sm" for="lessonSelect">Выбрать урок</label>
+            <select class="ai-select ai-select--full" id="lessonSelect">
+              <option value="">Загрузка уроков…</option>
+            </select>
+            <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" id="useCurrentLessonBtn">Использовать выбранный урок</button>
+          </div>
         </div>
 
         <div class="ai-grid ai-grid--two ai-grid--start">
