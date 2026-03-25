@@ -1,403 +1,367 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI Практика</title>
-    <link rel="stylesheet" href="/css/style.css" />
-    <link rel="stylesheet" href="/css/headerdash.css" />
-    <link rel="stylesheet" href="/css/anatilui.css" />
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/headerdash.css">
+  <link rel="stylesheet" href="/css/anatilui.css">
 </head>
-
 <body>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/api.js"></script>
+
 <header class="dash-header" id="header">
-    <div class="dash-header__container">
-        <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
-
-        <nav class="dash-header__nav" aria-label="Навигация">
-            <a class="dash-header__link" href="/courses">Курсы</a>
-            <a class="dash-header__link" href="/myprogress.html">Мой прогресс</a>
-            <a class="dash-header__link" href="/library.html">Библиотека</a>
-            <a class="dash-header__link" href="/anatilui.html">AI практика</a>
-            <a class="dash-header__link" href="/admin" id="adminBtn" style="display:none">
-                Админка
-            </a>
-        </nav>
-
-        <div class="dash-header__actions">
-            <a class="dash-header__btn" href="/profile.html">Профиль</a>
-
-            <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
-                <span></span><span></span><span></span>
-            </button>
-        </div>
+  <div class="dash-header__container">
+    <a class="dash-header__logo" href="/dashboard.html">AnaTil</a>
+    <nav class="dash-header__nav" aria-label="Навигация">
+      <a class="dash-header__link" href="/courses">Курсы</a>
+      <a class="dash-header__link" href="/progress">Мой прогресс</a>
+      <a class="dash-header__link" href="/library">Библиотека</a>
+    </nav>
+    <div class="dash-header__actions">
+      <a href="/admin" id="adminBtn" style="display:none">⚙ Админ панель</a>
+      <a class="dash-header__btn" href="/profile.html">Профиль</a>
+      <button class="dash-header__burger" type="button" aria-label="Открыть меню" data-burger>
+        <span></span><span></span><span></span>
+      </button>
     </div>
-
-
-    <div class="dash-header__mobile" data-mobile hidden>
-        <a class="dash-header__m-link" href="/courses">Курсы</a>
-        <a class="dash-header__m-link" href="/myprogress.html">Мой прогресс</a>
-        <a class="dash-header__m-link" href="/library.html">Библиотека</a>
-        <a class="dash-header__m-link" href="/profile.html">Профиль</a>
-        <a class="dash-header__m-link" href="/profile.html">AI практика</a>
-    </div>
+  </div>
+  <div class="dash-header__mobile" data-mobile hidden>
+    <a class="dash-header__m-link" href="/courses">Курсы</a>
+    <a class="dash-header__m-link" href="/progress">Мой прогресс</a>
+    <a class="dash-header__m-link" href="/library">Библиотека</a>
+    <a class="dash-header__m-link" href="/profile.html">Профиль</a>
+  </div>
 </header>
-<div class="app" id="app">
 
+<main class="ai-page">
+  <div class="ai-page__container">
+    <section class="ai-hero">
+      <div class="ai-hero__content">
+        <span class="ai-hero__eyebrow">AI Практика</span>
+        <h1 class="ai-hero__title">Тренируй казахский с ИИ: ошибки, диалоги, задания</h1>
+        <p class="ai-hero__text">Проверяй предложения, разыгрывай жизненные ситуации, задавай вопросы по текущему уроку и сохраняй новые слова в одном месте.</p>
+        <div class="ai-hero__actions">
+          <button class="ai-btn ai-btn--primary" type="button" data-open-mode="check">Начать практику</button>
+          <button class="ai-btn ai-btn--secondary" type="button" id="openHistoryBtn">История</button>
+        </div>
+      </div>
+      <div class="ai-hero__side">
+        <div class="ai-balance">
+          <span class="ai-balance__label">Сообщений сегодня</span>
+          <strong class="ai-balance__value" id="dailyUsage">0 / 50</strong>
+          <div class="ai-balance__bar"><span id="dailyUsageBar" style="width:0%"></span></div>
+        </div>
+        <div class="ai-stats-card">
+          <div class="ai-stats-card__item">
+            <strong id="todayPracticeValue">0 мин</strong>
+            <span>Практика сегодня</span>
+          </div>
+          <div class="ai-stats-card__item">
+            <strong id="todayErrorsValue">0</strong>
+            <span>Исправлено ошибок</span>
+          </div>
+          <div class="ai-stats-card__item">
+            <strong id="todayWordsValue">0</strong>
+            <span>Новых слов</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- HISTORY SHEET -->
-    <div class="sheet" id="historySheet" aria-hidden="true">
-      <div class="sheet__backdrop" id="historyBackdrop"></div>
-      <aside class="sheet__panel" role="dialog" aria-modal="true" aria-label="История практик">
-        <div class="sheet__head">
-          <h2 class="sheet__title">История практик</h2>
-          <button class="button button--ghost sheet__close" id="historyCloseBtn" type="button" aria-label="Закрыть">✕</button>
+    <section class="ai-summary">
+      <article class="ai-summary-card">
+        <span class="ai-summary-card__badge">Рекомендация на сегодня</span>
+        <h2 class="ai-summary-card__title" id="summaryTitle">Практика по текущему уроку</h2>
+        <p class="ai-summary-card__text" id="summaryText">Загружаем контекст урока и текущий прогресс.</p>
+        <div class="ai-progress">
+          <span class="ai-progress__label">Прогресс по теме</span>
+          <div class="ai-progress__track"><span id="summaryProgressBar" style="width:0%"></span></div>
+        </div>
+      </article>
+      <article class="ai-session-card">
+        <div class="ai-session-card__top">
+          <span class="ai-tag ai-tag--success">Последняя сессия</span>
+          <button class="ai-btn ai-btn--link" type="button" id="openLastSessionBtn">Открыть</button>
+        </div>
+        <h3 class="ai-session-card__title" id="lastSessionTitle">Сессий пока нет</h3>
+        <p class="ai-session-card__text" id="lastSessionMeta">Начни первую практику, и она появится здесь.</p>
+        <div class="ai-session-card__grid">
+          <div><strong id="lastSessionMessages">0</strong><span>Сообщений</span></div>
+          <div><strong id="lastSessionWords">0</strong><span>Слов</span></div>
+          <div><strong id="lastSessionErrors">0</strong><span>Ошибки</span></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="ai-modes">
+      <button class="ai-mode ai-mode--active" type="button" data-mode="check">
+        <span class="ai-mode__icon">✍️</span>
+        <span class="ai-mode__title">Проверка предложения</span>
+        <span class="ai-mode__text">Напиши фразу — я исправлю и объясню</span>
+      </button>
+      <button class="ai-mode" type="button" data-mode="dialog">
+        <span class="ai-mode__icon">🗣️</span>
+        <span class="ai-mode__title">Диалог</span>
+        <span class="ai-mode__text">Кафе, магазин, такси, универ, знакомство</span>
+      </button>
+      <button class="ai-mode" type="button" data-mode="tutor">
+        <span class="ai-mode__icon">🧑‍🏫</span>
+        <span class="ai-mode__title">Репетитор по уроку</span>
+        <span class="ai-mode__text">Вопросы по текущему уроку и теме</span>
+      </button>
+      <button class="ai-mode" type="button" data-mode="vocabulary">
+        <span class="ai-mode__icon">📚</span>
+        <span class="ai-mode__title">Словарь</span>
+        <span class="ai-mode__text">Слова по темам, примеры и мини-тест</span>
+      </button>
+    </section>
+
+    <section class="ai-workspace">
+      <aside class="ai-sidebar">
+        <div class="ai-panel ai-panel--active" data-settings="check">
+          <div class="ai-panel__head">
+            <h2 class="ai-panel__title">Настройки проверки</h2>
+            <p class="ai-panel__text">1–3 предложения на одну тему дадут лучший результат.</p>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Уровень</span>
+            <div class="ai-chips" data-chip-group="checkLevel">
+              <button class="ai-chip ai-chip--active" type="button" data-value="A1">A1</button>
+              <button class="ai-chip" type="button" data-value="A2">A2</button>
+              <button class="ai-chip" type="button" data-value="B1">B1</button>
+            </div>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Объяснение</span>
+            <div class="ai-chips" data-chip-group="checkExplain">
+              <button class="ai-chip ai-chip--active" type="button" data-value="simple">Просто</button>
+              <button class="ai-chip" type="button" data-value="full">Подробно</button>
+            </div>
+          </div>
+          <div class="ai-note">После проверки появятся ошибки, правило, примеры и мини-задание.</div>
         </div>
 
-        <div class="sheet__content" id="historyList">
-          <!-- JS renders items -->
+        <div class="ai-panel" data-settings="dialog">
+          <div class="ai-panel__head">
+            <h2 class="ai-panel__title">Настройки диалога</h2>
+            <p class="ai-panel__text">Выбери сценарий, уровень и стиль общения.</p>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Сценарий</span>
+            <div class="ai-chips" data-chip-group="dialogScenario">
+              <button class="ai-chip ai-chip--active" type="button" data-value="Кафе">Кафе</button>
+              <button class="ai-chip" type="button" data-value="Магазин">Магазин</button>
+              <button class="ai-chip" type="button" data-value="Такси">Такси</button>
+              <button class="ai-chip" type="button" data-value="Универ">Универ</button>
+              <button class="ai-chip" type="button" data-value="Знакомство">Знакомство</button>
+            </div>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Уровень</span>
+            <div class="ai-chips" data-chip-group="dialogLevel">
+              <button class="ai-chip ai-chip--active" type="button" data-value="A1">A1</button>
+              <button class="ai-chip" type="button" data-value="A2">A2</button>
+              <button class="ai-chip" type="button" data-value="B1">B1</button>
+            </div>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Тональность</span>
+            <div class="ai-chips" data-chip-group="dialogTone">
+              <button class="ai-chip ai-chip--active" type="button" data-value="дружелюбно">Дружелюбно</button>
+              <button class="ai-chip" type="button" data-value="строго">Строго</button>
+              <button class="ai-chip" type="button" data-value="как экзамен">Как экзамен</button>
+            </div>
+          </div>
+          <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="startDialogBtn">Начать диалог</button>
+        </div>
+
+        <div class="ai-panel" data-settings="tutor">
+          <div class="ai-panel__head">
+            <h2 class="ai-panel__title">Репетитор по уроку</h2>
+            <p class="ai-panel__text">ИИ отвечает по теме урока и объясняет как преподаватель.</p>
+          </div>
+          <div class="ai-context">
+            <span class="ai-context__badge">Контекст</span>
+            <strong class="ai-context__title" id="currentLessonTitle">Текущий урок загружается…</strong>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Выбрать урок</span>
+            <button class="ai-btn ai-btn--secondary ai-btn--full" type="button" id="useCurrentLessonBtn">Использовать текущий урок</button>
+          </div>
+          <div class="ai-note">Этот режим не уходит в болтовню и держится в рамках темы.</div>
+        </div>
+
+        <div class="ai-panel" data-settings="vocabulary">
+          <div class="ai-panel__head">
+            <h2 class="ai-panel__title">Словарь</h2>
+            <p class="ai-panel__text">Подбор слов по теме и короткое повторение.</p>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Тема</span>
+            <div class="ai-chips" data-chip-group="vocabularyTheme">
+              <button class="ai-chip ai-chip--active" type="button" data-value="Еда">Еда</button>
+              <button class="ai-chip" type="button" data-value="Работа">Работа</button>
+              <button class="ai-chip" type="button" data-value="Учёба">Учёба</button>
+              <button class="ai-chip" type="button" data-value="Путешествия">Путешествия</button>
+            </div>
+          </div>
+          <div class="ai-field">
+            <span class="ai-field__label">Количество</span>
+            <div class="ai-chips" data-chip-group="vocabularyCount">
+              <button class="ai-chip ai-chip--active" type="button" data-value="10">10 слов</button>
+              <button class="ai-chip" type="button" data-value="15">15 слов</button>
+              <button class="ai-chip" type="button" data-value="20">20 слов</button>
+            </div>
+          </div>
+          <button class="ai-btn ai-btn--primary ai-btn--full" type="button" id="generateWordsBtn">Сгенерировать слова</button>
         </div>
       </aside>
-    </div>
 
-    <main class="main">
-      <!-- Back bar (only on mode routes) -->
-      <div class="container main__backbar" id="backBar" hidden>
-        <button class="button button--ghost backbar__btn" id="backBtn" type="button">
-          <span class="icon icon--arrow-left" aria-hidden="true"></span>
-          Назад к выбору режима
-        </button>
+      <div class="ai-content">
+        <section class="ai-screen ai-screen--active" data-screen="check">
+          <div class="ai-screen__head">
+            <div>
+              <h2 class="ai-screen__title">Проверка предложения</h2>
+              <p class="ai-screen__text">Напиши фразу на казахском — ИИ исправит её и объяснит правило.</p>
+            </div>
+          </div>
+          <div class="ai-editor">
+            <textarea class="ai-editor__input" id="checkInput" placeholder="Например: Мен кеше дүкенге барды"></textarea>
+            <div class="ai-editor__actions">
+              <button class="ai-btn ai-btn--primary" type="button" id="checkSentenceBtn">Проверить</button>
+            </div>
+          </div>
+          <div class="ai-result" id="checkResult" hidden>
+            <div class="ai-result__block">
+              <span class="ai-result__label">Исправленный вариант</span>
+              <div class="ai-result__answer" id="checkCorrected">—</div>
+              <button class="ai-btn ai-btn--ghost" type="button" id="copyCorrectedBtn">Скопировать</button>
+            </div>
+            <div class="ai-result__block">
+              <span class="ai-result__label">Ошибки</span>
+              <ul class="ai-list" id="checkErrorsList"></ul>
+            </div>
+            <div class="ai-result__block">
+              <span class="ai-result__label">Правило</span>
+              <p id="checkRule">—</p>
+            </div>
+            <div class="ai-result__block">
+              <span class="ai-result__label">Примеры</span>
+              <div class="ai-examples" id="checkExamples"></div>
+            </div>
+            <div class="ai-result__block">
+              <span class="ai-result__label">Мини-задание</span>
+              <p id="checkTask">—</p>
+            </div>
+            <div class="ai-actions-row">
+              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="harder">Сделать сложнее</button>
+              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="simpler">Сделать проще</button>
+              <button class="ai-btn ai-btn--ghost" type="button" data-check-action="examples">Ещё 3 примера</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="ai-screen" data-screen="dialog">
+          <div class="ai-screen__head">
+            <div>
+              <h2 class="ai-screen__title">Диалог</h2>
+              <p class="ai-screen__text">Разыграй ситуацию и получи мини-оценку после каждого ответа.</p>
+            </div>
+            <button class="ai-btn ai-btn--secondary" type="button" id="showHintBtn">Показать подсказку</button>
+          </div>
+          <div class="ai-chat" id="dialogMessages"></div>
+          <div class="ai-chat-input">
+            <textarea class="ai-chat-input__field" id="dialogInput" placeholder="Введите ответ..."></textarea>
+            <button class="ai-btn ai-btn--primary" type="button" id="sendDialogBtn">Отправить</button>
+          </div>
+        </section>
+
+        <section class="ai-screen" data-screen="tutor">
+          <div class="ai-screen__head">
+            <div>
+              <h2 class="ai-screen__title">Репетитор по уроку</h2>
+              <p class="ai-screen__text">Задавай вопросы по теме и получай объяснение как от преподавателя.</p>
+            </div>
+            <span class="ai-tag" id="tutorContextTag">Контекст: текущий урок</span>
+          </div>
+          <div class="ai-chat ai-chat--tutor" id="tutorMessages"></div>
+          <div class="ai-chat-input">
+            <textarea class="ai-chat-input__field" id="tutorInput" placeholder="Например: Объясни разницу между -амын и -мақпын"></textarea>
+            <button class="ai-btn ai-btn--primary" type="button" id="sendTutorBtn">Спросить</button>
+          </div>
+        </section>
+
+        <section class="ai-screen" data-screen="vocabulary">
+          <div class="ai-screen__head">
+            <div>
+              <h2 class="ai-screen__title">Словарь</h2>
+              <p class="ai-screen__text">Слова по темам, примеры употребления и мини-тест.</p>
+            </div>
+          </div>
+          <div class="ai-words" id="vocabularyWords"></div>
+          <div class="ai-mini-test" id="vocabularyTest" hidden>
+            <h3 class="ai-mini-test__title">Мини-тест</h3>
+            <p class="ai-mini-test__text" id="vocabularyQuestion">—</p>
+            <div class="ai-mini-test__options" id="vocabularyOptions"></div>
+          </div>
+        </section>
       </div>
+    </section>
 
-      <!-- HOME -->
-      <section class="container view view--home" id="viewHome" data-view="home">
-        <div class="home">
-          <div class="home__block">
-            <h2 class="home__heading">Выберите режим практики</h2>
-
-            <div class="modes" id="modesGrid">
-              <!-- Mode cards (static, handled by JS) -->
-              <button class="card mode mode--clickable" data-route="sentence" type="button">
-                <div class="mode__inner">
-                  <div class="mode__icon">✍️</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Проверка предложения</h3>
-                    <p class="mode__desc">Напиши фразу — я исправлю и объясню</p>
-                  </div>
-                </div>
-              </button>
-
-              <button class="card mode mode--clickable" data-route="dialog" type="button">
-                <div class="mode__inner">
-                  <div class="mode__icon">🗣</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Диалог</h3>
-                    <p class="mode__desc">Кафе / Магазин / Университет / Собеседование</p>
-                  </div>
-                </div>
-              </button>
-
-              <button class="card mode mode--clickable" data-route="tutor" type="button">
-                <div class="mode__inner">
-                  <div class="mode__icon">🧑‍🏫</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Репетитор по уроку</h3>
-                    <p class="mode__desc">Задай вопрос по текущему уроку или теме</p>
-                  </div>
-                </div>
-              </button>
-
-              <button class="card mode mode--disabled" type="button" disabled>
-                <span class="mode__badge">Скоро</span>
-                <div class="mode__inner">
-                  <div class="mode__icon">📝</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Генерация упражнений</h3>
-                    <p class="mode__desc">Получи персональные задания для практики</p>
-                  </div>
-                </div>
-              </button>
-
-              <button class="card mode mode--disabled" type="button" disabled>
-                <span class="mode__badge">Скоро</span>
-                <div class="mode__inner">
-                  <div class="mode__icon">📚</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Словарь</h3>
-                    <p class="mode__desc">Узнай перевод и примеры использования слов</p>
-                  </div>
-                </div>
-              </button>
-
-              <button class="card mode mode--disabled" type="button" disabled>
-                <span class="mode__badge">Скоро</span>
-                <div class="mode__inner">
-                  <div class="mode__icon">🎧</div>
-                  <div class="mode__text">
-                    <h3 class="mode__title">Аудирование</h3>
-                    <p class="mode__desc">Практикуй восприятие речи на слух</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-<!--          <div class="home__stats">-->
-<!--            <section class="card stat">-->
-<!--              <h3 class="stat__title">Прогресс сессии</h3>-->
-
-<!--              <div class="stat__grid">-->
-<!--                <div class="stat__item">-->
-<!--                  <div class="stat__icon stat__icon&#45;&#45;blue" aria-hidden="true">-->
-<!--                    <span class="icon icon&#45;&#45;clock"></span>-->
-<!--                  </div>-->
-<!--                  <div class="stat__num" id="minutesToday">14</div>-->
-<!--                  <div class="stat__label">минут</div>-->
-<!--                </div>-->
-
-<!--                <div class="stat__item">-->
-<!--                  <div class="stat__icon stat__icon&#45;&#45;amber" aria-hidden="true">-->
-<!--                    <span class="icon icon&#45;&#45;check"></span>-->
-<!--                  </div>-->
-<!--                  <div class="stat__num" id="errorsCorrected">9</div>-->
-<!--                  <div class="stat__label">ошибок</div>-->
-<!--                </div>-->
-
-<!--                <div class="stat__item">-->
-<!--                  <div class="stat__icon stat__icon&#45;&#45;green" aria-hidden="true">-->
-<!--                    <span class="icon icon&#45;&#45;book"></span>-->
-<!--                  </div>-->
-<!--                  <div class="stat__num" id="newWords">6</div>-->
-<!--                  <div class="stat__label">слов</div>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </section>-->
-
-<!--            <section class="card achievements">-->
-<!--              <div class="achievements__head">-->
-<!--                <span class="icon icon&#45;&#45;award achievements__award" aria-hidden="true"></span>-->
-<!--                <h3 class="achievements__title">Достижения</h3>-->
-<!--              </div>-->
-
-<!--              <div class="achievements__list" id="achievementsList">-->
-<!--                &lt;!&ndash; JS renders &ndash;&gt;-->
-<!--              </div>-->
-<!--            </section>-->
-<!--          </div>-->
+    <section class="ai-bottom">
+      <article class="ai-achievements">
+        <div class="ai-block-head">
+          <h2 class="ai-block-head__title">Достижения</h2>
+          <p class="ai-block-head__text">Небольшие награды за регулярную практику.</p>
         </div>
-      </section>
-
-      <!-- SENTENCE MODE -->
-      <section class="container view" id="viewSentence" data-view="sentence" hidden>
-        <div class="layout">
-          <aside class="card settings settings--sticky" id="sentenceSettings">
-            <h3 class="settings__title">Настройки</h3>
-
-            <div class="settings__group">
-              <label class="settings__label">Уровень</label>
-              <div class="chips" id="sentenceLevel">
-                <button class="chip chip--active" type="button" data-level="A1">A1</button>
-                <button class="chip" type="button" data-level="A2">A2</button>
-                <button class="chip" type="button" data-level="B1">B1</button>
-              </div>
-            </div>
-
-            <div class="settings__group">
-              <label class="settings__label">Сложность объяснений</label>
-              <div class="chips chips--col" id="sentenceComplexity">
-                <button class="chip chip--active chip--center" type="button" data-complexity="simple">Просто</button>
-                <button class="chip chip--center" type="button" data-complexity="detailed">Подробно</button>
-              </div>
-            </div>
-
-            <button class="button button--primary button--full" id="sentenceCheckBtn" type="button" disabled>
-              Проверить
-            </button>
-          </aside>
-
-          <div class="work">
-            <section class="card work__input">
-              <label class="work__label" for="sentenceTextarea">Ваше предложение на казахском</label>
-              <textarea class="textarea" id="sentenceTextarea" placeholder="Напишите предложение, которое хотите проверить..." rows="5"></textarea>
-            </section>
-
-            <section class="card work__loading" id="sentenceLoading" hidden>
-              <div class="loading">
-                <div class="spinner" aria-hidden="true"></div>
-                <p class="loading__text">Анализирую предложение...</p>
-              </div>
-            </section>
-
-            <section class="work__result" id="sentenceResult" hidden>
-              <!-- JS renders ResultCard -->
-            </section>
-
-            <section class="work__empty" id="sentenceEmpty">
-              <div class="empty">
-                <div class="empty__icon">✍️</div>
-                <h3 class="empty__title">Введите предложение</h3>
-                <p class="empty__desc">
-                  Напишите фразу на казахском языке, и я проверю её на ошибки и дам подробное объяснение
-                </p>
-              </div>
-            </section>
+        <div class="ai-achievements__grid">
+          <div class="ai-achievement">
+            <strong id="achievementChecks">0</strong>
+            <span>Проверил предложений</span>
+          </div>
+          <div class="ai-achievement">
+            <strong id="achievementDialogs">0</strong>
+            <span>Диалога подряд</span>
+          </div>
+          <div class="ai-achievement">
+            <strong id="achievementDays">0</strong>
+            <span>Дней практики</span>
           </div>
         </div>
-      </section>
-
-      <!-- DIALOG MODE -->
-      <section class="container view" id="viewDialog" data-view="dialog" hidden>
-        <div class="layout">
-          <aside class="card settings settings--sticky settings--desktop" id="dialogSettings">
-            <h3 class="settings__title">Настройки диалога</h3>
-
-            <div class="settings__group">
-              <label class="settings__label">Сценарий</label>
-              <div class="chips chips--grid" id="dialogScenario">
-                <!-- JS renders -->
-              </div>
-            </div>
-
-            <div class="settings__group">
-              <label class="settings__label">Уровень</label>
-              <div class="chips" id="dialogLevel">
-                <button class="chip chip--active" type="button" data-level="A1">A1</button>
-                <button class="chip" type="button" data-level="A2">A2</button>
-                <button class="chip" type="button" data-level="B1">B1</button>
-              </div>
-            </div>
-
-            <div class="settings__group">
-              <label class="settings__label">Тон</label>
-              <div class="chips" id="dialogTone">
-                <button class="chip chip--active chip--center" type="button" data-tone="friendly">Дружелюбно</button>
-                <button class="chip chip--center" type="button" data-tone="formal">Официально</button>
-              </div>
-            </div>
-
-            <button class="button button--primary button--full" id="dialogStartBtn" type="button">
-              Начать диалог
-            </button>
-          </aside>
-
-          <div class="work">
-            <!-- mobile settings trigger -->
-            <div class="mobilebar">
-              <button class="button button--outline mobilebar__btn" id="dialogMobileSettingsBtn" type="button">
-                <span class="icon icon--settings" aria-hidden="true"></span>
-                Настройки
-              </button>
-            </div>
-
-            <section class="card chat">
-              <div class="chat__head">
-                <div class="chat__title">
-                  <span class="icon icon--message" aria-hidden="true"></span>
-                  Диалог
-                </div>
-                <button class="button button--ghost chat__hint" id="dialogHintBtn" type="button" title="Подсказка">
-                  <span class="icon icon--bulb" aria-hidden="true"></span>
-                </button>
-              </div>
-
-              <div class="chat__body" id="dialogMessages">
-                <div class="empty empty--compact" id="dialogEmpty">
-                  <div class="empty__icon">🗣</div>
-                  <h3 class="empty__title">Начните диалог</h3>
-                  <p class="empty__desc">Выберите сценарий и нажмите “Начать диалог”</p>
-                </div>
-              </div>
-
-              <div class="chat__footer">
-                <input class="input" id="dialogInput" type="text" placeholder="Напишите ответ на казахском..." disabled />
-                <button class="button button--primary chat__send" id="dialogSendBtn" type="button" disabled>
-                  <span class="icon icon--send" aria-hidden="true"></span>
-                </button>
-              </div>
-            </section>
-          </div>
+      </article>
+      <article class="ai-errors">
+        <div class="ai-block-head">
+          <h2 class="ai-block-head__title">Практика по ошибкам</h2>
+          <p class="ai-block-head__text">Тема, в которой ты чаще всего ошибаешься.</p>
         </div>
-      </section>
-
-      <!-- TUTOR MODE -->
-      <section class="container view" id="viewTutor" data-view="tutor" hidden>
-        <div class="layout">
-          <aside class="card settings settings--sticky settings--desktop" id="tutorSettings">
-            <h3 class="settings__title">Настройки</h3>
-
-            <div class="settings__group">
-              <label class="settings__label">Урок</label>
-
-              <div class="select" id="lessonSelect">
-                <button class="select__trigger" id="lessonTrigger" type="button" aria-haspopup="listbox" aria-expanded="false">
-                  <span class="select__value" id="lessonValue">Текущий урок (Урок 12 — Келер шақ)</span>
-                  <span class="icon icon--chevron" aria-hidden="true"></span>
-                </button>
-
-                <div class="select__menu" id="lessonMenu" role="listbox" aria-hidden="true">
-                  <!-- JS renders -->
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <div class="work">
-            <div class="mobilebar">
-              <button class="button button--outline mobilebar__btn" id="tutorMobileSettingsBtn" type="button">
-                <span class="icon icon--settings" aria-hidden="true"></span>
-                Настройки
-              </button>
-            </div>
-
-            <section class="card chat">
-              <div class="chat__head">
-                <div class="chat__title">
-                  <span class="icon icon--book" aria-hidden="true"></span>
-                  Репетитор
-                </div>
-              </div>
-
-              <div class="chat__body" id="tutorMessages">
-                <!-- JS renders (initial has AI message) -->
-              </div>
-
-              <div class="chat__footer">
-                <input class="input" id="tutorInput" type="text" placeholder="Задайте вопрос по уроку..." />
-                <button class="button button--primary chat__send" id="tutorSendBtn" type="button">
-                  <span class="icon icon--send" aria-hidden="true"></span>
-                </button>
-              </div>
-            </section>
-          </div>
+        <div class="ai-errors__card">
+          <strong id="mistakeTopicTitle">Прошедшее время</strong>
+          <p id="mistakeTopicText">После нескольких проверок здесь появится твоя самая частая тема ошибок.</p>
+          <button class="ai-btn ai-btn--primary" type="button" id="practiceMistakeBtn">Потренировать тему</button>
         </div>
-      </section>
-
-      <!-- MOBILE SETTINGS SHEET -->
-      <div class="sheet sheet--bottom" id="mobileSettingsSheet" aria-hidden="true">
-        <div class="sheet__backdrop" id="mobileSettingsBackdrop"></div>
-        <aside class="sheet__panel sheet__panel--bottom" role="dialog" aria-modal="true" aria-label="Настройки">
-          <div class="sheet__head">
-            <h2 class="sheet__title">Настройки</h2>
-            <button class="button button--ghost sheet__close" id="mobileSettingsCloseBtn" type="button" aria-label="Закрыть">✕</button>
-          </div>
-          <div class="sheet__content" id="mobileSettingsBody">
-            <!-- JS injects current mode settings markup clone -->
-          </div>
-        </aside>
-      </div>
-
-      <!-- TOAST -->
-      <div class="toast" id="toast" aria-live="polite" aria-atomic="true" hidden>
-        <div class="toast__inner" id="toastText">Скопировано!</div>
-      </div>
-    </main>
+      </article>
+    </section>
   </div>
+</main>
 
-  <script src="/js/auth-guard.js"></script>
-  <script src="/js/api.js"></script>
-  <script src="/js/authFetch.js"></script>
-  <script src="/js/anatilui.js"></script>
-<script src="/js/headerdash.js"></script>
+<div class="ai-history" id="historyDrawer" hidden>
+  <div class="ai-history__overlay" id="historyOverlay"></div>
+  <div class="ai-history__panel">
+    <div class="ai-history__head">
+      <h2 class="ai-history__title">История сессий</h2>
+      <button class="ai-btn ai-btn--icon" type="button" id="closeHistoryBtn">✕</button>
+    </div>
+    <div class="ai-history__list" id="historyList"></div>
+  </div>
+</div>
+
+<script src="/js/authFetch.js"></script>
+<script src="/js/header.js"></script>
+<script src="/js/anatilui.js"></script>
 </body>
 </html>

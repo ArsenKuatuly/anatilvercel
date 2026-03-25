@@ -1,1186 +1,863 @@
 (function () {
-    // -----------------------------
-    // Helpers
-    // -----------------------------
-    const $ = (sel, root = document) => root.querySelector(sel);
-    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const STORAGE_KEY = 'anatil_ai_practice_state_v1';
+  const DEFAULT_DAILY_LIMIT = 50;
 
-    function nowTimeRU() {
-        const d = new Date();
-        return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  const state = {
+    mode: 'check',
+    user: null,
+    currentLesson: null,
+    summaryPercent: 0,
+    usage: { used: 0, total: DEFAULT_DAILY_LIMIT },
+    sessionStats: { minutes: 0, errors: 0, words: 0 },
+    achievements: { checks: 0, dialogs: 0, days: 1 },
+    history: [],
+    check: { lastInput: '', lastResult: null },
+    dialog: { started: false, messages: [] },
+    tutor: { messages: [] },
+    vocabulary: { words: [], test: null },
+    focusTopic: 'Прошедшее время'
+  };
+
+  const els = {
+    modeButtons: document.querySelectorAll('[data-mode]'),
+    settingsPanels: document.querySelectorAll('[data-settings]'),
+    screens: document.querySelectorAll('[data-screen]'),
+    openModeButtons: document.querySelectorAll('[data-open-mode]'),
+    openHistoryBtn: document.getElementById('openHistoryBtn'),
+    openLastSessionBtn: document.getElementById('openLastSessionBtn'),
+    closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+    historyDrawer: document.getElementById('historyDrawer'),
+    historyOverlay: document.getElementById('historyOverlay'),
+    historyList: document.getElementById('historyList'),
+    adminBtn: document.getElementById('adminBtn'),
+    currentLessonTitle: document.getElementById('currentLessonTitle'),
+    tutorContextTag: document.getElementById('tutorContextTag'),
+    summaryTitle: document.getElementById('summaryTitle'),
+    summaryText: document.getElementById('summaryText'),
+    summaryProgressBar: document.getElementById('summaryProgressBar'),
+    dailyUsage: document.getElementById('dailyUsage'),
+    dailyUsageBar: document.getElementById('dailyUsageBar'),
+    todayPracticeValue: document.getElementById('todayPracticeValue'),
+    todayErrorsValue: document.getElementById('todayErrorsValue'),
+    todayWordsValue: document.getElementById('todayWordsValue'),
+    lastSessionTitle: document.getElementById('lastSessionTitle'),
+    lastSessionMeta: document.getElementById('lastSessionMeta'),
+    lastSessionMessages: document.getElementById('lastSessionMessages'),
+    lastSessionWords: document.getElementById('lastSessionWords'),
+    lastSessionErrors: document.getElementById('lastSessionErrors'),
+    checkInput: document.getElementById('checkInput'),
+    checkSentenceBtn: document.getElementById('checkSentenceBtn'),
+    checkResult: document.getElementById('checkResult'),
+    checkCorrected: document.getElementById('checkCorrected'),
+    checkErrorsList: document.getElementById('checkErrorsList'),
+    checkRule: document.getElementById('checkRule'),
+    checkExamples: document.getElementById('checkExamples'),
+    checkTask: document.getElementById('checkTask'),
+    copyCorrectedBtn: document.getElementById('copyCorrectedBtn'),
+    checkActionButtons: document.querySelectorAll('[data-check-action]'),
+    startDialogBtn: document.getElementById('startDialogBtn'),
+    showHintBtn: document.getElementById('showHintBtn'),
+    dialogMessages: document.getElementById('dialogMessages'),
+    dialogInput: document.getElementById('dialogInput'),
+    sendDialogBtn: document.getElementById('sendDialogBtn'),
+    tutorMessages: document.getElementById('tutorMessages'),
+    tutorInput: document.getElementById('tutorInput'),
+    sendTutorBtn: document.getElementById('sendTutorBtn'),
+    useCurrentLessonBtn: document.getElementById('useCurrentLessonBtn'),
+    generateWordsBtn: document.getElementById('generateWordsBtn'),
+    vocabularyWords: document.getElementById('vocabularyWords'),
+    vocabularyTest: document.getElementById('vocabularyTest'),
+    vocabularyQuestion: document.getElementById('vocabularyQuestion'),
+    vocabularyOptions: document.getElementById('vocabularyOptions'),
+    achievementChecks: document.getElementById('achievementChecks'),
+    achievementDialogs: document.getElementById('achievementDialogs'),
+    achievementDays: document.getElementById('achievementDays'),
+    mistakeTopicTitle: document.getElementById('mistakeTopicTitle'),
+    mistakeTopicText: document.getElementById('mistakeTopicText'),
+    practiceMistakeBtn: document.getElementById('practiceMistakeBtn')
+  };
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+      Object.assign(state.usage, parsed.usage || {});
+      Object.assign(state.sessionStats, parsed.sessionStats || {});
+      Object.assign(state.achievements, parsed.achievements || {});
+      state.history = Array.isArray(parsed.history) ? parsed.history : [];
+      state.focusTopic = parsed.focusTopic || state.focusTopic;
+    } catch (error) {
+      console.error(error);
     }
+  }
 
-    function setHidden(el, hidden) {
-        if (!el) return;
-        el.hidden = !!hidden;
+  function saveState() {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          usage: state.usage,
+          sessionStats: state.sessionStats,
+          achievements: state.achievements,
+          history: state.history.slice(0, 20),
+          focusTopic: state.focusTopic
+        })
+      );
+    } catch (error) {
+      console.error(error);
     }
+  }
 
-    function toast(msg) {
-        const t = $("#toast");
-        const tt = $("#toastText");
-        if (!t || !tt) return;
-        tt.textContent = msg;
-        t.hidden = false;
-        clearTimeout(toast._timer);
-        toast._timer = setTimeout(() => (t.hidden = true), 1400);
-    }
+  function escapeHtml(value) {
+    return String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
 
-    function escapeHtml(s) {
-        return String(s)
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
-    }
+  function getActiveChipValue(groupName) {
+    const active = document.querySelector('[data-chip-group="' + groupName + '"] .ai-chip--active');
+    return active ? active.dataset.value || active.textContent.trim() : '';
+  }
 
-    // -----------------------------
-    // AI Session + Usage badge
-    // -----------------------------
-    let activeAiSessionId = null;
-
-    async function ensureSession(mode, meta = {}) {
-        if (activeAiSessionId) return activeAiSessionId;
-
-        if (typeof window.apiFetch !== "function") {
-            throw new Error("apiFetch is not available");
-        }
-
-        const out = await window.apiFetch("/api/ai/session/start", {
-            method: "POST",
-            body: JSON.stringify({ mode, ...meta }),
-        });
-
-        const d = out?.data;
-        if (!d?.success || !d?.session?.id) {
-            throw new Error(d?.message || "Session start failed");
-        }
-
-        activeAiSessionId = d.session.id;
-        return activeAiSessionId;
-    }
-
-    function resetSession() {
-        activeAiSessionId = null;
-    }
-
-    async function refreshAiUsageBadge() {
-        try {
-            if (typeof window.apiFetch !== "function") return;
-            const out = await window.apiFetch("/api/ai/usage/today", { method: "GET" });
-            const d = out?.data;
-            if (!d?.success) return;
-
-            const now = $("#messagesNow");
-            const max = $("#messagesMax");
-            if (now) now.textContent = String(d.used);
-            if (max) max.textContent = String(d.limit);
-        } catch {
-            // ignore
-        }
-    }
-
-    // -----------------------------
-    // AI API (Vercel /api/ai/chat)
-    // -----------------------------
-    async function aiChat(message, sessionId) {
-        // Prefer apiFetch if exists (common in your project), fallback to fetch
-        if (typeof window.apiFetch === "function") {
-            const out = await window.apiFetch("/api/ai/chat", {
-                method: "POST",
-                body: JSON.stringify({ message, sessionId }),
-            });
-
-            const data = out && out.data;
-            if (!data) throw new Error("Empty response");
-            if (data.error) throw new Error(data.details || data.error);
-            if (typeof data.reply !== "string") throw new Error("Bad AI response");
-
-            // Update badge if backend returns usage
-            if (data.usage) {
-                const now = $("#messagesNow");
-                const max = $("#messagesMax");
-                if (now) now.textContent = String(data.usage.used);
-                if (max) max.textContent = String(data.usage.limit);
-            }
-
-            return data.reply;
-        }
-
-        const r = await fetch("/api/ai/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, sessionId }),
-        });
-        const data = await r.json().catch(() => null);
-        if (!r.ok) throw new Error((data && (data.details || data.error)) || "Request failed");
-        if (!data || typeof data.reply !== "string") throw new Error("Bad AI response");
-        return data.reply;
-    }
-
-    function extractJsonFromText(text) {
-        const s = String(text || "").trim();
-        if (!s) return null;
-
-        // If wrapped in ```json ... ```
-        const fenced = s.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-        const candidate = fenced ? fenced[1].trim() : s;
-
-        try {
-            return JSON.parse(candidate);
-        } catch {
-            // Try to slice first {...} block
-            const i = candidate.indexOf("{");
-            const j = candidate.lastIndexOf("}");
-            if (i >= 0 && j > i) {
-                try {
-                    return JSON.parse(candidate.slice(i, j + 1));
-                } catch {
-                    return null;
-                }
-            }
-            return null;
-        }
-    }
-
-    // -----------------------------
-    // Routing (hash-based)
-    // -----------------------------
-    const views = {
-        home: $("#viewHome"),
-        sentence: $("#viewSentence"),
-        dialog: $("#viewDialog"),
-        tutor: $("#viewTutor"),
-    };
-
-    const backBar = $("#backBar");
-    const backBtn = $("#backBtn");
-
-    function showView(name) {
-        Object.keys(views).forEach((k) => setHidden(views[k], k !== name));
-        setHidden(backBar, name === "home");
-    }
-
-    function getRoute() {
-        const h = (location.hash || "#/").trim();
-        const path = h.replace(/^#\/?/, "");
-        if (!path) return "home";
-        if (views[path]) return path;
-        return "home";
-    }
-
-    function go(route) {
-        location.hash = route === "home" ? "#/" : `#/${route}`;
-    }
-
-    window.addEventListener("hashchange", () => {
-        const route = getRoute();
-        showView(route);
-
-        // New route => new session
-        resetSession();
-
-        // When opening dialog/tutor on mobile, ensure sheet closed
-        closeMobileSettings();
+  function bindChipGroups() {
+    document.querySelectorAll('[data-chip-group]').forEach((group) => {
+      group.addEventListener('click', (event) => {
+        const button = event.target.closest('.ai-chip');
+        if (!button) return;
+        group.querySelectorAll('.ai-chip').forEach((chip) => chip.classList.remove('ai-chip--active'));
+        button.classList.add('ai-chip--active');
+      });
     });
+  }
 
-    // -----------------------------
-    // History panel (Sheet)
-    // -----------------------------
-    const historySheet = $("#historySheet");
-    const historyOpenBtn = $("#historyOpenBtn");
-    const historyCloseBtn = $("#historyCloseBtn");
-    const historyBackdrop = $("#historyBackdrop");
-    const historyList = $("#historyList");
+  function setMode(mode) {
+    state.mode = mode;
+    els.modeButtons.forEach((button) => {
+      button.classList.toggle('ai-mode--active', button.dataset.mode === mode);
+    });
+    els.settingsPanels.forEach((panel) => {
+      panel.classList.toggle('ai-panel--active', panel.dataset.settings === mode);
+    });
+    els.screens.forEach((screen) => {
+      screen.classList.toggle('ai-screen--active', screen.dataset.screen === mode);
+    });
+  }
 
-    const historyItems = [
-        { id: "1", mode: "sentence", date: "1 марта, 14:32", topic: "Проверка предложения", preview: "Мен кофе ішемін..." },
-        { id: "2", mode: "dialog", date: "1 марта, 12:15", topic: "Диалог: Кафе", preview: "Практиковал заказ в кафе" },
-        { id: "3", mode: "tutor", date: "28 февраля, 18:45", topic: "Урок 12 — Келер шақ", preview: "Вопросы по будущему времени" },
-    ];
-
-    function modeBadgeClass(mode) {
-        if (mode === "sentence") return "hitem__badge hitem__badge--purple";
-        if (mode === "dialog") return "hitem__badge hitem__badge--blue";
-        return "hitem__badge hitem__badge--green";
-    }
-    function modeLabel(mode) {
-        if (mode === "sentence") return "Проверка";
-        if (mode === "dialog") return "Диалог";
-        return "Репетитор";
-    }
-    function modeIcon(mode) {
-        if (mode === "sentence") return "✍️";
-        if (mode === "dialog") return "💬";
-        return "🎓";
-    }
-
-    function renderHistory() {
-        if (!historyList) return;
-        historyList.innerHTML = historyItems
-            .map((it) => {
-                return `
-          <div class="hitem" data-go="${it.mode}">
-            <div class="hitem__top">
-              <div class="${modeBadgeClass(it.mode)}">${modeIcon(it.mode)} ${modeLabel(it.mode)}</div>
-              <div class="hitem__date"><span class="icon icon--clock" aria-hidden="true"></span>${it.date}</div>
-            </div>
-            <h4 class="hitem__title">${it.topic}</h4>
-            <p class="hitem__preview">${it.preview}</p>
-          </div>
-        `;
-            })
-            .join("");
-
-        $$(".hitem", historyList).forEach((node) => {
-            node.addEventListener("click", () => {
-                const r = node.getAttribute("data-go") || "home";
-                closeHistory();
-                go(r);
-            });
-        });
-    }
-
-    function openHistory() {
-        if (!historySheet) return;
-        historySheet.classList.add("sheet--open");
-        historySheet.setAttribute("aria-hidden", "false");
-    }
-    function closeHistory() {
-        if (!historySheet) return;
-        historySheet.classList.remove("sheet--open");
-        historySheet.setAttribute("aria-hidden", "true");
-    }
-
-    historyOpenBtn && historyOpenBtn.addEventListener("click", openHistory);
-    historyCloseBtn && historyCloseBtn.addEventListener("click", closeHistory);
-    historyBackdrop && historyBackdrop.addEventListener("click", closeHistory);
-
+  function openHistory() {
     renderHistory();
+    if (!els.historyDrawer) return;
+    els.historyDrawer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
 
-    // -----------------------------
-    // Home: achievements
-    // -----------------------------
-    const achievementsList = $("#achievementsList");
-    const achievements = [
-        { icon: "✅", title: "Проверил 10 предложений", achieved: true },
-        { icon: "💬", title: "Прошёл 3 диалога подряд", achieved: true },
-        { icon: "🔥", title: "7 дней подряд практика", achieved: false },
-    ];
+  function closeHistory() {
+    if (!els.historyDrawer) return;
+    els.historyDrawer.hidden = true;
+    document.body.style.overflow = '';
+  }
 
-    function renderAchievements() {
-        if (!achievementsList) return;
-        achievementsList.innerHTML = achievements
-            .map((a) => {
-                const cls = a.achieved ? "ach ach--on" : "ach ach--off";
-                return `
-          <div class="${cls}">
-            <div class="ach__icon">${a.icon}</div>
-            <div class="ach__text">${a.title}</div>
-          </div>
-        `;
-            })
-            .join("");
+  function setUsage(used, total) {
+    state.usage.used = used;
+    state.usage.total = total || DEFAULT_DAILY_LIMIT;
+    const percent = Math.max(0, Math.min(100, Math.round((state.usage.used / state.usage.total) * 100)));
+    if (els.dailyUsage) els.dailyUsage.textContent = state.usage.used + ' / ' + state.usage.total;
+    if (els.dailyUsageBar) els.dailyUsageBar.style.width = percent + '%';
+  }
+
+  function increaseUsage(step) {
+    setUsage(Math.min(state.usage.total, state.usage.used + (step || 1)), state.usage.total);
+    saveState();
+  }
+
+  function updateStatsView() {
+    if (els.todayPracticeValue) els.todayPracticeValue.textContent = state.sessionStats.minutes + ' мин';
+    if (els.todayErrorsValue) els.todayErrorsValue.textContent = String(state.sessionStats.errors);
+    if (els.todayWordsValue) els.todayWordsValue.textContent = String(state.sessionStats.words);
+    if (els.achievementChecks) els.achievementChecks.textContent = String(state.achievements.checks);
+    if (els.achievementDialogs) els.achievementDialogs.textContent = String(state.achievements.dialogs);
+    if (els.achievementDays) els.achievementDays.textContent = String(state.achievements.days);
+    if (els.mistakeTopicTitle) els.mistakeTopicTitle.textContent = state.focusTopic;
+    if (els.mistakeTopicText) {
+      els.mistakeTopicText.textContent = 'Сейчас чаще всего встречаются ошибки по теме: ' + state.focusTopic + '. Открой практику и закрепи правило ещё раз.';
     }
-    renderAchievements();
+  }
 
-    // Home mode cards navigation
-    $$("#modesGrid [data-route]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-            const r = btn.getAttribute("data-route");
-            if (r) go(r);
-        });
+  function updateLastSessionCard() {
+    const session = state.history[0];
+    if (!session) return;
+    if (els.lastSessionTitle) els.lastSessionTitle.textContent = session.title;
+    if (els.lastSessionMeta) els.lastSessionMeta.textContent = session.meta;
+    if (els.lastSessionMessages) els.lastSessionMessages.textContent = String(session.messages || 0);
+    if (els.lastSessionWords) els.lastSessionWords.textContent = String(session.words || 0);
+    if (els.lastSessionErrors) els.lastSessionErrors.textContent = String(session.errors || 0);
+  }
+
+  function pushHistory(entry) {
+    state.history.unshift(entry);
+    state.history = state.history.slice(0, 20);
+    updateLastSessionCard();
+    saveState();
+  }
+
+  function renderHistory() {
+    if (!els.historyList) return;
+    if (!state.history.length) {
+      els.historyList.innerHTML = '<div class="ai-note">Пока нет сохранённых сессий.</div>';
+      return;
+    }
+
+    els.historyList.innerHTML = state.history
+      .map((item, index) => {
+        return [
+          '<button class="ai-history-item" type="button" data-history-index="' + index + '">',
+          '  <span class="ai-history-item__mode">' + escapeHtml(item.modeLabel) + '</span>',
+          '  <strong class="ai-history-item__title">' + escapeHtml(item.title) + '</strong>',
+          '  <span class="ai-history-item__meta">' + escapeHtml(item.meta) + '</span>',
+          '</button>'
+        ].join('');
+      })
+      .join('');
+  }
+
+  function attachHistoryClicks() {
+    if (!els.historyList) return;
+    els.historyList.addEventListener('click', (event) => {
+      const item = event.target.closest('[data-history-index]');
+      if (!item) return;
+      const session = state.history[Number(item.dataset.historyIndex)];
+      if (!session) return;
+      closeHistory();
+      if (session.targetMode) setMode(session.targetMode);
+      if (session.targetMode === 'check' && session.payload?.corrected) {
+        renderCheckResult(session.payload);
+      }
+      if (session.targetMode === 'dialog' && session.payload?.messages) {
+        state.dialog.messages = session.payload.messages;
+        renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+      }
+      if (session.targetMode === 'tutor' && session.payload?.messages) {
+        state.tutor.messages = session.payload.messages;
+        renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
+      }
+      if (session.targetMode === 'vocabulary' && session.payload?.words) {
+        state.vocabulary.words = session.payload.words;
+        state.vocabulary.test = session.payload.test || null;
+        renderVocabulary();
+      }
     });
+  }
 
-    // Back button
-    backBtn && backBtn.addEventListener("click", () => go("home"));
+  function parseResponsePayload(payload) {
+    if (!payload) return null;
+    if (typeof payload === 'string') return payload;
+    if (typeof payload.reply === 'string') return payload.reply;
+    if (typeof payload.message === 'string') return payload.message;
+    if (typeof payload.text === 'string') return payload.text;
+    if (typeof payload.response === 'string') return payload.response;
+    if (typeof payload.result === 'string') return payload.result;
+    if (payload.data) return parseResponsePayload(payload.data);
+    if (Array.isArray(payload.choices) && payload.choices[0]?.message?.content) return payload.choices[0].message.content;
+    return null;
+  }
 
-    // -----------------------------
-    // Sentence mode
-    // -----------------------------
-    let sentenceState = {
-        level: "A1",
-        complexity: "simple",
-        sentence: "",
-        loading: false,
-        result: null,
+  async function request(url, options) {
+    if (typeof authFetch === 'function') {
+      const out = await authFetch(url, options);
+      if (!out) return null;
+      if (out.data !== undefined) return out.data;
+      if (typeof out.json === 'function') return out.json();
+      return out;
+    }
+
+    const res = await fetch(url, Object.assign({ credentials: 'include' }, options || {}));
+    return res.json();
+  }
+
+  async function aiChat(promptPayload) {
+    const body = JSON.stringify(promptPayload);
+    const data = await request('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    });
+    return parseResponsePayload(data) || '';
+  }
+
+  function extractJson(text) {
+    if (!text) return null;
+    const cleaned = text.replace(/^```json\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+    try {
+      return JSON.parse(cleaned);
+    } catch (error) {}
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function wordCount(text) {
+    return String(text || '').trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function setButtonLoading(button, loading, label) {
+    if (!button) return;
+    if (loading) {
+      button.dataset.initialLabel = button.textContent;
+      button.disabled = true;
+      button.textContent = label || 'Загрузка...';
+    } else {
+      button.disabled = false;
+      if (button.dataset.initialLabel) button.textContent = button.dataset.initialLabel;
+    }
+  }
+
+  function renderCheckResult(result) {
+    if (!els.checkResult) return;
+    els.checkResult.hidden = false;
+    if (els.checkCorrected) els.checkCorrected.textContent = result.corrected || '—';
+    if (els.checkRule) els.checkRule.textContent = result.rule || '—';
+    if (els.checkTask) els.checkTask.textContent = result.task || '—';
+    if (els.checkErrorsList) {
+      const errors = Array.isArray(result.errors) && result.errors.length ? result.errors : ['Ошибки не найдены.'];
+      els.checkErrorsList.innerHTML = errors.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
+    }
+    if (els.checkExamples) {
+      const examples = Array.isArray(result.examples) && result.examples.length ? result.examples : ['Дополнительные примеры не получены.'];
+      els.checkExamples.innerHTML = examples.map((item) => '<div class="ai-example">' + escapeHtml(item) + '</div>').join('');
+    }
+  }
+
+  function fallbackCheckResult(text) {
+    return {
+      corrected: text,
+      errors: ['ИИ вернул общий ответ. Проверь формулировку и попробуй ещё раз.'],
+      rule: 'Структурированный ответ не получен, поэтому показываем общий результат.',
+      examples: ['Мен кеше дүкенге бардым.', 'Мен бүгін сабақ оқып отырмын.', 'Мен ертең досыммен кездесемін.'],
+      task: 'Сделай ещё одно предложение на ту же тему.'
     };
+  }
 
-    const sentenceLevel = $("#sentenceLevel");
-    const sentenceComplexity = $("#sentenceComplexity");
-    const sentenceTextarea = $("#sentenceTextarea");
-    const sentenceCheckBtn = $("#sentenceCheckBtn");
-    const sentenceLoading = $("#sentenceLoading");
-    const sentenceResult = $("#sentenceResult");
-    const sentenceEmpty = $("#sentenceEmpty");
-
-    function setChipActive(container, selectorAttr, value) {
-        if (!container) return;
-        $$(`button[${selectorAttr}]`, container).forEach((b) => {
-            b.classList.toggle("chip--active", b.getAttribute(selectorAttr) === value);
-        });
+  async function handleCheck(customInstruction) {
+    const text = (els.checkInput?.value || '').trim();
+    if (!text) {
+      alert('Напиши предложение для проверки');
+      return;
     }
 
-    function sentenceUpdateUI() {
-        setHidden(sentenceLoading, !sentenceState.loading);
-        setHidden(sentenceEmpty, sentenceState.loading || !!sentenceState.result);
-        setHidden(sentenceResult, !sentenceState.result || sentenceState.loading);
+    setButtonLoading(els.checkSentenceBtn, true, 'Проверяем...');
 
-        if (sentenceCheckBtn) {
-            const can = !!sentenceState.sentence.trim() && !sentenceState.loading;
-            sentenceCheckBtn.disabled = !can;
-        }
+    try {
+      const level = getActiveChipValue('checkLevel') || 'A1';
+      const explainMode = getActiveChipValue('checkExplain') || 'simple';
+      const modifier = customInstruction ? ' Дополнительная команда: ' + customInstruction + '.' : '';
+      const prompt = [
+        'Ты — преподаватель казахского языка для русскоязычного ученика.',
+        'Проверь предложение и ответь только JSON-объектом со следующими ключами:',
+        'corrected (string), errors (array of strings), rule (string), examples (array of 3 strings), task (string).',
+        'Уровень ученика: ' + level + '.',
+        'Стиль объяснения: ' + explainMode + '.',
+        'Предложение: ' + text + '.',
+        modifier
+      ].join(' ');
 
-        if (sentenceResult && sentenceState.result && !sentenceState.loading) {
-            sentenceResult.innerHTML = renderResultCard(sentenceState.result);
-            bindResultCard(sentenceResult, sentenceState.result);
-        }
+      const raw = await aiChat({
+        mode: 'sentence_check',
+        message: text,
+        prompt,
+        meta: { level, explainMode }
+      });
+
+      const parsed = extractJson(raw);
+      const result = parsed || fallbackCheckResult(raw || text);
+      state.check.lastInput = text;
+      state.check.lastResult = result;
+      renderCheckResult(result);
+      state.sessionStats.errors += Array.isArray(result.errors) ? result.errors.length : 0;
+      state.sessionStats.minutes += 2;
+      state.achievements.checks += 1;
+      if (Array.isArray(result.errors) && result.errors[0]) {
+        state.focusTopic = result.errors[0].split(':')[0].slice(0, 60) || state.focusTopic;
+      }
+      increaseUsage(1);
+      updateStatsView();
+      pushHistory({
+        modeLabel: 'Проверка предложения',
+        title: 'Проверка: ' + text.slice(0, 32),
+        meta: formatMeta('Сейчас', 1, 0, Array.isArray(result.errors) ? result.errors.length : 0),
+        messages: 1,
+        words: wordCount(text),
+        errors: Array.isArray(result.errors) ? result.errors.length : 0,
+        targetMode: 'check',
+        payload: result
+      });
+    } catch (error) {
+      console.error(error);
+      const fallback = fallbackCheckResult('Не удалось получить ответ от ИИ. Попробуй ещё раз.');
+      renderCheckResult(fallback);
+    } finally {
+      setButtonLoading(els.checkSentenceBtn, false);
+      saveState();
+    }
+  }
+
+  function appendMessage(list, role, text, meta, authorLabel) {
+    const message = { role, text, meta: meta || '' };
+    list.push(message);
+    return message;
+  }
+
+  function renderChat(container, messages, aiAuthor) {
+    if (!container) return;
+    container.innerHTML = messages
+      .map((message) => {
+        const isUser = message.role === 'user';
+        return [
+          '<div class="ai-bubble ' + (isUser ? 'ai-bubble--user' : 'ai-bubble--ai') + '">',
+          '  <span class="ai-bubble__author">' + (isUser ? 'Вы' : aiAuthor) + '</span>',
+          '  <p class="ai-bubble__text">' + escapeHtml(message.text) + '</p>',
+          message.meta ? '  <span class="ai-bubble__meta">' + escapeHtml(message.meta) + '</span>' : '',
+          '</div>'
+        ].join('');
+      })
+      .join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function buildDialogIntro() {
+    const scenario = getActiveChipValue('dialogScenario') || 'Кафе';
+    const level = getActiveChipValue('dialogLevel') || 'A1';
+    const tone = getActiveChipValue('dialogTone') || 'дружелюбно';
+    return { scenario, level, tone };
+  }
+
+  async function startDialog() {
+    setMode('dialog');
+    const setup = buildDialogIntro();
+    setButtonLoading(els.startDialogBtn, true, 'Запускаем...');
+
+    try {
+      const prompt = [
+        'Ты — ИИ для языковой практики казахского языка.',
+        'Начни короткий диалог на тему "' + setup.scenario + '".',
+        'Уровень ученика: ' + setup.level + '.',
+        'Тональность: ' + setup.tone + '.',
+        'Ответь 1 сообщением на казахском и в конце дай короткую русскую подсказку в формате: Ошибки: 0 • Правильно: ...'
+      ].join(' ');
+      const raw = await aiChat({ mode: 'dialog_start', prompt, meta: setup, message: 'Начать диалог' });
+      const first = raw || 'Сәлеметсіз бе! Бүгін не қалайсыз?';
+      state.dialog.started = true;
+      state.dialog.messages = [];
+      appendMessage(state.dialog.messages, 'assistant', first, 'Сценарий: ' + setup.scenario + ' • Уровень: ' + setup.level);
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+      increaseUsage(1);
+    } catch (error) {
+      console.error(error);
+      state.dialog.started = true;
+      state.dialog.messages = [];
+      appendMessage(state.dialog.messages, 'assistant', 'Сәлеметсіз бе! Бүгін не ішесіз?', 'Сценарий: ' + setup.scenario + ' • Уровень: ' + setup.level);
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+    } finally {
+      setButtonLoading(els.startDialogBtn, false);
+      saveState();
+    }
+  }
+
+  async function sendDialogMessage(withHint) {
+    if (!state.dialog.started) await startDialog();
+    const text = withHint ? 'Подскажи, что можно ответить в этой ситуации.' : (els.dialogInput?.value || '').trim();
+    if (!text) return;
+
+    if (!withHint) {
+      appendMessage(state.dialog.messages, 'user', text);
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+      els.dialogInput.value = '';
     }
 
-    function renderResultCard(res) {
-        const errorsHtml = (res.errors || [])
-            .map(
-                (e) => `
-        <div class="err">
-          <p class="err__title">${escapeHtml(e.text)}</p>
-          <p class="err__desc">${escapeHtml(e.explanation)}</p>
-        </div>
-      `
-            )
-            .join("");
+    setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
+    if (els.showHintBtn) els.showHintBtn.disabled = true;
 
-        const examplesHtml = (res.examples || []).map((ex) => `<li>${escapeHtml(ex)}</li>`).join("");
-
-        return `
-      <div class="result">
-        <section class="card result__card">
-          <div class="result__section">
-            <div class="result__head">
-              <span class="icon icon--check" style="color:#16A34A" aria-hidden="true"></span>
-              <h4 class="result__h">Исправленный вариант</h4>
-            </div>
-            <div class="result__box result__box--green">
-              <p>${escapeHtml(res.corrected)}</p>
-              <button class="button button--ghost result__copy" data-copy type="button" title="Копировать">
-                ⧉
-              </button>
-            </div>
-          </div>
-
-          ${
-            (res.errors || []).length
-                ? `
-            <div class="result__section">
-              <div class="result__head">
-                <span class="icon icon--bulb" style="color:#D97706" aria-hidden="true"></span>
-                <h4 class="result__h">Ошибки (${(res.errors || []).length})</h4>
-              </div>
-              <div class="result__errors">${errorsHtml}</div>
-            </div>
-          `
-                : ""
-        }
-
-          ${
-            res.rule
-                ? `
-            <div class="result__section">
-              <div class="result__head">
-                <span class="icon icon--book" style="color:#2563EB" aria-hidden="true"></span>
-                <h4 class="result__h">Правило</h4>
-              </div>
-              <div class="result__rule">${escapeHtml(res.rule)}</div>
-            </div>
-          `
-                : ""
-        }
-
-          ${
-            (res.examples || []).length
-                ? `
-            <div class="result__section">
-              <div class="result__head">
-                <span class="icon icon--book" style="color:#2563EB" aria-hidden="true"></span>
-                <h4 class="result__h">Примеры</h4>
-              </div>
-              <div class="result__examples">
-                <ul>${examplesHtml}</ul>
-              </div>
-            </div>
-          `
-                : ""
-        }
-
-          ${
-            res.exercise
-                ? `
-            <div class="result__section">
-              <div class="result__head">
-                <span class="icon icon--target" aria-hidden="true"></span>
-                <h4 class="result__h">Задание</h4>
-              </div>
-              <div class="result__exercise">${escapeHtml(res.exercise)}</div>
-            </div>
-          `
-                : ""
-        }
-        </section>
-      </div>
-    `;
+    try {
+      const setup = buildDialogIntro();
+      const prompt = [
+        'Ты продолжаешь диалог по-казахски.',
+        'Сценарий: ' + setup.scenario + '.',
+        'Уровень: ' + setup.level + '.',
+        'Тональность: ' + setup.tone + '.',
+        'Если пользователь просит подсказку, дай короткий пример ответа и одно объяснение по-русски.',
+        'Если пользователь отвечает сам, продолжи разговор и в конце допиши: Ошибки: ... / Правильно: ...'
+      ].join(' ');
+      const raw = await aiChat({ mode: 'dialog', prompt, message: text, history: state.dialog.messages.slice(-6), meta: setup });
+      const reply = raw || 'Жақсы, тапсырысыңыз дайын болады.';
+      appendMessage(state.dialog.messages, 'assistant', reply);
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+      state.sessionStats.minutes += 2;
+      if (!withHint) state.achievements.dialogs += 1;
+      increaseUsage(1);
+      updateStatsView();
+      pushHistory({
+        modeLabel: 'Диалог',
+        title: 'Диалог: ' + setup.scenario,
+        meta: formatMeta('Сейчас', state.dialog.messages.length, 0, 0),
+        messages: state.dialog.messages.length,
+        words: wordCount(text),
+        errors: 0,
+        targetMode: 'dialog',
+        payload: { messages: state.dialog.messages.slice(-8) }
+      });
+    } catch (error) {
+      console.error(error);
+      appendMessage(state.dialog.messages, 'assistant', 'Кешіріңіз, жауап уақытша недоступен. Попробуй ещё раз.');
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+    } finally {
+      setButtonLoading(els.sendDialogBtn, false);
+      if (els.showHintBtn) els.showHintBtn.disabled = false;
+      saveState();
     }
+  }
 
-    function bindResultCard(root, res) {
-        const copyBtn = $("[data-copy]", root);
-        copyBtn &&
-        copyBtn.addEventListener("click", async () => {
-            try {
-                await navigator.clipboard.writeText(res.corrected || "");
-                toast("Скопировано!");
-            } catch {
-                toast("Не удалось скопировать");
-            }
-        });
+  async function sendTutorMessage() {
+    const text = (els.tutorInput?.value || '').trim();
+    if (!text) return;
+
+    appendMessage(state.tutor.messages, 'user', text);
+    renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
+    els.tutorInput.value = '';
+    setButtonLoading(els.sendTutorBtn, true, 'Отвечаем...');
+
+    try {
+      const context = state.currentLesson ? state.currentLesson.title : 'Текущий урок';
+      const prompt = [
+        'Ты — строгий, но дружелюбный преподаватель казахского языка.',
+        'Контекст урока: ' + context + '.',
+        'Отвечай кратко, структурированно и по делу. Не уходи в общую болтовню.',
+        'Если уместно, дай 1 короткий пример на казахском и 1 короткое правило по-русски.'
+      ].join(' ');
+      const raw = await aiChat({ mode: 'lesson_tutor', prompt, message: text, context: { lesson: context }, history: state.tutor.messages.slice(-6) });
+      const reply = raw || 'Келер шақ показывает действие в будущем. Сначала смотри на основу глагола, затем на личное окончание.';
+      appendMessage(state.tutor.messages, 'assistant', reply);
+      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
+      state.sessionStats.minutes += 2;
+      increaseUsage(1);
+      updateStatsView();
+      pushHistory({
+        modeLabel: 'Репетитор',
+        title: 'Репетитор: ' + context,
+        meta: formatMeta('Сейчас', state.tutor.messages.length, 0, 0),
+        messages: state.tutor.messages.length,
+        words: wordCount(text),
+        errors: 0,
+        targetMode: 'tutor',
+        payload: { messages: state.tutor.messages.slice(-8) }
+      });
+    } catch (error) {
+      console.error(error);
+      appendMessage(state.tutor.messages, 'assistant', 'Не удалось получить объяснение. Попробуй переформулировать вопрос.');
+      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
+    } finally {
+      setButtonLoading(els.sendTutorBtn, false);
+      saveState();
     }
+  }
 
-    sentenceLevel &&
-    sentenceLevel.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-level]");
-        if (!btn) return;
-        sentenceState.level = btn.getAttribute("data-level");
-        setChipActive(sentenceLevel, "data-level", sentenceState.level);
-    });
-
-    sentenceComplexity &&
-    sentenceComplexity.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-complexity]");
-        if (!btn) return;
-        sentenceState.complexity = btn.getAttribute("data-complexity");
-        setChipActive(sentenceComplexity, "data-complexity", sentenceState.complexity);
-    });
-
-    sentenceTextarea &&
-    sentenceTextarea.addEventListener("input", () => {
-        sentenceState.sentence = sentenceTextarea.value;
-        sentenceState.result = null;
-        sentenceUpdateUI();
-    });
-
-    sentenceCheckBtn &&
-    sentenceCheckBtn.addEventListener("click", async () => {
-        if (!sentenceState.sentence.trim() || sentenceState.loading) return;
-
-        sentenceState.loading = true;
-        sentenceState.result = null;
-        sentenceUpdateUI();
-
-        try {
-            const prompt = [
-                "Режим: Проверка предложения (казахский язык).",
-                `Уровень ученика: ${sentenceState.level}.`,
-                `Сложность объяснений: ${sentenceState.complexity === "detailed" ? "подробно" : "просто"}.`,
-                "Пользователь написал предложение на казахском. Проверь и исправь.",
-                "Ответь СТРОГО в JSON без лишнего текста и без markdown.",
-                "Формат:",
-                '{"corrected":"...","errors":[{"text":"...","explanation":"..."}],"rule":"...","examples":["..."],"exercise":"..."}',
-                "Требования:",
-                "- corrected: исправленный вариант на казахском",
-                "- errors: 0..5 ключевых ошибок (если нет — пустой массив)",
-                "- rule: короткое правило/объяснение (русский)",
-                "- examples: 2..4 примера (казахский + в скобках русский)",
-                "- exercise: 1 задание для закрепления (русский)",
-                "Предложение пользователя:",
-                sentenceState.sentence,
-            ].join("\n");
-
-            const sid = await ensureSession("sentence");
-            const reply = await aiChat(prompt, sid);
-
-            const json = extractJsonFromText(reply);
-            if (!json || typeof json !== "object") throw new Error("parse");
-
-            sentenceState.result = {
-                original: sentenceState.sentence,
-                corrected: json.corrected || "",
-                errors: Array.isArray(json.errors) ? json.errors : [],
-                rule: json.rule || "",
-                examples: Array.isArray(json.examples) ? json.examples : [],
-                exercise: json.exercise || "",
-            };
-        } catch (e) {
-            console.error(e);
-            toast("Ошибка ИИ. Попробуйте ещё раз");
-        } finally {
-            sentenceState.loading = false;
-            sentenceUpdateUI();
-        }
-    });
-
-    // -----------------------------
-    // Dialog mode
-    // -----------------------------
-    const dialogScenario = $("#dialogScenario");
-    const dialogLevel = $("#dialogLevel");
-    const dialogTone = $("#dialogTone");
-    const dialogStartBtn = $("#dialogStartBtn");
-    const dialogMessages = $("#dialogMessages");
-    const dialogInput = $("#dialogInput");
-    const dialogSendBtn = $("#dialogSendBtn");
-    const dialogEmpty = $("#dialogEmpty");
-    const dialogHintBtn = $("#dialogHintBtn");
-
-    const scenarios = [
-        { value: "cafe", label: "Кафе", icon: "☕" },
-        { value: "taxi", label: "Такси", icon: "🚕" },
-        { value: "shop", label: "Магазин", icon: "🛒" },
-        { value: "university", label: "Универ", icon: "🎓" },
-        { value: "meet", label: "Знакомство", icon: "👋" },
-    ];
-
-    let dialogState = {
-        scenario: "cafe",
-        level: "A1",
-        tone: "friendly",
-        started: false,
-        messages: [],
+  function fallbackWords(theme, count) {
+    const base = {
+      'Еда': [
+        ['тағам', 'еда', 'Маған ыстық тағам керек.'],
+        ['тапсырыс', 'заказ', 'Мен тапсырыс бердім.'],
+        ['баға', 'цена', 'Бұл тағамның бағасы қымбат емес.'],
+        ['асхана', 'столовая', 'Біз асханаға барамыз.']
+      ],
+      'Работа': [
+        ['жұмыс', 'работа', 'Мен жаңа жұмыс іздеп жүрмін.'],
+        ['кеңсе', 'офис', 'Ол кеңседе істейді.'],
+        ['кездесу', 'встреча', 'Бүгін маңызды кездесу бар.'],
+        ['жоба', 'проект', 'Бұл жоба ертең бітеді.']
+      ],
+      'Учёба': [
+        ['сабақ', 'урок', 'Бүгін қазақ тілі сабағы бар.'],
+        ['мұғалім', 'учитель', 'Мұғалім ережені түсіндірді.'],
+        ['дәптер', 'тетрадь', 'Мен дәптерге жаздым.'],
+        ['емтихан', 'экзамен', 'Ертең емтихан тапсырамыз.']
+      ],
+      'Путешествия': [
+        ['сапар', 'поездка', 'Біз ұзақ сапарға шықтық.'],
+        ['әуежай', 'аэропорт', 'Әуежайға ерте келдік.'],
+        ['билет', 'билет', 'Мен билет сатып алдым.'],
+        ['қонақүй', 'отель', 'Қонақүй қала орталығында.']
+      ]
     };
+    const source = base[theme] || base['Еда'];
+    const words = [];
+    for (let i = 0; i < count; i += 1) {
+      const item = source[i % source.length];
+      words.push({ word: item[0], translation: item[1], example: item[2], topic: theme });
+    }
+    return words;
+  }
 
-    function renderDialogScenarios() {
-        if (!dialogScenario) return;
-        dialogScenario.innerHTML = scenarios
-            .map((s) => {
-                const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
-                return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
-            })
-            .join("");
+  function renderVocabulary() {
+    if (els.vocabularyWords) {
+      els.vocabularyWords.innerHTML = state.vocabulary.words
+        .map((item) => {
+          return [
+            '<article class="ai-word">',
+            '  <div class="ai-word__top">',
+            '    <strong class="ai-word__main">' + escapeHtml(item.word) + '</strong>',
+            '    <span class="ai-tag">' + escapeHtml(item.topic || '') + '</span>',
+            '  </div>',
+            '  <p class="ai-word__translate">' + escapeHtml(item.translation) + '</p>',
+            '  <p class="ai-word__example">' + escapeHtml(item.example) + '</p>',
+            '</article>'
+          ].join('');
+        })
+        .join('');
     }
 
-    function renderChatBubble({ isAI, message, feedback, timestamp }) {
-        const rootCls = isAI ? "bubble" : "bubble bubble--user";
-        const avatarCls = isAI ? "bubble__avatar bubble__avatar--ai" : "bubble__avatar bubble__avatar--user";
-        const msgCls = isAI ? "bubble__msg bubble__msg--ai" : "bubble__msg bubble__msg--user";
-
-        return `
-      <div class="${rootCls}">
-        <div class="${avatarCls}" aria-hidden="true">${isAI ? "🤖" : "👤"}</div>
-        <div class="bubble__col">
-          <div class="${msgCls}">${escapeHtml(message)}</div>
-          ${
-            feedback
-                ? `<div class="bubble__feedback">
-                  <div style="display:flex;flex-direction:column;gap:4px">
-                    <div style="font-weight:600;color:#15803D">✓ Отлично!</div>
-                    <div style="font-size:12px;color:#4B5563">${escapeHtml(feedback)}</div>
-                  </div>
-                </div>`
-                : ""
-        }
-          ${timestamp ? `<div class="bubble__time">${escapeHtml(timestamp)}</div>` : ""}
-        </div>
-      </div>
-    `;
+    if (els.vocabularyTest && els.vocabularyQuestion && els.vocabularyOptions) {
+      const test = state.vocabulary.test;
+      if (!test) {
+        els.vocabularyTest.hidden = true;
+        return;
+      }
+      els.vocabularyTest.hidden = false;
+      els.vocabularyQuestion.innerHTML = 'Как переводится слово <strong>' + escapeHtml(test.word) + '</strong>?';
+      els.vocabularyOptions.innerHTML = test.options
+        .map((item) => '<button class="ai-option" type="button" data-test-answer="' + escapeHtml(item) + '">' + escapeHtml(item) + '</button>')
+        .join('');
     }
+  }
 
-    function dialogUpdateUI() {
-        if (!dialogInput || !dialogSendBtn || !dialogMessages || !dialogEmpty) return;
+  async function generateWords() {
+    const theme = getActiveChipValue('vocabularyTheme') || 'Еда';
+    const count = Number(getActiveChipValue('vocabularyCount') || 10);
+    setButtonLoading(els.generateWordsBtn, true, 'Генерируем...');
 
-        dialogInput.disabled = !dialogState.started;
-        dialogSendBtn.disabled = !dialogState.started || !dialogInput.value.trim();
-
-        if (!dialogState.started) {
-            dialogMessages.innerHTML = dialogEmpty.outerHTML;
-            return;
-        }
-
-        dialogMessages.innerHTML = dialogState.messages.map(renderChatBubble).join("");
-        dialogMessages.scrollTop = dialogMessages.scrollHeight;
-    }
-
-    renderDialogScenarios();
-
-    dialogScenario &&
-    dialogScenario.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-scenario]");
-        if (!btn) return;
-        dialogState.scenario = btn.getAttribute("data-scenario");
-        renderDialogScenarios();
-    });
-
-    dialogLevel &&
-    dialogLevel.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-level]");
-        if (!btn) return;
-        dialogState.level = btn.getAttribute("data-level");
-        setChipActive(dialogLevel, "data-level", dialogState.level);
-    });
-
-    dialogTone &&
-    dialogTone.addEventListener("click", (e) => {
-        const btn = e.target.closest("button[data-tone]");
-        if (!btn) return;
-        dialogState.tone = btn.getAttribute("data-tone");
-        setChipActive(dialogTone, "data-tone", dialogState.tone);
-    });
-
-    dialogStartBtn &&
-    dialogStartBtn.addEventListener("click", async () => {
-        dialogState.started = true;
-        dialogState.messages = [];
-        if (dialogInput) dialogInput.value = "";
-        dialogUpdateUI();
-
-        try {
-            const scenarioLabel = scenarios.find((s) => s.value === dialogState.scenario)?.label || dialogState.scenario;
-            const prompt = [
-                "Режим: Диалог для практики казахского языка.",
-                `Сценарий: ${scenarioLabel}.`,
-                `Уровень ученика: ${dialogState.level}.`,
-                `Тон: ${dialogState.tone === "formal" ? "официальный" : "дружелюбный"}.`,
-                "Начни диалог с приветствия и первым вопросом.",
-                "Формат ответа: одна реплика на казахском + в скобках русский перевод.",
-            ].join("\n");
-
-            const sid = await ensureSession("dialog", { scenario: dialogState.scenario });
-            const reply = await aiChat(prompt, sid);
-
-            dialogState.messages.push({
-                id: "1",
-                isAI: true,
-                message: reply,
-                timestamp: nowTimeRU(),
-            });
-        } catch (e) {
-            console.error(e);
-            toast("Не удалось начать диалог");
-            dialogState.started = false;
-        } finally {
-            dialogUpdateUI();
-        }
-    });
-
-    dialogInput &&
-    dialogInput.addEventListener("input", () => {
-        dialogUpdateUI();
-    });
-
-    async function dialogSend() {
-        if (!dialogInput || !dialogInput.value.trim() || !dialogState.started) return;
-
-        const text = dialogInput.value;
-        dialogState.messages.push({
-            id: String(Date.now()),
-            isAI: false,
-            message: text,
-            timestamp: nowTimeRU(),
-        });
-        dialogInput.value = "";
-        dialogUpdateUI();
-
-        try {
-            const hist = dialogState.messages
-                .slice(-10)
-                .map((m) => `${m.isAI ? "AI" : "USER"}: ${m.message}`)
-                .join("\n");
-
-            const scenarioLabel = scenarios.find((s) => s.value === dialogState.scenario)?.label || dialogState.scenario;
-
-            const prompt = [
-                "Режим: Диалог для практики казахского языка.",
-                `Сценарий: ${scenarioLabel}.`,
-                `Уровень ученика: ${dialogState.level}.`,
-                `Тон: ${dialogState.tone === "formal" ? "официальный" : "дружелюбный"}.`,
-                "Ты играешь роль собеседника по выбранному сценарию.",
-                "Отвечай коротко на казахском + в скобках русский перевод.",
-                "Также дай ОДНУ короткую подсказку/правку по фразе ученика (русский).",
-                "Ответь СТРОГО в JSON без markdown:",
-                '{"reply":"...","feedback":"..."}',
-                "История диалога:",
-                hist,
-                "Ответь на последнее сообщение пользователя и продолжи разговор одним вопросом.",
-            ].join("\n");
-
-            const sid = await ensureSession("dialog", { scenario: dialogState.scenario });
-            const reply = await aiChat(prompt, sid);
-
-            const json = extractJsonFromText(reply) || {};
-            const aiMsg = String(json.reply || reply || "").trim();
-            const fb = json.feedback ? String(json.feedback).trim() : "";
-
-            dialogState.messages.push({
-                id: String(Date.now() + 1),
-                isAI: true,
-                message: aiMsg,
-                feedback: fb,
-                timestamp: nowTimeRU(),
-            });
-        } catch (e) {
-            console.error(e);
-            toast("Ошибка ИИ. Попробуйте ещё раз");
-        } finally {
-            dialogUpdateUI();
-        }
-    }
-
-    dialogSendBtn && dialogSendBtn.addEventListener("click", dialogSend);
-    dialogInput &&
-    dialogInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") dialogSend();
-    });
-
-    dialogHintBtn &&
-    dialogHintBtn.addEventListener("click", () => {
-        toast("Подсказка: попробуй ответить коротко (мысалы: «Бір американо, өтінемін.»)");
-    });
-
-    // -----------------------------
-    // Tutor: DB lessons loader + cache
-    // -----------------------------
-    const tutorLessonCache = new Map(); // lessonId -> { id, title, content }
-
-    async function apiGet(url) {
-        const out = await window.apiFetch(url, { method: "GET" });
-        if (!out || !out.data) throw new Error("Empty response");
-        if (out.data.success === false) throw new Error(out.data.message || "API error");
-        return out.data;
-    }
-
-    async function fetchLessonFromDb(lessonId) {
-        const id = Number(lessonId);
-        if (!id) throw new Error("Invalid lesson id");
-
-        if (tutorLessonCache.has(id)) return tutorLessonCache.get(id);
-
-        const data = await apiGet(`/api/lesson/${id}`);
-        if (!data.lesson) throw new Error("Lesson not found");
-
-        const lesson = {
-            id: data.lesson.id,
-            title: data.lesson.title || "",
-            content: data.lesson.content || "",
+    try {
+      const prompt = [
+        'Ты создаёшь словарь для изучения казахского языка.',
+        'Тема: ' + theme + '.',
+        'Количество слов: ' + count + '.',
+        'Ответь JSON-объектом с ключами words и test.',
+        'words — массив объектов {word, translation, example, topic}.',
+        'test — объект {word, options}. options — 3 варианта, один правильный.'
+      ].join(' ');
+      const raw = await aiChat({ mode: 'vocabulary', prompt, message: theme, meta: { count } });
+      const parsed = extractJson(raw);
+      if (parsed?.words?.length) {
+        state.vocabulary.words = parsed.words;
+        state.vocabulary.test = parsed.test || null;
+      } else {
+        state.vocabulary.words = fallbackWords(theme, count);
+        state.vocabulary.test = {
+          word: state.vocabulary.words[0].word,
+          options: [state.vocabulary.words[0].translation, 'машина', 'кітап']
         };
+      }
+      renderVocabulary();
+      state.sessionStats.words += Math.min(count, state.vocabulary.words.length);
+      state.sessionStats.minutes += 2;
+      increaseUsage(1);
+      updateStatsView();
+      pushHistory({
+        modeLabel: 'Словарь',
+        title: 'Слова: ' + theme,
+        meta: formatMeta('Сейчас', 1, state.vocabulary.words.length, 0),
+        messages: 1,
+        words: state.vocabulary.words.length,
+        errors: 0,
+        targetMode: 'vocabulary',
+        payload: { words: state.vocabulary.words, test: state.vocabulary.test }
+      });
+    } catch (error) {
+      console.error(error);
+      state.vocabulary.words = fallbackWords(theme, count);
+      state.vocabulary.test = {
+        word: state.vocabulary.words[0].word,
+        options: [state.vocabulary.words[0].translation, 'машина', 'кітап']
+      };
+      renderVocabulary();
+    } finally {
+      setButtonLoading(els.generateWordsBtn, false);
+      saveState();
+    }
+  }
 
-        tutorLessonCache.set(id, lesson);
-        return lesson;
+  function formatMeta(prefix, messages, words, errors) {
+    return prefix + ' • ' + messages + ' сообщ. • ' + words + ' слов • ' + errors + ' ошибок';
+  }
+
+  async function hydrateUserData() {
+    try {
+      const me = await request('/api/auth/me', { method: 'GET', headers: {} });
+      const user = me?.user || me?.data?.user || (me?.success ? me.user : null);
+      if (user) {
+        state.user = user;
+        if (user.role === 'admin' && els.adminBtn) els.adminBtn.style.display = 'inline-block';
+      }
+    } catch (error) {
+      console.error(error);
     }
 
-    function flattenCourseLessons(modules) {
-        const out = [];
-        (modules || []).forEach((m) => {
-            (m.lessons || []).forEach((l) => {
-                out.push({
-                    id: String(l.id),
-                    label: `${m.title || "Модуль"} — ${l.title || "Урок"}`,
-                    moduleTitle: m.title || "",
-                    lessonTitle: l.title || "",
-                    locked: !!m.locked,
-                    completed: !!l.completed,
-                });
-            });
-        });
-        return out;
-    }
-
-    // -----------------------------
-    // Tutor mode (DB-based)
-    // -----------------------------
-    const tutorMessages = $("#tutorMessages");
-    const tutorInput = $("#tutorInput");
-    const tutorSendBtn = $("#tutorSendBtn");
-
-    const lessonTrigger = $("#lessonTrigger");
-    const lessonMenu = $("#lessonMenu");
-    const lessonValue = $("#lessonValue");
-
-    let tutorLessons = [];
-    let tutorCourse = null;
-
-    let tutorState = {
-        lessonId: null,
-        messages: [
-            {
-                id: "1",
-                isAI: true,
-                message:
-                    "Сәлеметсіз! Я AI-репетитор AnaTil. Выберите урок и задайте вопрос — я буду объяснять по материалу урока.",
-                timestamp: nowTimeRU(),
-            },
-        ],
-    };
-
-    function renderLessons() {
-        if (!lessonMenu) return;
-
-        if (!tutorLessons.length) {
-            lessonMenu.innerHTML = `<div style="padding:12px;color:#6B7280;font-size:12px">Уроки не найдены</div>`;
-            return;
+    try {
+      const progress = await request('/api/lessons/progress/current', { method: 'GET', headers: {} });
+      const data = progress?.data || progress;
+      if (data?.success && data.course) {
+        state.currentLesson = {
+          title: data.nextLesson?.title || data.lastLesson?.title || data.course.title,
+          courseTitle: data.course.title,
+          percent: Number(data.percent || 0)
+        };
+        if (els.currentLessonTitle) els.currentLessonTitle.textContent = state.currentLesson.title;
+        if (els.tutorContextTag) els.tutorContextTag.textContent = 'Контекст: ' + state.currentLesson.title;
+        if (els.summaryTitle) els.summaryTitle.textContent = 'Практика по курсу — ' + data.course.title;
+        if (els.summaryText) {
+          els.summaryText.textContent = data.nextLesson
+            ? 'Следующий урок: ' + data.nextLesson.title + '. Повтори тему с репетитором или начни диалог по теме курса.'
+            : 'Ты завершил почти весь курс. Закрепи тему с ИИ перед итоговым заданием.';
         }
-
-        lessonMenu.innerHTML = tutorLessons
-            .map((l) => {
-                const isActive = String(l.id) === String(tutorState.lessonId);
-                const active = isActive ? "select__item select__item--active" : "select__item";
-                const lock = l.locked ? " 🔒" : "";
-                const done = l.completed ? " ✅" : "";
-                const label = `${l.label}${lock}${done}`;
-
-                return `<button class="${active}" type="button" role="option" data-lesson-id="${l.id}" ${
-                    l.locked ? 'data-locked="1"' : ""
-                }>${escapeHtml(label)}</button>`;
-            })
-            .join("");
+        if (els.summaryProgressBar) els.summaryProgressBar.style.width = Math.max(0, Math.min(100, Number(data.percent || 0))) + '%';
+      }
+    } catch (error) {
+      console.error(error);
     }
+  }
 
-    function updateLessonLabel() {
-        if (!lessonValue) return;
-        const found = tutorLessons.find((x) => String(x.id) === String(tutorState.lessonId));
-        lessonValue.textContent = found ? found.label : "Выберите урок";
+  function seedInitialContent() {
+    if (!state.history.length) {
+      state.dialog.messages = [
+        { role: 'assistant', text: 'Сәлеметсіз бе! Кафеге қош келдіңіз. Не ішесіз?', meta: 'Ошибки: 0 • Правильно: приветствие и вежливое обращение' },
+        { role: 'user', text: 'Маған бір кофе беріңізші.' }
+      ];
+      renderChat(els.dialogMessages, state.dialog.messages, 'AI');
+      state.tutor.messages = [
+        { role: 'assistant', text: 'Келер шақ показывает действие, которое произойдёт в будущем. Хочешь, объясню простую схему или сразу разберём пример?' }
+      ];
+      renderChat(els.tutorMessages, state.tutor.messages, 'AI-репетитор');
+      state.vocabulary.words = fallbackWords('Еда', 3);
+      state.vocabulary.test = { word: 'тағам', options: ['еда', 'школа', 'поезд'] };
+      renderVocabulary();
+    } else {
+      updateLastSessionCard();
     }
+  }
 
-    function openLessonMenu() {
-        if (!lessonMenu || !lessonTrigger) return;
-        lessonMenu.classList.add("select__menu--open");
-        lessonTrigger.setAttribute("aria-expanded", "true");
-        lessonMenu.setAttribute("aria-hidden", "false");
-    }
-    function closeLessonMenu() {
-        if (!lessonMenu || !lessonTrigger) return;
-        lessonMenu.classList.remove("select__menu--open");
-        lessonTrigger.setAttribute("aria-expanded", "false");
-        lessonMenu.setAttribute("aria-hidden", "true");
-    }
-    function toggleLessonMenu() {
-        if (!lessonMenu) return;
-        if (lessonMenu.classList.contains("select__menu--open")) closeLessonMenu();
-        else openLessonMenu();
-    }
+  function bindEvents() {
+    bindChipGroups();
 
-    function tutorUpdateUI() {
-        if (!tutorMessages) return;
-        tutorMessages.innerHTML = tutorState.messages.map((m) => renderChatBubble(m)).join("");
-        tutorMessages.scrollTop = tutorMessages.scrollHeight;
-
-        if (tutorSendBtn) {
-            const ok = !!tutorInput.value.trim() && !!tutorState.lessonId;
-            tutorSendBtn.disabled = !ok;
-        }
-    }
-
-    async function initTutorFromDb() {
-        try {
-            const prog = await apiGet("/api/lessons/progress/current");
-            tutorCourse = prog.course || null;
-
-            if (!tutorCourse?.slug) {
-                toast("Курс не найден для вашего уровня");
-                return;
-            }
-
-            const courseData = await apiGet(`/api/course/${encodeURIComponent(tutorCourse.slug)}`);
-            const modules = (courseData && courseData.modules) || [];
-            tutorLessons = flattenCourseLessons(modules);
-
-            const nextId = prog.nextLesson?.id ? String(prog.nextLesson.id) : null;
-            const lastId = prog.lastLesson?.id ? String(prog.lastLesson.id) : null;
-
-            const firstUnlocked = tutorLessons.find((x) => !x.locked)?.id || null;
-            tutorState.lessonId = nextId || lastId || firstUnlocked || (tutorLessons[0] ? tutorLessons[0].id : null);
-
-            renderLessons();
-            updateLessonLabel();
-            tutorUpdateUI();
-
-            if (tutorState.lessonId) {
-                fetchLessonFromDb(tutorState.lessonId).catch(() => {});
-            }
-        } catch (e) {
-            console.error(e);
-            toast("Не удалось загрузить уроки из базы");
-        }
-    }
-
-    initTutorFromDb();
-
-    lessonTrigger && lessonTrigger.addEventListener("click", toggleLessonMenu);
-
-    lessonMenu &&
-    lessonMenu.addEventListener("click", async (e) => {
-        const btn = e.target.closest("button[data-lesson-id]");
-        if (!btn) return;
-
-        if (btn.getAttribute("data-locked") === "1") {
-            toast("Этот урок пока закрыт");
-            return;
-        }
-
-        tutorState.lessonId = btn.getAttribute("data-lesson-id");
-        renderLessons();
-        updateLessonLabel();
-        closeLessonMenu();
-        tutorUpdateUI();
-
-        try {
-            await fetchLessonFromDb(tutorState.lessonId);
-            toast("Урок выбран");
-
-            // new lesson -> new session
-            resetSession();
-        } catch {
-            toast("Не удалось загрузить урок");
-        }
+    els.modeButtons.forEach((button) => {
+      button.addEventListener('click', () => setMode(button.dataset.mode));
     });
 
-    document.addEventListener("click", (e) => {
-        const sel = $("#lessonSelect");
-        if (!sel) return;
-        if (sel.contains(e.target)) return;
-        closeLessonMenu();
+    els.openModeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setMode(button.dataset.openMode);
+        document.querySelector('.ai-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     });
 
-    async function tutorSend() {
-        if (!tutorInput || !tutorInput.value.trim()) return;
-        if (!tutorState.lessonId) {
-            toast("Сначала выберите урок");
-            return;
-        }
+    if (els.openHistoryBtn) els.openHistoryBtn.addEventListener('click', openHistory);
+    if (els.openLastSessionBtn) els.openLastSessionBtn.addEventListener('click', openHistory);
+    if (els.closeHistoryBtn) els.closeHistoryBtn.addEventListener('click', closeHistory);
+    if (els.historyOverlay) els.historyOverlay.addEventListener('click', closeHistory);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeHistory();
+    });
 
-        const text = tutorInput.value;
-        tutorState.messages.push({ id: String(Date.now()), isAI: false, message: text, timestamp: nowTimeRU() });
-        tutorInput.value = "";
-        tutorUpdateUI();
-
+    if (els.checkSentenceBtn) els.checkSentenceBtn.addEventListener('click', () => handleCheck(''));
+    if (els.copyCorrectedBtn) {
+      els.copyCorrectedBtn.addEventListener('click', async () => {
+        const text = els.checkCorrected?.textContent || '';
+        if (!text || text === '—') return;
         try {
-            const lesson = await fetchLessonFromDb(tutorState.lessonId);
-
-            const hist = tutorState.messages
-                .slice(-10)
-                .map((m) => `${m.isAI ? "AI" : "USER"}: ${m.message}`)
-                .join("\n");
-
-            const prompt = [
-                "Ты — AI-репетитор платформы AnaTil по казахскому языку.",
-                "Отвечай по-русски, но примеры давай на казахском с переводом.",
-                "Правила:",
-                "- Используй ТОЛЬКО материал урока ниже (если чего-то нет — скажи, что этого нет в уроке, и предложи спросить по теме урока).",
-                "- Объясняй пошагово, очень понятно.",
-                "- В конце дай 1 мини-упражнение по теме.",
-                "",
-                `УРОК: ${lesson.title}`,
-                "МАТЕРИАЛ УРОКА (как есть из базы):",
-                lesson.content || "(пусто)",
-                "",
-                "ИСТОРИЯ ЧАТА:",
-                hist,
-                "",
-                "ОТВЕТЬ НА ПОСЛЕДНИЙ ВОПРОС ПОЛЬЗОВАТЕЛЯ:",
-            ].join("\n");
-
-            const sid = await ensureSession("tutor", { lessonId: tutorState.lessonId });
-            const reply = await aiChat(prompt, sid);
-
-            tutorState.messages.push({
-                id: String(Date.now() + 1),
-                isAI: true,
-                message: reply,
-                timestamp: nowTimeRU(),
-            });
-        } catch (e) {
-            console.error(e);
-            toast("Ошибка ИИ. Попробуйте ещё раз");
-        } finally {
-            tutorUpdateUI();
+          await navigator.clipboard.writeText(text);
+          els.copyCorrectedBtn.textContent = 'Скопировано';
+          setTimeout(() => {
+            els.copyCorrectedBtn.textContent = 'Скопировать';
+          }, 1200);
+        } catch (error) {
+          console.error(error);
         }
+      });
     }
 
-    tutorSendBtn && tutorSendBtn.addEventListener("click", tutorSend);
-    tutorInput && tutorInput.addEventListener("input", () => tutorUpdateUI());
-    tutorInput &&
-    tutorInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") tutorSend();
+    els.checkActionButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.checkAction;
+        const labelMap = {
+          harder: 'Сделай ответ чуть сложнее и дай новые примеры',
+          simpler: 'Сделай ответ проще и короче',
+          examples: 'Дай ещё 3 новых примера по этому же правилу'
+        };
+        handleCheck(labelMap[action] || '');
+      });
     });
 
-    // -----------------------------
-    // Mobile settings sheet (bottom)
-    // -----------------------------
-    const mobileSettingsSheet = $("#mobileSettingsSheet");
-    const mobileSettingsBackdrop = $("#mobileSettingsBackdrop");
-    const mobileSettingsCloseBtn = $("#mobileSettingsCloseBtn");
-    const mobileSettingsBody = $("#mobileSettingsBody");
-
-    const dialogMobileSettingsBtn = $("#dialogMobileSettingsBtn");
-    const tutorMobileSettingsBtn = $("#tutorMobileSettingsBtn");
-
-    function openMobileSettings(fromMode) {
-        if (!mobileSettingsSheet || !mobileSettingsBody) return;
-
-        // Clone the settings panel from the corresponding mode to keep layout identical
-        mobileSettingsBody.innerHTML = "";
-        if (fromMode === "dialog") {
-            const src = $("#dialogSettings");
-            if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
-        } else if (fromMode === "tutor") {
-            const src = $("#tutorSettings");
-            if (src) mobileSettingsBody.appendChild(src.cloneNode(true));
+    if (els.startDialogBtn) els.startDialogBtn.addEventListener('click', startDialog);
+    if (els.sendDialogBtn) els.sendDialogBtn.addEventListener('click', () => sendDialogMessage(false));
+    if (els.showHintBtn) els.showHintBtn.addEventListener('click', () => sendDialogMessage(true));
+    if (els.dialogInput) {
+      els.dialogInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendDialogMessage(false);
         }
-
-        // Re-bind interactions inside cloned node (chips/select)
-        rebindMobileSettings(fromMode);
-
-        mobileSettingsSheet.classList.add("sheet--open");
-        mobileSettingsSheet.setAttribute("aria-hidden", "false");
+      });
     }
 
-    function closeMobileSettings() {
-        if (!mobileSettingsSheet) return;
-        mobileSettingsSheet.classList.remove("sheet--open");
-        mobileSettingsSheet.setAttribute("aria-hidden", "true");
+    if (els.sendTutorBtn) els.sendTutorBtn.addEventListener('click', sendTutorMessage);
+    if (els.tutorInput) {
+      els.tutorInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendTutorMessage();
+        }
+      });
     }
 
-    function rebindMobileSettings(fromMode) {
-        if (!mobileSettingsBody) return;
-
-        if (fromMode === "dialog") {
-            const sc = $(".chips--grid", mobileSettingsBody);
-            const lvl = $("#dialogLevel", mobileSettingsBody);
-            const tone = $("#dialogTone", mobileSettingsBody);
-            const start = $("#dialogStartBtn", mobileSettingsBody);
-
-            // render scenarios inside cloned sheet
-            if (sc) {
-                sc.innerHTML = scenarios
-                    .map((s) => {
-                        const active = s.value === dialogState.scenario ? "chip chip--active chip--center" : "chip chip--center";
-                        return `<button class="${active}" type="button" data-scenario="${s.value}"><span>${s.icon}</span>${s.label}</button>`;
-                    })
-                    .join("");
-
-                sc.addEventListener("click", (e) => {
-                    const btn = e.target.closest("button[data-scenario]");
-                    if (!btn) return;
-                    dialogState.scenario = btn.getAttribute("data-scenario");
-                    renderDialogScenarios();
-                    rebindMobileSettings("dialog");
-                });
-            }
-
-            if (lvl) {
-                lvl.addEventListener("click", (e) => {
-                    const btn = e.target.closest("button[data-level]");
-                    if (!btn) return;
-                    dialogState.level = btn.getAttribute("data-level");
-                    setChipActive(dialogLevel, "data-level", dialogState.level);
-                    setChipActive(lvl, "data-level", dialogState.level);
-                });
-            }
-
-            if (tone) {
-                tone.addEventListener("click", (e) => {
-                    const btn = e.target.closest("button[data-tone]");
-                    if (!btn) return;
-                    dialogState.tone = btn.getAttribute("data-tone");
-                    setChipActive(dialogTone, "data-tone", dialogState.tone);
-                    setChipActive(tone, "data-tone", dialogState.tone);
-                });
-            }
-
-            if (start) {
-                start.addEventListener("click", () => {
-                    dialogStartBtn && dialogStartBtn.click();
-                    closeMobileSettings();
-                });
-            }
-
-            // sync active classes
-            if (lvl) setChipActive(lvl, "data-level", dialogState.level);
-            if (tone) setChipActive(tone, "data-tone", dialogState.tone);
-        }
-
-        if (fromMode === "tutor") {
-            // Keep mobile tutor settings simple: open desktop select in main UI
-            const trigger = $("#lessonTrigger", mobileSettingsBody);
-            const menu = $("#lessonMenu", mobileSettingsBody);
-            const value = $("#lessonValue", mobileSettingsBody);
-
-            if (value) value.textContent = lessonValue ? lessonValue.textContent : value.textContent;
-
-            if (menu) {
-                // Use DB lessons
-                if (!tutorLessons.length) {
-                    menu.innerHTML = `<div style="padding:12px;color:#6B7280;font-size:12px">Уроки не найдены</div>`;
-                } else {
-                    menu.innerHTML = tutorLessons
-                        .map((l) => {
-                            const isActive = String(l.id) === String(tutorState.lessonId);
-                            const active = isActive ? "select__item select__item--active" : "select__item";
-                            const lock = l.locked ? " 🔒" : "";
-                            const done = l.completed ? " ✅" : "";
-                            const label = `${l.label}${lock}${done}`;
-                            return `<button class="${active}" type="button" role="option" data-lesson-id="${l.id}" ${
-                                l.locked ? 'data-locked="1"' : ""
-                            }>${escapeHtml(label)}</button>`;
-                        })
-                        .join("");
-                }
-            }
-
-            if (trigger && menu) {
-                trigger.addEventListener("click", () => {
-                    menu.classList.toggle("select__menu--open");
-                });
-            }
-
-            if (menu) {
-                menu.addEventListener("click", async (e) => {
-                    const btn = e.target.closest("button[data-lesson-id]");
-                    if (!btn) return;
-
-                    if (btn.getAttribute("data-locked") === "1") {
-                        toast("Этот урок пока закрыт");
-                        return;
-                    }
-
-                    const v = btn.getAttribute("data-lesson-id");
-                    tutorState.lessonId = v;
-
-                    renderLessons();
-                    updateLessonLabel();
-                    tutorUpdateUI();
-
-                    if (value) value.textContent = tutorLessons.find((x) => String(x.id) === String(v))?.label || value.textContent;
-
-                    $$(".select__item", menu).forEach((b) =>
-                        b.classList.toggle("select__item--active", b.getAttribute("data-lesson-id") === v)
-                    );
-                    menu.classList.remove("select__menu--open");
-
-                    // new lesson -> new session
-                    resetSession();
-
-                    try {
-                        await fetchLessonFromDb(v);
-                        toast("Урок выбран");
-                    } catch {
-                        toast("Не удалось загрузить урок");
-                    }
-                });
-            }
-        }
+    if (els.useCurrentLessonBtn) {
+      els.useCurrentLessonBtn.addEventListener('click', () => {
+        setMode('tutor');
+        document.querySelector('.ai-workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
-    mobileSettingsBackdrop && mobileSettingsBackdrop.addEventListener("click", closeMobileSettings);
-    mobileSettingsCloseBtn && mobileSettingsCloseBtn.addEventListener("click", closeMobileSettings);
+    if (els.generateWordsBtn) els.generateWordsBtn.addEventListener('click', generateWords);
+    if (els.vocabularyOptions) {
+      els.vocabularyOptions.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-test-answer]');
+        if (!button || !state.vocabulary.test) return;
+        const answer = button.getAttribute('data-test-answer');
+        const correct = state.vocabulary.test.options[0];
+        alert(answer === correct ? 'Верно ✅' : 'Неверно. Правильный ответ: ' + correct);
+      });
+    }
 
-    dialogMobileSettingsBtn && dialogMobileSettingsBtn.addEventListener("click", () => openMobileSettings("dialog"));
-    tutorMobileSettingsBtn && tutorMobileSettingsBtn.addEventListener("click", () => openMobileSettings("tutor"));
+    if (els.practiceMistakeBtn) {
+      els.practiceMistakeBtn.addEventListener('click', () => {
+        setMode('check');
+        if (els.checkInput) {
+          els.checkInput.value = 'Сделай упражнение на тему: ' + state.focusTopic;
+          els.checkInput.focus();
+        }
+      });
+    }
 
-    // -----------------------------
-    // Initial route
-    // -----------------------------
-    showView(getRoute());
+    attachHistoryClicks();
+  }
 
-    // initial UI sync
-    sentenceUpdateUI();
-    dialogUpdateUI();
-    tutorUpdateUI();
-
-    // initial badge
-    refreshAiUsageBadge();
+  loadState();
+  setUsage(state.usage.used, state.usage.total);
+  updateStatsView();
+  updateLastSessionCard();
+  seedInitialContent();
+  bindEvents();
+  hydrateUserData();
 })();
