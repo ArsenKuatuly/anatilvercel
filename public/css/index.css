@@ -68,6 +68,12 @@ img { display: block; max-width: 100%; }
   height: auto;
   object-fit: contain;
 }
+
+.header__logo{
+    font-size: 24px;
+    font-weight: var(--fw-extrabold);
+    color: var(--blue);
+}
 .site-header__logo-image--footer {
   width: 156px;
 }
