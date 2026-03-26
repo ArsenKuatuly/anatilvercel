@@ -872,6 +872,7 @@ body.is-menu-open { overflow: hidden; }
   align-items: center;
   gap: 16px;
   padding-top: 32px;
+    justify-content: center;
 }
 .final-cta__benefits {
   display: flex;
