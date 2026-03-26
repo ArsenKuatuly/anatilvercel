@@ -14,8 +14,7 @@
   <header class="site-header" id="top">
     <div class="site-header__container container">
       <a class="site-header__logo" href="/index.html" aria-label="AnaTil">
-        <span class="site-header__logo-mark">A</span>
-        <span class="site-header__logo-text">AnaTil</span>
+        <img class="site-header__logo-image" src="images/ui/logo-anatil.svg" alt="AnaTil">
       </a>
 
       <nav class="site-header__nav" aria-label="Основная навигация">
@@ -27,19 +26,21 @@
       </nav>
 
       <div class="site-header__actions">
-        <button class="lang-toggle" type="button" aria-label="Сменить язык">
-          <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-          <span class="lang-toggle__value">RU</span>
-        </button>
+        <div class="lang-switch" aria-label="Language switcher">
+          <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+          <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
+          <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
+        </div>
         <a class="button button--ghost button--sm" href="/auth.html">Войти</a>
         <a class="button button--primary button--sm" href="/auth.html">Начать обучение</a>
       </div>
 
       <div class="site-header__mobile-actions">
-        <button class="lang-toggle" type="button" aria-label="Сменить язык">
-          <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-          <span class="lang-toggle__value">RU</span>
-        </button>
+        <div class="lang-switch lang-switch--mobile" aria-label="Language switcher">
+          <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+          <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
+          <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
+        </div>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Открыть меню">
           <span class="menu-toggle__line"></span>
           <span class="menu-toggle__line"></span>
@@ -278,19 +279,51 @@
     </section>
   </main>
 
+  <div class="chat" id="chat" hidden>
+      <div class="chat-window" role="dialog" aria-label="AI Ассистент">
+          <div class="chat-head">
+              <div class="chat-avatar">
+                  <svg viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+                            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+              </div>
+
+              <div class="chat-head-text">
+                  <div class="chat-title">AI Ассистент</div>
+                  <div class="chat-subtitle">Онлайн • Ответим быстро</div>
+              </div>
+
+              <button class="icon-btn chat-close" type="button" aria-label="Закрыть чат">
+                  ✕
+              </button>
+          </div>
+
+          <div class="chat-body" id="chatBody"></div>
+
+          <div class="chat-input">
+              <div>
+                  <input id="chatInput" type="text" placeholder="Напишите сообщение..." />
+                  <button class="chat-send" id="chatSend" type="button">➤</button>
+              </div>
+              <div class="chat-hint">Обычно отвечаем в течение 2 минут</div>
+          </div>
+      </div>
+  </div>
+
   <footer class="site-footer" id="footer">
     <div class="container">
       <div class="site-footer__grid">
         <div class="site-footer__brand">
-          <a class="site-header__logo site-header__logo--footer" href="/index.html">
-            <span class="site-header__logo-mark">A</span>
-            <span class="site-header__logo-text">AnaTil</span>
+          <a class="site-header__logo site-header__logo--footer" href="/index.html" aria-label="AnaTil">
+            <img class="site-header__logo-image site-header__logo-image--footer" src="images/ui/logo-anatil.svg" alt="AnaTil">
           </a>
           <p class="site-footer__description">Современная платформа для изучения казахского языка с AI-технологиями</p>
-          <button class="lang-toggle lang-toggle--footer" type="button" aria-label="Сменить язык">
-            <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-            <span class="lang-toggle__value">RU</span>
-          </button>
+          <div class="lang-switch lang-switch--footer" aria-label="Language switcher">
+            <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+            <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
+            <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
+          </div>
         </div>
 
         <div class="site-footer__column">
