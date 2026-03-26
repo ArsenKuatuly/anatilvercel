@@ -95,43 +95,24 @@ img { display: block; max-width: 100%; }
   align-items: center;
   gap: 8px;
 }
-.lang-switch {
+.lang-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  gap: 4px;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
 }
-.lang-switch__icon {
+.lang-toggle__icon {
   width: 16px;
   height: 16px;
   object-fit: contain;
   flex-shrink: 0;
-  margin-left: 4px;
 }
-.lang-switch__button {
-  min-width: 42px;
-  height: 32px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 1;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color .2s ease, color .2s ease, box-shadow .2s ease;
-}
-.lang-switch__button.is-active {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
-}
-.lang-switch--mobile { transform: scale(.96); transform-origin: center; }
 .menu-toggle {
   width: 40px;
   height: 40px;
@@ -1050,7 +1031,7 @@ body.is-menu-open { overflow: hidden; }
   object-fit: contain;
   display: block;
 }
-.lang-switch__icon { filter: none; }
+.lang-toggle__icon { filter: none; }
 .hero-benefit__icon img,
 .mockup-tip__icon img,
 .feature-card__icon img,
@@ -1058,7 +1039,7 @@ body.is-menu-open { overflow: hidden; }
 .ai-card__icon img,
 .audience-card__icon img,
 .section-badge__icon,
-.lang-switch__icon { flex-shrink: 0; }
+
 .hero-benefit__icon img { width: 62%; height: 62%; }
 .step-card__icon img,
 .ai-card__icon img,
@@ -1089,10 +1070,10 @@ body.is-menu-open { overflow: hidden; }
 .faq-item.is-open .faq-item__icon::before { transform: rotate(180deg); }
 
 
-.hero-benefit__icon img, .section-badge__icon, .lang-switch__icon { width: 16px; height: 16px; }
+.hero-benefit__icon img, .section-badge__icon, .lang-toggle__icon { width: 16px; height: 16px; }
 .mockup-tip__icon img { width: 22px; height: 22px; }
 .feature-card__icon img { width: 24px; height: 24px; }
 .step-card__icon img, .ai-card__icon img, .audience-card__icon img { width: 28px; height: 28px; }
 .ai-card__icon img { width: 26px; height: 26px; }
 .hero-benefit__icon, .feature-card__icon, .step-card__icon, .mockup-tip__icon, .ai-card__icon, .audience-card__icon { background: #e9effd; }
-.feature-card__icon img, .step-card__icon img, .hero-benefit__icon img, .mockup-tip__icon img, .ai-card__icon img, .audience-card__icon img, .section-badge__icon, .lang-switch__icon { opacity: 1; }
+.feature-card__icon img, .step-card__icon img, .hero-benefit__icon img, .mockup-tip__icon img, .ai-card__icon img, .audience-card__icon img, .section-badge__icon, .lang-toggle__icon { opacity: 1; }

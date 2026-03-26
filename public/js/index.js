@@ -117,86 +117,87 @@
       footerCopyright: '© 2026 AnaTil. Все права защищены.',
       footerBottomLinks: ['Политика конфиденциальности', 'Условия использования']
     },
-    en: {
-      htmlLang: 'en',
+
+    kz: {
+      htmlLang: 'kk',
       title: 'AnaTil',
-      description: 'AnaTil is a platform for learning Kazakh with lessons and AI practice.',
-      navAria: 'Main navigation',
-      menuAria: 'Open menu',
-      navLinks: ['About', 'How it works', 'AI features', 'Levels', 'FAQ'],
-      headerButtons: ['Log in', 'Start learning'],
-      mobileButtons: ['Log in', 'Start learning'],
-      heroTitle: 'Learn Kazakh and start speaking with confidence',
-      heroSubtitle: 'Step-by-step lessons, practice, level assessment, and an AI assistant that helps you train anytime.',
-      heroButtons: ['Start learning', 'Log in to account'],
-      heroBenefits: ['Lessons from A1 to C1', 'AI dialogues anytime', 'Grammar checks with explanations', 'AI tutor for each lesson'],
-      mockupLesson: 'Lesson 5: Introduction',
-      mockupOnline: 'Online',
-      mockupTranslation: 'Hello! My name is Aidar.',
-      mockupHintLabel: 'AI hint',
-      mockupHintText: 'Try introducing yourself using the phrase you just learned',
-      mockupProgress: 'Lesson progress',
-      section1Title: 'Why AnaTil',
-      section1Text: 'A modern platform for learning Kazakh with a strong focus on practice and AI tools',
-      featureTitles: ['A clear path from one level to the next', 'Simple lessons without overload', 'Practice beyond theory', 'Train anytime you want', 'Built for Russian-speaking learners', 'An interface for everyday learning'],
-      featureTexts: ['A structured learning path from A1 to C1 with gradual difficulty', 'The material is delivered in small portions with practical examples', 'Practice in AI dialogues and apply your knowledge in real-life situations', 'Study at your own pace with an AI assistant available 24/7', 'All explanations are adapted for Russian-speaking learners', 'A clean and easy interface that makes daily learning comfortable'],
-      section2Title: 'How learning works',
-      section2Text: 'A simple and clear path from sign-up to confident language use',
-      stepTitles: ['Sign up or log in', 'Take a level assessment or start from zero', 'Study lessons for your level', 'Practice with AI'],
-      stepTexts: ['Create an account in seconds and begin learning', 'Take a short test or start right away from A1', 'Move through the program step by step with a clear structure', 'Use dialogues, sentence checks, and personal tutor support'],
-      aiBadge: 'Artificial intelligence',
-      aiTitle: 'AI features of the platform',
-      aiText: 'Not just theory, but live practice and personal support throughout your learning',
-      aiCardTitles: ['Sentence check', 'AI dialogues', 'AI tutor'],
+      description: 'AnaTil — қазақ тілін үйренуге арналған сабақтар мен AI практикасы бар платформа.',
+      navAria: 'Негізгі навигация',
+      menuAria: 'Мәзірді ашу',
+      navLinks: ['Платформа туралы', 'Бұл қалай жұмыс істейді', 'AI мүмкіндіктері', 'Деңгейлер', 'FAQ'],
+      headerButtons: ['Кіру', 'Оқуды бастау'],
+      mobileButtons: ['Кіру', 'Оқуды бастау'],
+      heroTitle: 'Қазақ тілін үйреніп, сенімді сөйлей баста',
+      heroSubtitle: 'Қадамдық сабақтар, практика, деңгей анықтау және кез келген уақытта жаттығуға көмектесетін AI-көмекші.',
+      heroButtons: ['Оқуды бастау', 'Аккаунтқа кіру'],
+      heroBenefits: ['A1–C1 деңгейлері бойынша сабақтар', 'Кез келген уақытта AI-мен диалогтар', 'Сауаттылықты тексеру және қателерді түсіндіру', 'Сабақ бойынша AI-репетитор'],
+      mockupLesson: '5-сабақ: Танысу',
+      mockupOnline: 'Онлайн',
+      mockupTranslation: 'Сәлеметсіз бе! Менің атым Айдар.',
+      mockupHintLabel: 'AI-кеңес',
+      mockupHintText: 'Үйренген сөйлемді қолданып, өзіңізді таныстырып көріңіз',
+      mockupProgress: 'Сабақ прогресі',
+      section1Title: 'Неліктен AnaTil',
+      section1Text: 'Практика мен AI технологияларға басымдық беретін қазақ тілін үйренуге арналған заманауи платформа',
+      featureTitles: ['Деңгейден деңгейге ыңғайлы жол', 'Артық жүктемесіз түсінікті сабақтар', 'Тек теория емес, нағыз практика', 'Кез келген уақытта жаттығуға болады', 'Орыс тілді қолданушылар үшін', 'Күнделікті оқуға арналған интерфейс'],
+      featureTexts: ['A1-ден C1-ге дейінгі оқу құрылымы түсінікті және біртіндеп күрделенеді', 'Ақпарат шағын бөліктермен және практикалық мысалдармен беріледі', 'AI-мен диалогтарда жаттығып, білімді шынайы жағдайларда қолданасыз', 'Өзіңізге ыңғайлы қарқынмен оқыңыз, AI-көмекші 24/7 қолжетімді', 'Барлық түсіндірмелер орыс тілді аудиторияның ерекшеліктерін ескере отырып жасалған', 'Қарапайым әрі түсінікті интерфейс күн сайын оқуға көмектеседі'],
+      section2Title: 'Оқу қалай өтеді',
+      section2Text: 'Тіркелуден бастап тілді сенімді меңгеруге дейінгі қарапайым әрі түсінікті жол',
+      stepTitles: ['Тіркелесіз немесе кіресіз', 'Деңгейді анықтайсыз немесе нөлден бастайсыз', 'Өз деңгейіңізге сай сабақтарды өтесіз', 'AI-мен практика жасайсыз'],
+      stepTexts: ['Бірнеше секундта аккаунт ашып, оқуды бастаңыз', 'Қысқа тесттен өтіңіз немесе A1 деңгейінен бастаңыз', 'Нақты құрылымы бар бағдарлама бойынша біртіндеп алға жылжыңыз', 'Диалогтар, сөйлем тексеру және жеке репетитор көмегі'],
+      aiBadge: 'Жасанды интеллект',
+      aiTitle: 'Платформаның AI мүмкіндіктері',
+      aiText: 'Тек теория емес, тірі практика және оқудағы жеке көмек',
+      aiCardTitles: ['Сөйлемді тексеру', 'AI-мен диалогтар', 'AI-репетитор'],
       aiCardTexts: [
-        'The learner writes a phrase in Kazakh, and the system corrects mistakes, explains the rule, and shows the proper version.',
-        'The learner can practice spoken Kazakh anytime in real-life situations: introductions, shopping, cafés, work, and study.',
-        'The AI helps with the current lesson topic, explains difficult parts, asks questions, and helps reinforce the material.'
+        'Пайдаланушы қазақша сөйлем жазады, ал жүйе қателерді түзетіп, ережені түсіндіреді және дұрыс нұсқаны көрсетеді.',
+        'Пайдаланушы кез келген уақытта шынайы жағдайларда сөйлесу қазақ тілін жаттықтыра алады: танысу, дүкен, кафе, жұмыс, оқу.',
+        'AI сабақ тақырыбы бойынша көмектеседі, түсініксіз жерлерді түсіндіреді, сұрақтар қояды және материалды бекітуге жәрдемдеседі.'
       ],
-      aiExampleLabels: ['Your version:', 'Correct:'],
+      aiExampleLabels: ['Сіздің нұсқаңыз:', 'Дұрысы:'],
       aiExampleWrong: 'Мен университетке барам',
       aiExampleCorrect: 'Мен университетке барамын',
-      aiExampleFooter: 'In personal verb forms, you need to add the ending -мын/-мін',
-      aiTags: ['Introduction', 'Shopping', 'At a café', 'At work', 'At school'],
-      aiDots: ['Explains rules', 'Answers questions', 'Helps with practice'],
-      levelsBadge: 'From simple to advanced',
-      levelsTitle: 'Learning levels',
-      levelsText: 'A clear level system from basic to advanced Kazakh proficiency',
-      levelTitles: ['Elementary', 'Basic', 'Intermediate', 'Upper-intermediate', 'Advanced'],
-      levelTexts: ['Basic phrases, greetings, and simple dialogues about yourself and daily life', 'Communication on familiar topics, describing events, plans, and daily situations', 'Understanding texts on different topics, expressing opinions, and describing experience', 'Freer communication on complex topics and understanding more technical texts', 'Confident language use, understanding complex texts, and expressing thoughts fluently'],
-      levelMeta: ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5'],
-      levelsCtaTitle: 'Not sure about your level?',
-      levelsCtaText: 'Take a short placement test or start from A1',
-      levelsCtaButton: 'Find my level',
-      audienceTitle: 'Who the platform is for',
-      audienceText: 'AnaTil is built for everyone who wants to learn Kazakh and speak with confidence',
-      audienceCardTitles: ['For learners starting from zero', 'For Russian-speaking learners', 'For those who understand but feel shy to speak', 'For those who want more practice'],
-      audienceCardTexts: ['Even if you have never studied Kazakh before, the program is suitable for complete beginners', 'All explanations are adapted for learners transitioning from Russian to Kazakh', 'Practice in a safe environment with AI, without fear of mistakes or embarrassment', 'Not only theory, but constant speaking practice with an AI assistant'],
-      faqTitle: 'Frequently asked questions',
-      faqText: 'Answers to common questions about the AnaTil platform',
-      faqQuestions: ['Is it suitable if I do not know Kazakh?', 'Can I start from zero?', 'How is my level determined?', 'How does AI help in learning?', 'Can I study at any time?', 'Is there speaking practice?'],
+      aiExampleFooter: 'Жіктік формадағы етістікке -мын/-мін жалғауын қосу керек',
+      aiTags: ['Танысу', 'Дүкенде', 'Кафеде', 'Жұмыста', 'Оқуда'],
+      aiDots: ['Ережелерді түсіндіреді', 'Сұрақтарға жауап береді', 'Практикаға көмектеседі'],
+      levelsBadge: 'Оқу жүйесі',
+      levelsTitle: 'Сізге лайық деңгейден бастаңыз',
+      levelsText: 'Платформада қазақ тілін үйренуге арналған бірнеше деңгей бар: бастауыштан сенімді сөйлеуге дейін',
+      levelTitles: ['A1 — Элементар деңгей', 'A2 — Базалық деңгей', 'B1 — Орта деңгей', 'B2 — Ортадан жоғары деңгей', 'C1 — Жоғары деңгей'],
+      levelTexts: ['Қарапайым сөздер, танысу, күнделікті тіркестер', 'Негізгі сөйлемдер, күнделікті тақырыптар, қысқа диалогтар', 'Еркінірек сөйлеу, ойды жеткізу, кеңейтілген грамматика', 'Сенімді диалогтар, күрделі тақырыптар, тілдік икемділік', 'Еркін сөйлеу, терең түсіну, академиялық және кәсіби тіл'],
+      levelMeta: ['Бастау', 'Негіз', 'Орта', 'Сенімді', 'Еркін'],
+      levelsCtaTitle: 'Қай деңгейден бастау керегін білмейсіз бе?',
+      levelsCtaText: 'Қысқа тесттен өтіп, деңгейіңізді анықтаңыз немесе A1-ден бастаңыз',
+      levelsCtaButton: 'Деңгейді анықтау',
+      audienceTitle: 'Платформа кімдерге арналған',
+      audienceText: 'AnaTil — қазақ тілін үйреніп, сенімді сөйлегісі келетіндердің бәріне арналған',
+      audienceCardTitles: ['Нөлден бастайтындар үшін', 'Орыс тілді оқушылар үшін', 'Түсінеді, бірақ сөйлеуге қысылады', 'Көбірек практика қалайтындар үшін'],
+      audienceCardTexts: ['Егер сіз бұрын қазақ тілін мүлде оқымаған болсаңыз да, бағдарлама толық бастауыштарға лайық', 'Барлық түсіндірмелер орыс тілінен қазақ тіліне өтетіндерге бейімделген', 'Қателесуден немесе ұялудан қорықпай, AI-мен қауіпсіз ортада жаттығыңыз', 'Тек теория емес, AI көмекшісімен тұрақты сөйлесу практикасы'],
+      faqTitle: 'Жиі қойылатын сұрақтар',
+      faqText: 'AnaTil платформасы туралы ең жиі қойылатын сұрақтарға жауаптар',
+      faqQuestions: ['Егер мен қазақ тілін білмесем, бұл маған сай ма?', 'Нөлден бастауға бола ма?', 'Менің деңгейім қалай анықталады?', 'AI оқуға қалай көмектеседі?', 'Кез келген уақытта оқи аламын ба?', 'Сөйлеу практикасы бар ма?'],
       faqAnswers: [
-        'Yes, AnaTil is suitable for complete beginners. You can start from A1, where you learn basic phrases and the foundations of the language. All explanations are provided in Russian.',
-        'Absolutely. The program is designed so that beginners can start learning Kazakh from the very basics. The first A1 lessons do not require any prior knowledge.',
-        'During registration, you can take a short placement test to determine your Kazakh level. Based on the results, the system will suggest the most suitable learning path. You can also start from A1 if you are unsure.',
-        'The AI assistant in AnaTil performs three main functions: it checks your sentences and explains mistakes, runs dialogues on different topics for speaking practice, and acts as a personal tutor by answering lesson-related questions.',
-        'Yes, the platform is available 24/7. You can study whenever it is convenient for you, and the AI assistant is always ready to help with practice and questions.',
-        'Yes, this is one of AnaTil’s key strengths. You can practice spoken Kazakh in AI dialogues across different situations: introductions, shopping, cafés, work, or study. The AI creates realistic dialogues and helps you overcome the language barrier.'
+        'Иә, AnaTil мүлде жаңадан бастайтындарға да сай келеді. Сіз A1 деңгейінен бастап, негізгі сөз тіркестері мен тілдің іргетасын үйрене аласыз. Барлық түсіндірмелер орыс тілінде беріледі.',
+        'Әрине. Бағдарлама жаңадан бастағандар қазақ тілін ең қарапайым деңгейден бастай алатындай жасалған. A1 деңгейінің алғашқы сабақтары алдын ала білімді талап етпейді.',
+        'Тіркелу кезінде қысқа тесттен өтіп, қазақ тілі деңгейіңізді анықтай аласыз. Нәтижеге қарай жүйе сізге ең қолайлы оқу жолын ұсынады. Қаласаңыз, A1 деңгейінен де бастай аласыз.',
+        'AnaTil-дегі AI-көмекші үш негізгі қызмет атқарады: сөйлемдеріңізді тексеріп, қателерді түсіндіреді; түрлі тақырыптарда диалогтар жүргізіп, сөйлеу практикасын береді; және сабақ бойынша сұрақтарға жауап беретін жеке репетитор ретінде көмектеседі.',
+        'Иә, платформа тәулік бойы қолжетімді. Сіз өзіңізге ыңғайлы уақытта оқи аласыз, ал AI-көмекші әрқашан практика мен сұрақтарға көмектесуге дайын.',
+        'Иә, бұл AnaTil-дің басты артықшылықтарының бірі. Сіз танысу, дүкен, кафе, жұмыс немесе оқу сияқты түрлі жағдайларда AI-мен қазақша сөйлеу практикасын жасай аласыз. AI шынайы диалогтар құрып, тілдік кедергіні жеңуге көмектеседі.'
       ],
-      faqSupportText: 'Did not find the answer you need?',
-      faqSupportButton: 'Contact support',
-      finalBadge: 'Start right now',
-      finalTitle: 'Start learning Kazakh today',
-      finalText: 'Sign up, find your level, and move straight to lessons and AI practice',
-      finalButtons: ['Start learning', 'Log in'],
-      finalBenefits: ['24/7 access', 'AI assistant', 'All levels'],
-      footerDescription: 'A modern platform for learning Kazakh with AI-powered tools',
-      footerTitles: ['Platform', 'Help', 'Account'],
-      footerPlatformLinks: ['About', 'How it works', 'AI features', 'Levels'],
-      footerHelpLinks: ['FAQ', 'Support', 'Contacts'],
-      footerAccountLinks: ['Log in', 'Sign up'],
-      footerCopyright: '© 2026 AnaTil. All rights reserved.',
-      footerBottomLinks: ['Privacy policy', 'Terms of use']
+      faqSupportText: 'Қажетті жауабыңызды таппадыңыз ба?',
+      faqSupportButton: 'Қолдауға жазу',
+      finalBadge: 'Дәл қазір бастаңыз',
+      finalTitle: 'Қазақ тілін бүгіннен бастап үйреніңіз',
+      finalText: 'Тіркеліңіз, деңгейіңізді анықтаңыз және бірден сабақтар мен AI практикасына өтіңіз',
+      finalButtons: ['Оқуды бастау', 'Кіру'],
+      finalBenefits: ['24/7 қолжетімділік', 'AI көмекші', 'Барлық деңгейлер'],
+      footerDescription: 'AI құралдары бар қазақ тілін үйренуге арналған заманауи платформа',
+      footerTitles: ['Платформа', 'Көмек', 'Аккаунт'],
+      footerPlatformLinks: ['Платформа туралы', 'Қалай жұмыс істейді', 'AI мүмкіндіктері', 'Деңгейлер'],
+      footerHelpLinks: ['FAQ', 'Қолдау', 'Байланыс'],
+      footerAccountLinks: ['Кіру', 'Тіркелу'],
+      footerCopyright: '© 2026 AnaTil. Барлық құқықтар қорғалған.',
+      footerBottomLinks: ['Құпиялық саясаты', 'Пайдалану шарттары']
     }
   };
 
@@ -311,23 +312,24 @@
     setTextAll('.site-footer__column:nth-child(4) .site-footer__link', dict.footerAccountLinks);
     setText('.site-footer__copyright', dict.footerCopyright);
     setTextAll('.site-footer__bottom-link', dict.footerBottomLinks);
-
-    document.querySelectorAll('[data-lang-option]').forEach(function (button) {
-      button.classList.toggle('is-active', button.getAttribute('data-lang-option') === lang);
+    document.querySelectorAll('.lang-toggle__value').forEach(function (value) {
+      value.textContent = lang === 'kz' ? 'KZ' : 'RU';
     });
 
     localStorage.setItem('anatil-home-lang', lang);
   }
 
-  const langButtons = document.querySelectorAll('[data-lang-option]');
+  const langButtons = document.querySelectorAll('.lang-toggle');
   langButtons.forEach(function (button) {
     button.addEventListener('click', function () {
-      applyLanguage(button.getAttribute('data-lang-option'));
+      const current = localStorage.getItem('anatil-home-lang') === 'kz' ? 'kz' : 'ru';
+      const next = current === 'ru' ? 'kz' : 'ru';
+      applyLanguage(next);
     });
   });
 
   const savedLang = localStorage.getItem('anatil-home-lang');
-  applyLanguage(savedLang === 'en' ? 'en' : 'ru');
+  applyLanguage(savedLang === 'kz' ? 'kz' : 'ru');
 
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(function (item) {

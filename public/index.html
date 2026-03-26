@@ -14,7 +14,7 @@
   <header class="site-header" id="top">
     <div class="site-header__container container">
       <a class="site-header__logo" href="/index.html" aria-label="AnaTil">
-        <img class="site-header__logo-image" src="images/ui/logo-anatil.svg" alt="AnaTil">
+        <img class="site-header__logo-image" src="assets/imgs/logo.png" alt="AnaTil">
       </a>
 
       <nav class="site-header__nav" aria-label="Основная навигация">
@@ -26,21 +26,19 @@
       </nav>
 
       <div class="site-header__actions">
-        <div class="lang-switch" aria-label="Language switcher">
-          <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-          <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
-          <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
-        </div>
+        <button class="lang-toggle" type="button" aria-label="Сменить язык">
+          <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+          <span class="lang-toggle__value">RU</span>
+        </button>
         <a class="button button--ghost button--sm" href="/auth.html">Войти</a>
         <a class="button button--primary button--sm" href="/auth.html">Начать обучение</a>
       </div>
 
       <div class="site-header__mobile-actions">
-        <div class="lang-switch lang-switch--mobile" aria-label="Language switcher">
-          <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-          <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
-          <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
-        </div>
+        <button class="lang-toggle" type="button" aria-label="Сменить язык">
+          <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+          <span class="lang-toggle__value">RU</span>
+        </button>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Открыть меню">
           <span class="menu-toggle__line"></span>
           <span class="menu-toggle__line"></span>
@@ -279,6 +277,22 @@
     </section>
   </main>
 
+  <button class="chat-fab" type="button" aria-label="Открыть чат" aria-expanded="false">
+      <span class="fab-ping" aria-hidden="true"></span>
+      <span class="fab-circle">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+      <span class="fab-badge" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z"
+            stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+  </span>
+  </button>
+
   <div class="chat" id="chat" hidden>
       <div class="chat-window" role="dialog" aria-label="AI Ассистент">
           <div class="chat-head">
@@ -319,11 +333,10 @@
             <img class="site-header__logo-image site-header__logo-image--footer" src="images/ui/logo-anatil.svg" alt="AnaTil">
           </a>
           <p class="site-footer__description">Современная платформа для изучения казахского языка с AI-технологиями</p>
-          <div class="lang-switch lang-switch--footer" aria-label="Language switcher">
-            <img class="lang-switch__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
-            <button class="lang-switch__button is-active" type="button" data-lang-option="ru">RU</button>
-            <button class="lang-switch__button" type="button" data-lang-option="en">EN</button>
-          </div>
+          <button class="lang-toggle" type="button" aria-label="Сменить язык">
+            <img class="lang-toggle__icon" src="images/ui/icon-globe.svg" alt="" aria-hidden="true">
+            <span class="lang-toggle__value">RU</span>
+          </button>
         </div>
 
         <div class="site-footer__column">
@@ -359,5 +372,7 @@
   </footer>
 
   <script src="js/index.js"></script>
+    <script src="js/chat.js"></script>
+
 </body>
 </html>
