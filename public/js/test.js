@@ -246,9 +246,7 @@ function calculateScores() {
 function getLevel(score) {
   if (score <= 6) return "elementary";
   if (score <= 12) return "basic";
-  if (score <= 18) return "intermediate";
-  if (score <= 24) return "upper";
-  return "advanced";
+  return "intermediate";
 }
 
 const levelTitles = {

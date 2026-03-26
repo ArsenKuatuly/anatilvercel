@@ -18,8 +18,13 @@ module.exports = async (req, res) => {
 
   const { totalScore, level, reading, listening, math } = req.body || {};
 
+  const cappedLevel =
+    level === "upper" || level === "advanced"
+      ? "intermediate"
+      : level;
+
   // minimal validation to avoid breaking inserts
-  if (typeof totalScore !== "number" || !level) {
+  if (typeof totalScore !== "number" || !cappedLevel) {
     return res.status(400).json({ success: false, message: "Некорректные данные" });
   }
 
@@ -30,7 +35,7 @@ module.exports = async (req, res) => {
     // 2) обновление уровня пользователя
     await db.query(
       `UPDATE users SET current_level = $1 WHERE id = $2`,
-      [level, user.id]
+      [cappedLevel, user.id]
     );
 
     // 3) сохранение результата
@@ -41,7 +46,7 @@ module.exports = async (req, res) => {
         VALUES
           ($1, $2, $3, $4, $5, $6)
       `,
-      [user.id, totalScore, level, reading ?? null, listening ?? null, math ?? null]
+      [user.id, totalScore, cappedLevel, reading ?? null, listening ?? null, math ?? null]
     );
 
     return res.json({ success: true });
