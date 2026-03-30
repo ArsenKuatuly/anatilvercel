@@ -11,10 +11,48 @@ function authHeaders() {
     return token ? { Authorization: "Bearer " + token } : {};
 }
 
-function goToCourse(slug) {
-    window.location.href = `/courses/${encodeURIComponent(slug)}`;
-}
+async function goToCourse(slug) {
+    try {
+        const res = await fetch(`/api/course/${encodeURIComponent(slug)}`, {
+            headers: authHeaders()
+        });
 
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || !data?.success || !Array.isArray(data.modules)) {
+            window.location.href = `/courses/${encodeURIComponent(slug)}`;
+            return;
+        }
+
+        let targetLessonId = null;
+
+        for (const moduleItem of data.modules) {
+            if (moduleItem.locked) continue;
+
+            const lessons = Array.isArray(moduleItem.lessons) ? moduleItem.lessons : [];
+            const firstUncompleted = lessons.find((lesson) => Number(lesson.completed) !== 1);
+
+            if (firstUncompleted?.id) {
+                targetLessonId = firstUncompleted.id;
+                break;
+            }
+
+            if (!targetLessonId && lessons[0]?.id) {
+                targetLessonId = lessons[0].id;
+            }
+        }
+
+        if (targetLessonId) {
+            window.location.href = `/lesson/${targetLessonId}`;
+            return;
+        }
+
+        window.location.href = `/courses/${encodeURIComponent(slug)}`;
+    } catch (err) {
+        console.error("Ошибка прямого перехода в курс:", err);
+        window.location.href = `/courses/${encodeURIComponent(slug)}`;
+    }
+}
 
 function renderMessage(text) {
     courseCard.innerHTML = `
@@ -49,14 +87,12 @@ async function fetchJson(url) {
 }
 
 async function loadMyCoursesSmart() {
-    // 0) нет токена -> на вход
     if (!getToken()) {
         renderMessage("Войдите, чтобы увидеть ваш курс.");
         return;
     }
 
     try {
-        // 1) активный курс
         const active = await fetchJson("/api/my-active-course");
 
         if (active.res.status === 401) {
@@ -66,12 +102,10 @@ async function loadMyCoursesSmart() {
         }
 
         if (active.data && active.data.success && active.data.slug) {
-            // сразу открываем активный курс
             goToCourse(active.data.slug);
             return;
         }
 
-        // 2) курс по уровню (рекомендованный)
         const rec = await fetchJson("/api/my-course");
 
         if (rec.res.status === 401) {
@@ -94,12 +128,10 @@ async function loadMyCoursesSmart() {
 
         const course = rec.data.course;
 
-        // показываем карточку и кнопку
         courseCard.innerHTML = `
       <div class="course__card">
         <h2 class="course__title">${course.title}</h2>
         <p class="course__level">Уровень: ${translateLevel(course.level)}</p>
-
         <button class="btn btn--primary" id="openCourse">Продолжить</button>
       </div>
     `;
@@ -119,7 +151,6 @@ async function loadMyCoursesSmart() {
     }
 }
 
-// кнопки
 goProfile?.addEventListener("click", () => (window.location.href = "/profile.html"));
 goHome?.addEventListener("click", () => (window.location.href = "/dashboard.html"));
 

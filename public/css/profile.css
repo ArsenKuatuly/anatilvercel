@@ -107,6 +107,7 @@ img{max-width:100%;display:block}
     transition:.15s;
 }
 .profile-sidebar__menu-link:hover{background:#f8fafc}
+.profile-sidebar__menu-link--active:hover{background:var(--primary); color:#fff}
 .profile-sidebar__menu-link--active{
     background:var(--primary);
     color:#fff;
@@ -196,6 +197,7 @@ img{max-width:100%;display:block}
     transition:.15s;
 }
 .profile-mobile__link:hover{background:#f8fafc}
+.profile-mobile__link--active:hover{background:var(--primary); color:#fff}
 .profile-mobile__link--active{background:var(--primary); color:#fff; box-shadow:var(--shadow-sm)}
 .profile-mobile__drawer-bottom{padding:16px; border-top:1px solid var(--border)}
 .profile-mobile__logout{

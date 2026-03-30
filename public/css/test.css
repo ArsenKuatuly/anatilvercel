@@ -171,6 +171,10 @@ body{
 }
 
 .exam__subject:hover{ color: var(--text); }
+.exam__subject--active:hover{
+  background: var(--blue);
+  color:#fff;
+}
 
 .exam__subject--active{
   background: var(--blue);
