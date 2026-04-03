@@ -616,7 +616,14 @@
     state.activeSessionId = null;
     state.dialog.scenarioId = scenario.id;
     state.dialog.started = true;
-    state.dialog.messages = [{ role: 'assistant', text: scenario.name === 'В кафе' ? 'Сәлеметсіз бе! Не ішесіз?' : 'Сәлеметсіз бе! Бүгін сізге қалай көмектесе аламын?', meta: 'Сценарий: ' + scenario.name }];
+    const firstReplicaMap = {
+      cafe: 'Сәлеметсіз бе! Не ішесіз?',
+      shop: 'Сәлеметсіз бе! Сізге не керек?',
+      taxi: 'Сәлеметсіз бе! Қай мекенжайға барамыз?',
+      university: 'Сәлеметсіз бе! Қандай сұрағыңыз бар?',
+      meeting: 'Сәлем! Танысқаныма қуаныштымын. Атыңыз кім?'
+    };
+    state.dialog.messages = [{ role: 'assistant', text: firstReplicaMap[scenario.id] || 'Сәлеметсіз бе! Бүгін сізге қалай көмектесе аламын?', meta: 'Сценарий: ' + scenario.name }];
     state.dialog.hints = 0;
     state.dialog.errors = 0;
     els.dialogScenarioStep.hidden = true;
@@ -644,9 +651,9 @@
     if (!state.dialog.started) return;
     const scenario = dialogScenarios.find(function (item) { return item.id === state.dialog.scenarioId; }) || dialogScenarios[0];
     let text = '';
-    if (kind === 'hint') text = 'Подскажи короткий ответ для этой ситуации.';
-    else if (kind === 'repeat') text = 'Повтори последний вопрос и сформулируй его проще.';
-    else if (kind === 'explain') text = 'Объясни, как ответить лучше и естественнее.';
+    if (kind === 'hint') text = 'Подскажи короткий естественный ответ ученика именно для текущей реплики собеседника.';
+    else if (kind === 'repeat') text = 'Повтори последнюю реплику собеседника проще и понятнее.';
+    else if (kind === 'explain') text = 'Объясни, как ответить естественнее именно в этом сценарии.';
     else text = (els.dialogInput.value || '').trim();
     if (!text) return;
 
