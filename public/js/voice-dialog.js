@@ -289,6 +289,17 @@
     updateMistakeBox();
   }
 
+  function patchLastUserMessage(patch){
+    for (let i = state.messages.length - 1; i >= 0; i -= 1) {
+      if (state.messages[i] && state.messages[i].sender === 'user') {
+        state.messages[i] = Object.assign({}, state.messages[i], patch || {});
+        break;
+      }
+    }
+    renderTranscript();
+    updateMistakeBox();
+  }
+
   function renderTranscript(){
     transcriptList.innerHTML = state.messages.map(function(message, index){
       const isUser = message.sender === 'user';
@@ -449,7 +460,7 @@
     const payload = buildAiPayload(userText, action);
     if (!window.apiFetch) return buildFallbackReply(userText, action);
     try {
-      const response = await window.apiFetch('/api/ai/chat', {
+      const response = await window.apiFetch('/api/ai/voice-dialog', {
         method:'POST',
         body: JSON.stringify(payload)
       });
@@ -461,7 +472,13 @@
         state.usage.limit = Number(response.data.usage.limit || state.usage.limit);
         usageBadge.textContent = 'Сегодня: ' + state.usage.used + '/' + state.usage.limit + ' диалогов';
       }
-      return parseChatReply(response.data.reply);
+      return {
+        text: String(response.data.assistantText || ''),
+        correction: response.data.correction && response.data.correction.hasIssue ? String(response.data.correction.better || '') : '',
+        translation: response.data.correction ? String(response.data.correction.translation || '') : '',
+        explanation: response.data.correction ? String(response.data.correction.explanation || '') : '',
+        meta: response.data.meta || {}
+      };
     } catch {
       return buildFallbackReply(userText, action);
     }
@@ -511,9 +528,10 @@
       setStatus('processing');
       addMessage({ sender:'user', text:text });
       const aiReply = await askAi(text, 'message');
+      patchLastUserMessage({ correction: aiReply.correction || '', translation: aiReply.translation || '', explanation: aiReply.explanation || '' });
       setStatus('ai');
       state.lastAiReply = aiReply.text || '';
-      addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
+      addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.' });
       await speakText(aiReply.text || '');
       if (!state.paused) setStatus('listening');
     };
@@ -571,8 +589,9 @@
       setStatus('processing');
       addMessage({ sender:'user', text:typed });
       askAi(typed, 'message').then(async function(aiReply){
+        patchLastUserMessage({ correction: aiReply.correction || '', translation: aiReply.translation || '', explanation: aiReply.explanation || '' });
         setStatus('ai');
-        addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
+        addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.' });
         await speakText(aiReply.text || '');
         if (!state.paused) setStatus('listening');
       });
