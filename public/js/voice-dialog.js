@@ -651,15 +651,12 @@
     pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>';
     await startAiSession();
 
-    const opener = await askAi('', 'start');
-    const fallbackStarter = buildFallbackReply('', 'start');
-    const welcomeText = (opener && opener.text) || fallbackStarter.text;
-    const welcomeTranslation = (opener && opener.translation) || fallbackStarter.translation || '';
-
-    addMessage({ sender:'ai', text:welcomeText, translation:welcomeTranslation });
+    const starter = buildFallbackReply('', 'start');
+    addMessage({ sender:'ai', text:starter.text, translation:starter.translation || '' });
+    state.lastAiReply = starter.text || '';
     setStatus('listening');
     if (SpeechRecognitionCtor && !state.recognition) state.recognition = createRecognition();
-    await speakText((opener && opener.ttsText) || welcomeText);
+    await speakText(starter.ttsText || starter.text || '');
   }
 
   function startListening(){

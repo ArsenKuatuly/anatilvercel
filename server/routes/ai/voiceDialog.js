@@ -334,9 +334,10 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: "OPENAI_API_KEY missing" });
     }
 
-    const { message, sessionId } = req.body || {};
+    const { sessionId } = req.body || {};
     const action = normalizeText(req.body?.action || "message");
-    const cleanMessage = normalizeText(message);
+    const rawMessage = req.body?.message ?? req.body?.text ?? req.body?.userText ?? "";
+    const cleanMessage = normalizeText(rawMessage);
     if (!cleanMessage && action !== "start") {
       return res.status(400).json({ error: "Message is required" });
     }
@@ -352,7 +353,7 @@ module.exports = async (req, res) => {
 
     let reply;
     if (action === "start") {
-      reply = fallbackVoiceReply(cleanMessage, req.body);
+      reply = fallbackVoiceReply("", req.body);
     } else if (isLikelyUnclearInput(cleanMessage)) {
       reply = fallbackVoiceReply(cleanMessage, req.body);
     } else {
@@ -392,10 +393,17 @@ module.exports = async (req, res) => {
 
         if (s.rows[0]) {
           session = s.rows[0];
-          await db.query(
-            `insert into ai_messages (session_id, role, content) values ($1,'user',$2), ($1,'assistant',$3)`,
-            [sid, cleanMessage, reply.assistantText]
-          );
+          if (action === "start") {
+            await db.query(
+              `insert into ai_messages (session_id, role, content) values ($1,'assistant',$2)`,
+              [sid, reply.assistantText]
+            );
+          } else {
+            await db.query(
+              `insert into ai_messages (session_id, role, content) values ($1,'user',$2), ($1,'assistant',$3)`,
+              [sid, cleanMessage, reply.assistantText]
+            );
+          }
         }
       }
     }
