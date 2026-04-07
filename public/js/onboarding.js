@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const STORAGE_KEY = "anatil_onboarding_v2";
+    const LEGACY_STORAGE_KEY = "anatil_onboarding_v2";
     const token = (() => {
         try {
             return localStorage.getItem("token") || "";
@@ -9,6 +9,23 @@
             return "";
         }
     })();
+
+    function parseJwtPayload(jwtToken) {
+        try {
+            if (!jwtToken) return null;
+            const part = jwtToken.split(".")[1];
+            if (!part) return null;
+            const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+            const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+            return JSON.parse(atob(padded));
+        } catch {
+            return null;
+        }
+    }
+
+    const tokenPayload = parseJwtPayload(token);
+    const storageScope = tokenPayload?.id || tokenPayload?.login || "guest";
+    const STORAGE_KEY = `anatil_onboarding_v2_${storageScope}`;
 
     const state = {
         currentStep: 1,
@@ -155,6 +172,10 @@
 
             if (firstNameInput) firstNameInput.value = state.profile.first_name;
             if (lastNameInput) lastNameInput.value = state.profile.last_name;
+
+            if (localStorage.getItem(LEGACY_STORAGE_KEY)) {
+                localStorage.removeItem(LEGACY_STORAGE_KEY);
+            }
         } catch (error) {
             console.error("Не удалось восстановить onboarding state", error);
         }
