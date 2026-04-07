@@ -1636,5 +1636,3 @@ button {
 .ai-result-stack--hidden[hidden] {
   display: none !important;
 }
-
-.ai-mode--voice{display:flex;text-decoration:none;}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
@@ -6,323 +6,235 @@
   <title>Голосовой диалог с ИИ — AnaTil</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/headerdash.css">
   <link rel="stylesheet" href="/css/voice-dialog.css">
 </head>
 <body>
-<script src="/js/auth-guard.js"></script>
-<script src="/js/api.js"></script>
-<div class="voice-app">
-  <header class="voice-header">
-    <div class="voice-shell voice-header__inner">
-      <div class="voice-header__copy">
-        <h1 class="voice-header__title">Голосовой диалог с ИИ</h1>
-        <p class="voice-header__text">Тренируй разговорный казахский голосом в реальных ситуациях</p>
-      </div>
-      <div class="voice-header__actions">
-        <div class="voice-usage-badge" id="usageBadge">Сегодня: 8/20 диалогов</div>
-        <button class="voice-btn voice-btn--outline" type="button" id="historyBtnHeader">
-          <span class="voice-icon"> 
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"></path><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path><path d="M12 7v5l4 2"></path></svg>
-          </span>
-          <span>История</span>
-        </button>
-        <button class="voice-btn voice-btn--primary" type="button" id="quickStartBtn">
-          <span class="voice-icon">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-          </span>
-          <span>Начать практику</span>
-        </button>
-      </div>
+<header class="dash-header">
+  <div class="dash-header__container">
+    <a href="/dashboard.html" class="dash-header__brand" aria-label="AnaTil">
+      <img src="/images/ui/logo-blue.png" alt="AnaTil" class="dash-header__logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+      <span class="dash-header__logo-fallback" style="display:none;">AnaTil</span>
+    </a>
+    <nav class="dash-header__nav">
+      <a href="/dashboard.html" class="dash-header__nav-link">Главная</a>
+      <a href="/lesson.html" class="dash-header__nav-link">Уроки</a>
+      <a href="/anatilui.html" class="dash-header__nav-link dash-header__nav-link--active">AI Практика</a>
+      <a href="/profile.html" class="dash-header__nav-link">Профиль</a>
+    </nav>
+    <button class="dash-header__burger" type="button" aria-label="Открыть меню" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="dash-header__mobile" hidden>
+      <a href="/dashboard.html" class="dash-header__mobile-link">Главная</a>
+      <a href="/lesson.html" class="dash-header__mobile-link">Уроки</a>
+      <a href="/anatilui.html" class="dash-header__mobile-link">AI Практика</a>
+      <a href="/profile.html" class="dash-header__mobile-link">Профиль</a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="voice-shell voice-main">
-    <section class="voice-screen voice-screen--active" id="setupScreen">
-      <div class="voice-setup">
-        <section class="voice-card voice-card--padded">
-          <div class="voice-block-head">
-            <h2 class="voice-section-title">Выбери сценарий</h2>
-          </div>
-          <div class="voice-scenarios" id="scenarioGrid">
-            <button class="voice-scenario-card" type="button" data-scenario="intro">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Знакомство</span>
-                <span class="voice-scenario-card__text">Знакомься, рассказывай о себе</span>
-              </span>
-            </button>
-            <button class="voice-scenario-card" type="button" data-scenario="cafe">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Кафе</span>
-                <span class="voice-scenario-card__text">Заказывай еду и напитки</span>
-              </span>
-            </button>
-            <button class="voice-scenario-card" type="button" data-scenario="shop">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Магазин</span>
-                <span class="voice-scenario-card__text">Покупай продукты и товары</span>
-              </span>
-            </button>
-            <button class="voice-scenario-card" type="button" data-scenario="taxi">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Такси</span>
-                <span class="voice-scenario-card__text">Вызывай такси и общайся с водителем</span>
-              </span>
-            </button>
-            <button class="voice-scenario-card" type="button" data-scenario="university">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Университет</span>
-                <span class="voice-scenario-card__text">Учебные ситуации и разговоры</span>
-              </span>
-            </button>
-            <button class="voice-scenario-card" type="button" data-scenario="work">
-              <span class="voice-scenario-card__icon"></span>
-              <span class="voice-scenario-card__body">
-                <span class="voice-scenario-card__title">Работа</span>
-                <span class="voice-scenario-card__text">Рабочие моменты и деловая беседа</span>
-              </span>
-            </button>
-          </div>
-
-          <div class="voice-divider"></div>
-
-          <div class="voice-levels-wrap">
-            <label class="voice-label">Уровень сложности</label>
-            <div class="voice-levels" id="levelSelector">
-              <button class="voice-level-chip is-active" type="button" data-level="A1"><span class="voice-level-chip__name">A1</span><span class="voice-level-chip__text">простые фразы</span></button>
-              <button class="voice-level-chip" type="button" data-level="A2"><span class="voice-level-chip__name">A2</span><span class="voice-level-chip__text">бытовой диалог</span></button>
-              <button class="voice-level-chip" type="button" data-level="B1"><span class="voice-level-chip__name">B1</span><span class="voice-level-chip__text">естественная речь</span></button>
-            </div>
-          </div>
-
-          <div class="voice-divider"></div>
-
-          <div class="voice-options-wrap">
-            <h3 class="voice-section-title voice-section-title--sm">Настройки помощи</h3>
-            <div class="voice-options">
-              <label class="voice-toggle-row"><span>Показывать перевод</span><input type="checkbox" id="optTranslation" checked><span class="voice-switch"><span></span></span></label>
-              <label class="voice-toggle-row"><span>Мягко исправлять ошибки</span><input type="checkbox" id="optCorrection" checked><span class="voice-switch"><span></span></span></label>
-              <label class="voice-toggle-row"><span>Подсказывать, если я застрял</span><input type="checkbox" id="optHints" checked><span class="voice-switch"><span></span></span></label>
-              <label class="voice-toggle-row"><span>Говорить медленнее</span><input type="checkbox" id="optSlow"><span class="voice-switch"><span></span></span></label>
-            </div>
-          </div>
-
-          <div class="voice-divider"></div>
-
-          <div class="voice-start-block">
-            <button class="voice-btn voice-btn--primary voice-btn--full voice-btn--lg" type="button" id="startDialogBtn" disabled>
-              <span class="voice-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><path d="M12 18v4"></path><path d="M8 22h8"></path></svg>
-              </span>
-              <span>Начать голосовой диалог</span>
-            </button>
-            <p class="voice-note">Понадобится доступ к микрофону</p>
-          </div>
-        </section>
-
-        <section class="voice-lesson-card">
-          <div class="voice-lesson-card__icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
-          </div>
-          <div class="voice-lesson-card__body">
-            <div class="voice-lesson-card__head">
-              <h3>Разговор по уроку</h3>
-              <span class="voice-sparkle">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"></path><path d="M19 14l.95 2.55L22.5 17.5l-2.55.95L19 21l-.95-2.55L15.5 17.5l2.55-.95z"></path></svg>
-              </span>
-            </div>
-            <p>Практикуй темы из уроков в голосовом формате. ИИ будет направлять разговор по теме урока.</p>
-            <div class="voice-topic-tags">
-              <span>Приветствие</span>
-              <span>Магазин</span>
-              <span>Прошедшее время</span>
-              <span>Будущее время</span>
-              <span>Вежливая речь</span>
-            </div>
-            <button class="voice-link-btn" type="button">Выбрать тему урока →</button>
-          </div>
-        </section>
+<main class="voice-page">
+  <div class="voice-page__container">
+    <section class="voice-topbar">
+      <div>
+        <h1 class="voice-topbar__title">Голосовой диалог с ИИ</h1>
+        <p class="voice-topbar__text">Тренируй разговорный казахский голосом в реальных ситуациях</p>
+      </div>
+      <div class="voice-topbar__actions">
+        <div class="voice-usage">
+          <span class="voice-usage__label">Сегодня</span>
+          <strong class="voice-usage__value" id="voiceUsageValue">0 / 50</strong>
+        </div>
+        <button class="voice-btn voice-btn--secondary" type="button" id="openHistoryBtn">История</button>
+        <button class="voice-btn voice-btn--primary" type="button" id="startTopBtn">Начать практику</button>
       </div>
     </section>
 
-    <section class="voice-screen" id="historyScreen">
-      <div class="voice-history-head">
-        <button class="voice-btn voice-btn--ghost" type="button" id="backFromHistoryBtn">
-          <span class="voice-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
-          </span>
-          <span>Назад</span>
-        </button>
-        <h2>История диалогов</h2>
-        <p>Все ваши голосовые практики и результаты</p>
+    <section class="voice-screen voice-screen--active" id="setupScreen">
+      <div class="voice-setup-card">
+        <div class="voice-setup-card__head">
+          <div>
+            <h2 class="voice-section-title">Выбери сценарий</h2>
+            <p class="voice-section-text">Лучше начинать с простых жизненных ситуаций и постепенно усложнять разговор.</p>
+          </div>
+          <a href="/anatilui.html" class="voice-link-card">
+            <span class="voice-link-card__label">Другие режимы</span>
+            <span class="voice-link-card__title">Вернуться в AI Практика</span>
+          </a>
+        </div>
+        <div class="voice-scenarios" id="scenarioGrid"></div>
+
+        <div class="voice-setup-grid">
+          <section class="voice-panel">
+            <h3 class="voice-panel__title">Уровень</h3>
+            <div class="voice-levels" id="levelGroup">
+              <button class="voice-level voice-level--active" type="button" data-level="A1">A1</button>
+              <button class="voice-level" type="button" data-level="A2">A2</button>
+              <button class="voice-level" type="button" data-level="B1">B1</button>
+            </div>
+            <p class="voice-panel__hint" id="levelHint">A1 — простые фразы и медленный темп</p>
+          </section>
+
+          <section class="voice-panel">
+            <h3 class="voice-panel__title">Настройки</h3>
+            <div class="voice-options">
+              <label class="voice-toggle"><input type="checkbox" id="optTranslation" checked><span>Показывать перевод</span></label>
+              <label class="voice-toggle"><input type="checkbox" id="optCorrection" checked><span>Мягко исправлять ошибки</span></label>
+              <label class="voice-toggle"><input type="checkbox" id="optHints" checked><span>Подсказывать, если я застрял</span></label>
+              <label class="voice-toggle"><input type="checkbox" id="optSlow"><span>Говорить медленнее</span></label>
+            </div>
+          </section>
+        </div>
+
+        <div class="voice-specials">
+          <button class="voice-lesson-card" type="button" id="lessonModeBtn">
+            <span class="voice-lesson-card__eyebrow">Спецрежим</span>
+            <strong class="voice-lesson-card__title">Разговор по уроку</strong>
+            <span class="voice-lesson-card__text" id="lessonModeText">Привязать диалог к текущему уроку и практиковать нужную тему голосом.</span>
+          </button>
+        </div>
+
+        <div class="voice-start-row">
+          <button class="voice-btn voice-btn--primary voice-btn--big" type="button" id="startSessionBtn">Начать голосовой диалог</button>
+          <p class="voice-start-row__text">Понадобится доступ к микрофону</p>
+        </div>
       </div>
-      <div class="voice-history-list" id="historyList"></div>
     </section>
 
     <section class="voice-screen" id="permissionScreen">
-      <div class="voice-permission-card">
-        <div class="voice-permission-card__icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><path d="M12 18v4"></path><path d="M8 22h8"></path></svg>
+      <div class="voice-permission">
+        <div class="voice-permission__icon">🎙️</div>
+        <h2 class="voice-section-title">Разреши доступ к микрофону</h2>
+        <p class="voice-section-text">После разрешения мы сразу подключим голосовой диалог с ИИ.</p>
+        <p class="voice-error" id="permissionError" hidden></p>
+        <div class="voice-permission__actions">
+          <button class="voice-btn voice-btn--primary" type="button" id="allowMicBtn">Разрешить микрофон</button>
+          <button class="voice-btn voice-btn--secondary" type="button" id="backToSetupBtn">Назад</button>
         </div>
-        <h3>Доступ к микрофону</h3>
-        <p>Для голосового диалога нужен доступ к микрофону. Ваша речь будет обрабатываться в реальном времени.</p>
-        <div class="voice-error" id="permissionError" hidden></div>
-        <button class="voice-btn voice-btn--primary voice-btn--full" type="button" id="allowMicBtn">Разрешить доступ к микрофону</button>
       </div>
     </section>
 
     <section class="voice-screen" id="conversationScreen">
-      <div class="voice-conversation-layout">
-        <div class="voice-conversation-main">
-          <section class="voice-card voice-card--padded">
-            <div class="voice-conversation-top">
+      <div class="voice-conversation">
+        <div class="voice-conversation__main">
+          <div class="voice-call-card">
+            <div class="voice-call-card__head">
               <div>
-                <h3 class="voice-conversation-title" id="conversationScenario">Знакомство</h3>
-                <p class="voice-conversation-level">Уровень: <span id="conversationLevel">A1</span></p>
+                <div class="voice-call-card__eyebrow" id="activeScenarioLabel">Знакомство</div>
+                <h2 class="voice-call-card__title">Живой разговор с ИИ</h2>
+                <p class="voice-call-card__meta"><span id="activeLevelLabel">A1</span> <span class="voice-dot">•</span> <span id="sessionModeLabel">Обычный сценарий</span></p>
               </div>
-              <div class="voice-status-pill is-listening" id="statusPill"><span class="voice-status-pill__dot"></span><span class="voice-status-pill__text">Слушаю</span></div>
+              <span class="voice-status voice-status--idle" id="sessionStatus">Подключение</span>
             </div>
 
-            <div class="voice-wave-box">
-              <div class="voice-waveform" id="waveform">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
+            <div class="voice-wave" id="waveBars">
+              <span></span><span></span><span></span><span></span><span></span>
             </div>
 
-            <div class="voice-controls">
-              <button class="voice-control-btn" type="button" id="muteBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 5.12 2.12"></path><path d="M17 10v1a5 5 0 0 1-.46 2.08"></path><path d="M19 10v1a7 7 0 0 1-12.59 4.34"></path><path d="m2 2 20 20"></path><path d="M12 19v3"></path><path d="M8 22h8"></path></svg>
-              </button>
-              <button class="voice-mic-btn is-listening" type="button" id="micBtn"><span class="voice-mic-btn__pulse"></span><span class="voice-mic-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v1a7 7 0 0 1-14 0v-1"></path><path d="M12 18v4"></path><path d="M8 22h8"></path></svg></span></button>
-              <button class="voice-control-btn" type="button" id="pauseBtn">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>
-              </button>
-              <button class="voice-control-btn voice-control-btn--danger" type="button" id="endBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-              </button>
+            <div class="voice-call-card__actions">
+              <button class="voice-icon-btn voice-icon-btn--ghost" type="button" id="muteBtn">🔇</button>
+              <button class="voice-mic-btn" type="button" id="reconnectBtn">🎤</button>
+              <button class="voice-icon-btn voice-icon-btn--danger" type="button" id="endBtn">✕</button>
             </div>
+          </div>
 
-            <div class="voice-status-line" id="statusLine">Нажмите кнопку микрофона и говорите</div>
-          </section>
-
-          <section class="voice-card voice-transcript-card">
-            <div class="voice-card-head"><h3>Транскрипт диалога</h3></div>
+          <div class="voice-transcript-card">
+            <div class="voice-transcript-card__head">
+              <h3 class="voice-panel__title">Текст диалога</h3>
+              <span class="voice-mini-status" id="liveIndicator">Ожидание</span>
+            </div>
             <div class="voice-transcript" id="transcriptList"></div>
-          </section>
-
-          <section class="voice-hints-box">
-            <p>💡 Попробуй ответить полным предложением</p>
-            <p>💡 Можно попросить повторить: "Қайталап айтыңыз"</p>
-            <p>💡 Используй вежливую форму с "сіз"</p>
-          </section>
+            <div class="voice-hints-strip" id="hintStrip"></div>
+            <div class="voice-text-input">
+              <textarea id="textFallbackInput" class="voice-textarea" placeholder="Можно ответить текстом, если микрофон временно не нужен..."></textarea>
+              <button class="voice-btn voice-btn--primary" type="button" id="sendTextBtn">Отправить</button>
+            </div>
+          </div>
         </div>
 
-        <aside class="voice-support-column">
-          <div class="voice-support-sticky">
-            <section class="voice-card voice-support-card">
-              <h3>Тема разговора</h3>
-              <p id="supportScenarioText">Знакомство</p>
-              <span class="voice-soft-chip">Уровень: <span id="supportLevelText">A1</span></span>
-            </section>
-
-            <section class="voice-card voice-support-card">
-              <div class="voice-support-head"><span class="voice-support-head__icon"></span><h3>Полезные фразы</h3></div>
-              <div class="voice-phrase-list">
-                <div>Сәлеметсіз бе? — Здравствуйте</div>
-                <div>Өтінемін — Пожалуйста</div>
-                <div>Рахмет — Спасибо</div>
-                <div>Кешіріңіз — Извините</div>
-                <div>Түсінбедім — Не понял</div>
-              </div>
-            </section>
-
-            <section class="voice-card voice-support-card voice-support-card--amber">
-              <div class="voice-support-head"><span class="voice-support-head__icon"></span><h3>Быстрые подсказки</h3></div>
-              <div class="voice-bullets">
-                <div><span>•</span><span>Попробуй ответить полным предложением</span></div>
-                <div><span>•</span><span>Можно попросить повторить</span></div>
-                <div><span>•</span><span>Используй вежливую форму</span></div>
-              </div>
-            </section>
-
-            <section class="voice-card voice-support-card voice-support-card--orange">
-              <div class="voice-support-head"><span class="voice-support-head__icon"></span><h3>Ошибки в процессе</h3></div>
-              <div class="voice-mistake-box">
-                <div class="voice-mistake-box__bad">Мен бар</div>
-                <div class="voice-mistake-box__good">Мен барамын</div>
-                <div class="voice-mistake-box__note">нужен глагол в наст. времени</div>
-              </div>
-            </section>
-
-            <section class="voice-card voice-support-card">
-              <div class="voice-support-head"><span class="voice-support-head__icon"></span><h3>Помощь</h3></div>
-              <div class="voice-support-actions">
-                <button class="voice-btn voice-btn--outline voice-btn--full voice-btn--left" type="button" data-help="example">Дай пример ответа</button>
-                <button class="voice-btn voice-btn--outline voice-btn--full voice-btn--left" type="button" data-help="explain">Объясни по-русски</button>
-                <button class="voice-btn voice-btn--outline voice-btn--full voice-btn--left" type="button" data-help="simplify">Упростить диалог</button>
-              </div>
-            </section>
-          </div>
+        <aside class="voice-support">
+          <section class="voice-side-card">
+            <h3 class="voice-side-card__title">Тема разговора</h3>
+            <p class="voice-side-card__text" id="topicDescription"></p>
+          </section>
+          <section class="voice-side-card">
+            <h3 class="voice-side-card__title">Полезные фразы</h3>
+            <div class="voice-phrase-list" id="phraseList"></div>
+          </section>
+          <section class="voice-side-card">
+            <h3 class="voice-side-card__title">Подсказки</h3>
+            <div class="voice-tip-list" id="tipList"></div>
+            <div class="voice-side-card__buttons">
+              <button class="voice-btn voice-btn--secondary voice-btn--full" type="button" id="exampleAnswerBtn">Дай пример ответа</button>
+              <button class="voice-btn voice-btn--secondary voice-btn--full" type="button" id="explainRuBtn">Объясни по-русски</button>
+              <button class="voice-btn voice-btn--secondary voice-btn--full" type="button" id="simplifyBtn">Упростить диалог</button>
+            </div>
+          </section>
+          <section class="voice-side-card">
+            <h3 class="voice-side-card__title">Ошибки в процессе</h3>
+            <div class="voice-error-feed" id="errorFeed"><p class="voice-side-card__text">Пока всё спокойно. После первых реплик здесь появятся мягкие замечания и советы.</p></div>
+          </section>
         </aside>
       </div>
     </section>
-  </main>
-</div>
 
-<div class="voice-modal" id="summaryModal" hidden>
-  <div class="voice-modal__backdrop"></div>
-  <div class="voice-modal__dialog">
-    <div class="voice-modal__header">
-      <h2>Разговор завершён</h2>
-      <button class="voice-modal__close" type="button" id="closeSummaryBtn">×</button>
-    </div>
-    <div class="voice-modal__body">
-      <section class="voice-summary-green">Отличная работа! Вы практиковали казахский язык в живом диалоге.</section>
-      <div class="voice-summary-grid">
-        <div class="voice-summary-stat"><div>Сценарий</div><strong id="summaryScenario">Знакомство</strong></div>
-        <div class="voice-summary-stat"><div>Длительность</div><strong>5 мин 30 сек</strong></div>
+    <section class="voice-screen" id="summaryScreen">
+      <div class="voice-summary">
+        <div class="voice-summary__head">
+          <div>
+            <span class="voice-summary__badge">Разговор завершён</span>
+            <h2 class="voice-section-title">Итоги голосовой практики</h2>
+            <p class="voice-section-text">Короткий разбор того, что получилось хорошо и что стоит повторить.</p>
+          </div>
+          <div class="voice-summary__meta">
+            <div><span>Сценарий</span><strong id="summaryScenario">—</strong></div>
+            <div><span>Длительность</span><strong id="summaryDuration">—</strong></div>
+            <div><span>Фраз</span><strong id="summaryCount">0</strong></div>
+          </div>
+        </div>
+        <div class="voice-summary__grid">
+          <section class="voice-summary-card">
+            <h3 class="voice-summary-card__title">Сильные стороны</h3>
+            <ul id="summaryStrengths" class="voice-bullet-list"></ul>
+          </section>
+          <section class="voice-summary-card">
+            <h3 class="voice-summary-card__title">Что улучшить</h3>
+            <ul id="summaryImprovements" class="voice-bullet-list"></ul>
+          </section>
+          <section class="voice-summary-card">
+            <h3 class="voice-summary-card__title">Полезные фразы</h3>
+            <ul id="summaryPhrases" class="voice-bullet-list"></ul>
+          </section>
+          <section class="voice-summary-card">
+            <h3 class="voice-summary-card__title">Следующий шаг</h3>
+            <p class="voice-summary-card__text" id="summaryNext">—</p>
+          </section>
+        </div>
+        <div class="voice-summary__actions">
+          <button class="voice-btn voice-btn--primary" type="button" id="repeatBtn">Повторить сценарий</button>
+          <button class="voice-btn voice-btn--secondary" type="button" id="newScenarioBtn">Выбрать другой сценарий</button>
+          <button class="voice-btn voice-btn--secondary" type="button" id="saveResultBtn">Сохранить результат</button>
+          <a class="voice-btn voice-btn--secondary" href="/anatilui.html">Перейти к текстовой практике</a>
+        </div>
       </div>
-      <div class="voice-summary-big"><div>Фраз произнесено</div><strong>12</strong></div>
-      <section>
-        <div class="voice-summary-head"><h3>Сильные стороны</h3></div>
-        <div class="voice-summary-list voice-summary-list--green">
-          <div>Хорошее произношение звука «ә»</div>
-          <div>Правильное использование вежливой формы</div>
-          <div>Уверенное построение простых предложений</div>
-        </div>
-      </section>
-      <section>
-        <div class="voice-summary-head"><h3>Что улучшить</h3></div>
-        <div class="voice-summary-list voice-summary-list--orange">
-          <div>Обрати внимание на окончания глаголов настоящего времени</div>
-          <div>Практикуй использование местного падежа (-да/-де)</div>
-          <div>Увеличь словарный запас по теме «Семья»</div>
-        </div>
-      </section>
-      <section>
-        <div class="voice-summary-head"><h3>Полезные фразы из диалога</h3></div>
-        <div class="voice-summary-list voice-summary-list--blue">
-          <div>Мен студентпін — Я студент</div>
-          <div>Сәлеметсіз бе? — Здравствуйте</div>
-          <div>Рахмет — Спасибо</div>
-        </div>
-      </section>
-      <section class="voice-summary-reco">Попробуй сценарий «Кафе» на уровне A2, чтобы применить полученные навыки в новой ситуации.</section>
-      <div class="voice-summary-actions">
-        <button class="voice-btn voice-btn--primary" type="button" id="repeatBtn">Повторить сценарий</button>
-        <button class="voice-btn voice-btn--outline" type="button" id="newScenarioBtn">Выбрать другой сценарий</button>
-        <button class="voice-btn voice-btn--outline" type="button">Сохранить результат</button>
-        <button class="voice-btn voice-btn--outline" type="button">Перейти к текстовой практике</button>
-      </div>
+    </section>
+  </div>
+</main>
+
+<div class="voice-history-modal" id="historyModal" hidden>
+  <div class="voice-history-modal__backdrop" data-close-history></div>
+  <div class="voice-history-modal__dialog">
+    <div class="voice-history-modal__head">
+      <h2 class="voice-panel__title">История голосовых сессий</h2>
+      <button class="voice-icon-btn voice-icon-btn--ghost" type="button" data-close-history>✕</button>
     </div>
+    <div class="voice-history-list" id="historyList"></div>
   </div>
 </div>
 
+<script src="/js/authFetch.js"></script>
 <script src="/js/voice-dialog.js"></script>
 </body>
 </html>

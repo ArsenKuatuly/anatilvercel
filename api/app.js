@@ -60,6 +60,7 @@ const adminLibraryMaterialUpdate = require("../server/routes/admin/libraryMateri
 
 const aiSessionStart = require("../server/routes/ai/sessionStart.js");
 const aiUsageToday = require("../server/routes/ai/usageToday.js");
+const aiVoiceToken = require("../server/routes/ai/voiceToken.js");
 const testWritingScore = require("../server/routes/ai/testWritingScore.js");
 
 
@@ -112,6 +113,7 @@ module.exports = async (req, res) => {
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
         if (path === "/api/ai/session/start" && method === "POST") return aiSessionStart(req, res);
         if (path === "/api/ai/usage/today" && method === "GET") return aiUsageToday(req, res);
+        if (path === "/api/ai/voice/token" && method === "POST") return aiVoiceToken(req, res);
         if (path === "/api/ai/test-writing-score" && method === "POST") {
             return testWritingScore(req, res);
         }
