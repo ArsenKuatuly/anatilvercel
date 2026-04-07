@@ -1,733 +1,256 @@
-(function () {
-  const STORAGE_KEY = 'anatil_voice_history_v1';
-  const scenarioData = [
-    {
-      id: 'intro', icon: '👋', title: 'Знакомство', description: 'Знакомься, рассказывай о себе', topic: 'Поздороваться, представиться, рассказать о себе и задать собеседнику 1–2 вопроса.', phrases: ['Сәлеметсіз бе', 'Менің атым Арсен', 'Мен Қарағандыданмын', 'Сіз қайдан келдіңіз?'], tips: ['Говори коротко и спокойно', 'Сначала представься', 'Добавь встречный вопрос'], next: 'Попробуй тот же сценарий на уровне выше и отвечай полными предложениями.'
-    },
-    {
-      id: 'cafe', icon: '☕', title: 'Кафе', description: 'Заказывай еду и напитки', topic: 'Сделать заказ, уточнить напиток, спросить цену и попросить счёт.', phrases: ['Маған бір кофе беріңізші', 'Тағы не бар?', 'Бағасы қанша?', 'Шот әкеліңізші'], tips: ['Начни с вежливой формы', 'Уточняй заказ короткими фразами', 'Не бойся попросить повторить'], next: 'Повтори сценарий и попробуй заказать 2–3 позиции без подсказок.'
-    },
-    {
-      id: 'shop', icon: '🛍️', title: 'Магазин', description: 'Покупай продукты и товары', topic: 'Спросить товар, количество, цену и наличие нужного размера или вкуса.', phrases: ['Маған нан керек', 'Бұл бар ма?', 'Тағы қандай түрі бар?', 'Мынау қанша тұрады?'], tips: ['Используй простые существительные', 'Сначала скажи, что тебе нужно', 'Добавь вопрос про цену'], next: 'Попрактикуйся в магазине на уровне A2 и добавь больше уточнений.'
-    },
-    {
-      id: 'taxi', icon: '🚕', title: 'Такси', description: 'Поездка и общение с водителем', topic: 'Назвать адрес, уточнить маршрут, время и попросить остановить.', phrases: ['Мына мекенжайға апарыңызшы', 'Қанша уақытта барамыз?', 'Осы жерге тоқтаңызшы', 'Кептеліс бар ма?'], tips: ['Говори чётко адрес', 'Используй вежливую форму', 'Задай вопрос про время'], next: 'Сделай ещё один диалог и попробуй сам вести разговор без перехода на русский.'
-    },
-    {
-      id: 'university', icon: '🎓', title: 'Университет', description: 'Учебные ситуации и разговоры', topic: 'Спросить про аудиторию, расписание, преподавателя или задание.', phrases: ['Сабақ қай аудиторияда?', 'Бүгін қандай тапсырма бар?', 'Мұғалім келді ме?', 'Маған түсіндіріп бересіз бе?'], tips: ['Используй слова про учёбу', 'Не бойся просить объяснить', 'Сохраняй вежливый тон'], next: 'Закрепи лексику по учёбе и попробуй разговор по уроку.'
-    },
-    {
-      id: 'work', icon: '💼', title: 'Работа', description: 'Рабочая и деловая беседа', topic: 'Короткий рабочий разговор: задачи, сроки, статус и уточнения.', phrases: ['Мен бұл тапсырманы бүгін аяқтаймын', 'Қай уақытта бастаймыз?', 'Маған қосымша ақпарат керек', 'Бұл дұрыс па?'], tips: ['Отвечай чуть формальнее', 'Старайся говорить полными фразами', 'Уточняй срок или действие'], next: 'Попробуй B1 и отвечай более естественно, с уточняющими вопросами.'
-    }
+(function(){
+  const scenarios = {
+    intro:{title:'Знакомство',description:'Знакомься, рассказывай о себе'},
+    cafe:{title:'Кафе',description:'Заказывай еду и напитки'},
+    shop:{title:'Магазин',description:'Покупай продукты и товары'},
+    taxi:{title:'Такси',description:'Вызывай такси и общайся с водителем'},
+    university:{title:'Университет',description:'Учебные ситуации и разговоры'},
+    work:{title:'Работа',description:'Рабочие моменты и деловая беседа'}
+  };
+
+  const historyItems = [
+    {scenario:'Знакомство',level:'A1',date:'7 апреля 2026',duration:'5 мин 30 сек',phrases:12,status:'completed'},
+    {scenario:'Кафе',level:'A1',date:'6 апреля 2026',duration:'4 мин 15 сек',phrases:10,status:'completed'},
+    {scenario:'Магазин',level:'A2',date:'5 апреля 2026',duration:'3 мин 20 сек',phrases:8,status:'incomplete'}
   ];
-  const levelHints = {
-    A1: 'A1 — простые фразы и медленный темп',
-    A2: 'A2 — бытовой диалог и чуть длиннее ответы',
-    B1: 'B1 — более естественная речь и уточняющие вопросы'
-  };
+
   const state = {
-    screen: 'setup',
-    selectedScenario: scenarioData[0],
-    selectedLevel: 'A1',
-    lessonMode: false,
-    lessonTitle: '',
-    lessonCourseTitle: '',
-    lessonModeLabel: '',
-    options: { showTranslation: true, gentleCorrection: true, hints: true, slowSpeech: false },
-    history: [],
-    usage: { used: 0, limit: 50 },
-    transcript: [],
-    sessionStartedAt: 0,
-    sessionStatus: 'Подключение',
-    audio: null,
-    pc: null,
-    dc: null,
-    stream: null,
-    liveAssistantBuffer: '',
-    sessionId: null,
-    lastSaved: null,
-    assistantMessageMap: new Map(),
-    userMessageMap: new Map(),
-    muted: false,
-  };
-  const els = {
-    screens: {
-      setup: document.getElementById('setupScreen'),
-      permission: document.getElementById('permissionScreen'),
-      conversation: document.getElementById('conversationScreen'),
-      summary: document.getElementById('summaryScreen')
-    },
-    scenarioGrid: document.getElementById('scenarioGrid'),
-    levelGroup: document.getElementById('levelGroup'),
-    levelHint: document.getElementById('levelHint'),
-    optTranslation: document.getElementById('optTranslation'),
-    optCorrection: document.getElementById('optCorrection'),
-    optHints: document.getElementById('optHints'),
-    optSlow: document.getElementById('optSlow'),
-    lessonModeBtn: document.getElementById('lessonModeBtn'),
-    lessonModeText: document.getElementById('lessonModeText'),
-    startTopBtn: document.getElementById('startTopBtn'),
-    startSessionBtn: document.getElementById('startSessionBtn'),
-    backToSetupBtn: document.getElementById('backToSetupBtn'),
-    allowMicBtn: document.getElementById('allowMicBtn'),
-    permissionError: document.getElementById('permissionError'),
-    sessionStatus: document.getElementById('sessionStatus'),
-    waveBars: document.getElementById('waveBars'),
-    transcriptList: document.getElementById('transcriptList'),
-    liveIndicator: document.getElementById('liveIndicator'),
-    activeScenarioLabel: document.getElementById('activeScenarioLabel'),
-    activeLevelLabel: document.getElementById('activeLevelLabel'),
-    sessionModeLabel: document.getElementById('sessionModeLabel'),
-    topicDescription: document.getElementById('topicDescription'),
-    phraseList: document.getElementById('phraseList'),
-    tipList: document.getElementById('tipList'),
-    hintStrip: document.getElementById('hintStrip'),
-    errorFeed: document.getElementById('errorFeed'),
-    textFallbackInput: document.getElementById('textFallbackInput'),
-    sendTextBtn: document.getElementById('sendTextBtn'),
-    exampleAnswerBtn: document.getElementById('exampleAnswerBtn'),
-    explainRuBtn: document.getElementById('explainRuBtn'),
-    simplifyBtn: document.getElementById('simplifyBtn'),
-    reconnectBtn: document.getElementById('reconnectBtn'),
-    muteBtn: document.getElementById('muteBtn'),
-    endBtn: document.getElementById('endBtn'),
-    openHistoryBtn: document.getElementById('openHistoryBtn'),
-    historyModal: document.getElementById('historyModal'),
-    historyList: document.getElementById('historyList'),
-    voiceUsageValue: document.getElementById('voiceUsageValue'),
-    summaryScenario: document.getElementById('summaryScenario'),
-    summaryDuration: document.getElementById('summaryDuration'),
-    summaryCount: document.getElementById('summaryCount'),
-    summaryStrengths: document.getElementById('summaryStrengths'),
-    summaryImprovements: document.getElementById('summaryImprovements'),
-    summaryPhrases: document.getElementById('summaryPhrases'),
-    summaryNext: document.getElementById('summaryNext'),
-    repeatBtn: document.getElementById('repeatBtn'),
-    newScenarioBtn: document.getElementById('newScenarioBtn'),
-    saveResultBtn: document.getElementById('saveResultBtn')
+    scenario:null,
+    level:'A1',
+    screen:'setup',
+    status:'listening',
+    paused:false,
+    messages:[
+      {sender:'ai',text:'Сәлеметсіз бе! Мен сіздің виртуалды репетітормін. Өзіңізді таныстырыңыз.',translation:'Здравствуйте! Я ваш виртуальный репетитор. Представьтесь, пожалуйста.'}
+    ]
   };
 
-  function escapeHtml(value) {
-    return String(value || '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
+  const setupScreen = document.getElementById('setupScreen');
+  const historyScreen = document.getElementById('historyScreen');
+  const permissionScreen = document.getElementById('permissionScreen');
+  const conversationScreen = document.getElementById('conversationScreen');
+  const summaryModal = document.getElementById('summaryModal');
+  const scenarioButtons = Array.from(document.querySelectorAll('.voice-scenario-card'));
+  const levelButtons = Array.from(document.querySelectorAll('.voice-level-chip'));
+  const startDialogBtn = document.getElementById('startDialogBtn');
+  const quickStartBtn = document.getElementById('quickStartBtn');
+  const historyBtnHeader = document.getElementById('historyBtnHeader');
+  const backFromHistoryBtn = document.getElementById('backFromHistoryBtn');
+  const allowMicBtn = document.getElementById('allowMicBtn');
+  const permissionError = document.getElementById('permissionError');
+  const transcriptList = document.getElementById('transcriptList');
+  const statusPill = document.getElementById('statusPill');
+  const statusLine = document.getElementById('statusLine');
+  const waveform = document.getElementById('waveform');
+  const micBtn = document.getElementById('micBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const endBtn = document.getElementById('endBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const repeatBtn = document.getElementById('repeatBtn');
+  const newScenarioBtn = document.getElementById('newScenarioBtn');
+  const closeSummaryBtn = document.getElementById('closeSummaryBtn');
+  const conversationScenario = document.getElementById('conversationScenario');
+  const conversationLevel = document.getElementById('conversationLevel');
+  const supportScenarioText = document.getElementById('supportScenarioText');
+  const supportLevelText = document.getElementById('supportLevelText');
+  const summaryScenario = document.getElementById('summaryScenario');
+  const historyList = document.getElementById('historyList');
+  let aiTimers = [];
 
-  function request(url, options) {
-    if (typeof window.authFetch === 'function') return window.authFetch(url, options || {});
-    return fetch(url, options || {}).then(async function (res) {
-      const data = await res.json().catch(function () { return null; });
-      return { res: res, data: data };
-    });
-  }
-
-  function getQueryParam(name) {
-    const url = new URL(window.location.href);
-    return url.searchParams.get(name) || '';
-  }
-
-  function parseLessonMode() {
-    state.lessonTitle = getQueryParam('lessonTitle');
-    state.lessonCourseTitle = getQueryParam('courseTitle');
-    state.lessonModeLabel = getQueryParam('topic') || state.lessonTitle || '';
-    if (state.lessonModeLabel) {
-      state.lessonMode = true;
-      els.lessonModeText.textContent = 'Текущая тема: ' + state.lessonModeLabel + '. Диалог будет привязан к уроку и его грамматике.';
-    }
-  }
-
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.history)) state.history = parsed.history;
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  function saveHistory() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ history: state.history.slice(0, 20) }));
-  }
-
-  function setScreen(name) {
+  function setScreen(name){
     state.screen = name;
-    Object.keys(els.screens).forEach(function (key) {
-      els.screens[key].classList.toggle('voice-screen--active', key === name);
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    [setupScreen, historyScreen, permissionScreen, conversationScreen].forEach(el => el.classList.remove('voice-screen--active'));
+    if(name === 'setup') setupScreen.classList.add('voice-screen--active');
+    if(name === 'history') historyScreen.classList.add('voice-screen--active');
+    if(name === 'permission') permissionScreen.classList.add('voice-screen--active');
+    if(name === 'conversation') conversationScreen.classList.add('voice-screen--active');
   }
 
-  function setUsage(used, limit) {
-    state.usage.used = Number(used || 0);
-    state.usage.limit = Number(limit || 50);
-    els.voiceUsageValue.textContent = state.usage.used + ' / ' + state.usage.limit;
+  function setScenario(id){
+    state.scenario = id;
+    scenarioButtons.forEach(btn => btn.classList.toggle('is-selected', btn.dataset.scenario === id));
+    startDialogBtn.disabled = !id;
   }
 
-  async function loadUsage() {
-    try {
-      const result = await request('/api/ai/usage/today', { method: 'GET' });
-      if (result && result.data && result.data.usage) {
-        setUsage(result.data.usage.used, result.data.usage.limit);
-      }
-    } catch (error) {
-      console.error(error);
-    }
+  function setLevel(level){
+    state.level = level;
+    levelButtons.forEach(btn => btn.classList.toggle('is-active', btn.dataset.level === level));
   }
 
-  function renderScenarios() {
-    els.scenarioGrid.innerHTML = scenarioData.map(function (item) {
-      return '<button class="voice-scenario' + (state.selectedScenario.id === item.id ? ' voice-scenario--active' : '') + '" type="button" data-scenario="' + item.id + '">' +
-        '<span class="voice-scenario__icon">' + item.icon + '</span>' +
-        '<span class="voice-scenario__title">' + escapeHtml(item.title) + '</span>' +
-        '<span class="voice-scenario__text">' + escapeHtml(item.description) + '</span>' +
-      '</button>';
-    }).join('');
-  }
-
-  function renderConversationInfo() {
-    const scenario = state.selectedScenario;
-    els.activeScenarioLabel.textContent = scenario.title;
-    els.activeLevelLabel.textContent = state.selectedLevel;
-    els.sessionModeLabel.textContent = state.lessonMode ? 'Разговор по уроку' : 'Обычный сценарий';
-    els.topicDescription.textContent = state.lessonMode && state.lessonModeLabel
-      ? 'Разговор связан с темой: ' + state.lessonModeLabel + '. Сценарий: ' + scenario.topic
-      : scenario.topic;
-    els.phraseList.innerHTML = scenario.phrases.map(function (item) {
-      return '<div class="voice-phrase-item">' + escapeHtml(item) + '</div>';
-    }).join('');
-    els.tipList.innerHTML = scenario.tips.map(function (item) {
-      return '<div class="voice-tip-item">' + escapeHtml(item) + '</div>';
-    }).join('');
-    renderHintStrip();
-  }
-
-  function renderHintStrip() {
-    const items = state.selectedScenario.tips.slice(0, 3);
-    els.hintStrip.innerHTML = items.map(function (item) {
-      return '<span class="voice-hint-pill">' + escapeHtml(item) + '</span>';
-    }).join('');
-  }
-
-  function renderHistory() {
-    if (!state.history.length) {
-      els.historyList.innerHTML = '<div class="voice-history-item"><div class="voice-history-item__title">История пока пустая</div><div class="voice-history-item__meta">После первых разговоров здесь появятся сохранённые сессии.</div></div>';
+  function renderHistory(){
+    if(!historyItems.length){
+      historyList.innerHTML = '<div class="voice-empty-card"><div class="voice-empty-card__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div><h3>История пуста</h3><p>Вы ещё не провели ни одного голосового диалога. Начните практику, чтобы увидеть вашу историю разговоров.</p><button class="voice-btn voice-btn--primary" type="button" id="startFirstDialogBtn">Начать первый диалог</button></div>';
+      document.getElementById('startFirstDialogBtn').addEventListener('click', function(){ setScreen('setup'); });
       return;
     }
-    els.historyList.innerHTML = state.history.map(function (item) {
-      return '<div class="voice-history-item">' +
-        '<div class="voice-history-item__top"><div class="voice-history-item__title">' + escapeHtml(item.scenario + ' · ' + item.level) + '</div><div class="voice-history-item__date">' + escapeHtml(item.date) + '</div></div>' +
-        '<div class="voice-history-item__meta">' + escapeHtml(item.duration + ' · ' + item.count + ' фраз · ' + item.modeLabel) + '</div>' +
-      '</div>';
+    historyList.innerHTML = historyItems.map(item => {
+      const done = item.status === 'completed';
+      return '<article class="voice-history-item"><div class="voice-history-item__row"><div><div class="voice-history-item__top"><h3 class="voice-history-item__title">'+item.scenario+'</h3><span class="voice-tiny-chip">'+item.level+'</span><span class="voice-state-chip '+(done?'voice-state-chip--done':'voice-state-chip--pending')+'">'+(done?'Завершён':'Не завершён')+'</span></div><p class="voice-history-item__date">'+item.date+'</p><div class="voice-history-item__meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>'+item.duration+'</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>'+item.phrases+' фраз</span></div></div><button class="voice-btn voice-btn--outline" type="button">Посмотреть</button></div></article>';
     }).join('');
   }
 
-  function openHistory() {
-    renderHistory();
-    els.historyModal.hidden = false;
+  function setConversationMeta(){
+    const title = state.scenario ? scenarios[state.scenario].title : 'Знакомство';
+    conversationScenario.textContent = title;
+    supportScenarioText.textContent = title;
+    conversationLevel.textContent = state.level;
+    supportLevelText.textContent = state.level;
+    summaryScenario.textContent = title;
   }
 
-  function closeHistory() {
-    els.historyModal.hidden = true;
-  }
-
-  function bindHeaderMenu() {
-    const burger = document.querySelector('.dash-header__burger');
-    const mobile = document.querySelector('.dash-header__mobile');
-    if (!burger || !mobile) return;
-    function closeMenu() {
-      mobile.setAttribute('hidden', '');
-      burger.setAttribute('aria-expanded', 'false');
-      document.body.classList.remove('is-menu-open');
+  function setStatus(status){
+    state.status = status;
+    statusPill.className = 'voice-status-pill';
+    micBtn.classList.remove('is-listening','is-disabled');
+    waveform.classList.remove('is-active');
+    if(status === 'listening'){
+      statusPill.classList.add('is-listening');
+      statusPill.querySelector('.voice-status-pill__text').textContent = 'Слушаю';
+      statusLine.textContent = 'Нажмите кнопку микрофона и говорите';
+      micBtn.classList.add('is-listening');
+      waveform.classList.add('is-active');
     }
-    function openMenu() {
-      mobile.removeAttribute('hidden');
-      burger.setAttribute('aria-expanded', 'true');
-      document.body.classList.add('is-menu-open');
+    if(status === 'processing'){
+      statusPill.classList.add('is-processing');
+      statusPill.querySelector('.voice-status-pill__text').textContent = 'Обрабатываю';
+      statusLine.textContent = 'Обрабатываю вашу речь...';
+      micBtn.classList.add('is-disabled');
     }
-    burger.addEventListener('click', function () {
-      if (mobile.hasAttribute('hidden')) openMenu(); else closeMenu();
-    });
-    mobile.addEventListener('click', function (event) {
-      if (event.target.closest('a')) closeMenu();
-    });
-    window.addEventListener('resize', function () {
-      if (window.innerWidth > 768) closeMenu();
-    });
-    closeMenu();
+    if(status === 'ai'){
+      statusPill.classList.add('is-ai');
+      statusPill.querySelector('.voice-status-pill__text').textContent = 'ИИ отвечает';
+      statusLine.textContent = 'ИИ формирует ответ...';
+      micBtn.classList.add('is-disabled');
+      waveform.classList.add('is-active');
+    }
+    if(status === 'paused'){
+      statusPill.classList.add('is-paused');
+      statusPill.querySelector('.voice-status-pill__text').textContent = 'Пауза';
+      statusLine.textContent = 'Диалог на паузе';
+      micBtn.classList.add('is-disabled');
+    }
   }
 
-  function bindSetupEvents() {
-    els.scenarioGrid.addEventListener('click', function (event) {
-      const button = event.target.closest('[data-scenario]');
-      if (!button) return;
-      const scenario = scenarioData.find(function (item) { return item.id === button.dataset.scenario; });
-      if (!scenario) return;
-      state.selectedScenario = scenario;
-      renderScenarios();
-      renderConversationInfo();
-    });
+  function clearAiTimers(){
+    aiTimers.forEach(clearTimeout);
+    aiTimers = [];
+  }
 
-    els.levelGroup.addEventListener('click', function (event) {
-      const button = event.target.closest('[data-level]');
-      if (!button) return;
-      state.selectedLevel = button.dataset.level;
-      Array.from(els.levelGroup.querySelectorAll('[data-level]')).forEach(function (node) {
-        node.classList.toggle('voice-level--active', node.dataset.level === state.selectedLevel);
-      });
-      els.levelHint.textContent = levelHints[state.selectedLevel] || '';
-    });
-
-    els.lessonModeBtn.addEventListener('click', function () {
-      state.lessonMode = !state.lessonMode;
-      els.lessonModeBtn.classList.toggle('voice-scenario--active', state.lessonMode);
-    });
-
-    [els.startTopBtn, els.startSessionBtn].forEach(function (button) {
-      button.addEventListener('click', function () {
-        state.options.showTranslation = els.optTranslation.checked;
-        state.options.gentleCorrection = els.optCorrection.checked;
-        state.options.hints = els.optHints.checked;
-        state.options.slowSpeech = els.optSlow.checked;
-        setScreen('permission');
+  function renderTranscript(){
+    transcriptList.innerHTML = state.messages.map((message, index) => {
+      const isUser = message.sender === 'user';
+      return '<div class="voice-transcript-item '+(isUser?'is-user':'is-ai')+'"><div class="voice-transcript-stack"><div class="voice-transcript-role">'+(isUser?'Вы':'ИИ репетитор')+'</div><div class="voice-bubble">'+message.text+'</div>'+(isUser && (message.correction || message.translation || message.explanation) ? '<div class="voice-bubble-actions">'+(message.correction?'<button class="voice-bubble-chip voice-bubble-chip--orange" data-toggle="correction-'+index+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg><span>Показать исправление</span><svg class="voice-bubble-chip__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>':'')+(message.translation?'<button class="voice-bubble-chip voice-bubble-chip--blue" data-toggle="translation-'+index+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 8 6 6"></path><path d="m4 14 6-6 2-3"></path><path d="M2 5h12"></path><path d="M7 2h1"></path><path d="m22 22-5-10-5 10"></path><path d="M14 18h6"></path></svg><span>Перевод</span><svg class="voice-bubble-chip__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>':'')+(message.explanation?'<button class="voice-bubble-chip voice-bubble-chip--purple" data-toggle="explanation-'+index+'"><span>Почему это ошибка?</span><svg class="voice-bubble-chip__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg></button>':'')+'</div>':'')+(message.correction?'<div class="voice-extra-box voice-extra-box--orange" id="correction-'+index+'"><strong>Исправление:</strong><span>'+message.correction+'</span></div>':'')+(message.translation?'<div class="voice-extra-box voice-extra-box--blue" id="translation-'+index+'"><strong>Перевод:</strong><span>'+message.translation+'</span></div>':'')+(message.explanation?'<div class="voice-extra-box voice-extra-box--purple" id="explanation-'+index+'"><strong>Объяснение:</strong><span>'+message.explanation+'</span></div>':'')+'</div></div>';
+    }).join('');
+    transcriptList.scrollTop = transcriptList.scrollHeight;
+    transcriptList.querySelectorAll('[data-toggle]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        const id = btn.getAttribute('data-toggle');
+        const box = document.getElementById(id);
+        if(!box) return;
+        const open = box.classList.toggle('is-open');
+        btn.classList.toggle('is-open', open);
       });
     });
-
-    els.backToSetupBtn.addEventListener('click', function () {
-      setScreen('setup');
-    });
   }
 
-  function setSessionStatus(mode, text) {
-    state.sessionStatus = text;
-    els.sessionStatus.textContent = text;
-    els.sessionStatus.className = 'voice-status ' + (mode ? 'voice-status--' + mode : 'voice-status--idle');
-    els.liveIndicator.textContent = text;
-    els.waveBars.classList.toggle('voice-wave--active', mode === 'listening' || mode === 'thinking');
-  }
-
-  function appendErrorTip(text) {
-    if (!text) return;
-    const div = document.createElement('div');
-    div.className = 'voice-error-item';
-    div.textContent = text;
-    els.errorFeed.prepend(div);
-    while (els.errorFeed.children.length > 4) {
-      els.errorFeed.removeChild(els.errorFeed.lastChild);
-    }
-  }
-
-  function buildMessageDetails(entry) {
-    const blocks = [];
-    if (entry.translation) blocks.push('<strong>Перевод:</strong> ' + escapeHtml(entry.translation));
-    if (entry.correction) blocks.push('<strong>Исправление:</strong> ' + escapeHtml(entry.correction));
-    if (entry.explanation) blocks.push('<strong>Почему так:</strong> ' + escapeHtml(entry.explanation));
-    return blocks.join('<br><br>');
-  }
-
-  function renderTranscript() {
-    els.transcriptList.innerHTML = '';
-    state.transcript.forEach(function (entry, index) {
-      const article = document.createElement('article');
-      article.className = 'voice-message voice-message--' + entry.role;
-      const actions = entry.role === 'user'
-        ? '<div class="voice-message__actions"><button class="voice-chip-btn" type="button" data-detail-index="' + index + '">Показать разбор</button></div>'
-        : '';
-      const detailsContent = buildMessageDetails(entry);
-      article.innerHTML =
-        '<div class="voice-message__meta"><span>' + (entry.role === 'user' ? 'Вы' : 'ИИ репетитор') + '</span><span>•</span><span>' + escapeHtml(entry.time) + '</span></div>' +
-        '<p class="voice-message__text">' + escapeHtml(entry.text || '...') + '</p>' +
-        actions +
-        '<div class="voice-message__details">' + (detailsContent || 'Пока разбор не готов.') + '</div>';
-      els.transcriptList.appendChild(article);
-    });
-    els.transcriptList.scrollTop = els.transcriptList.scrollHeight;
-  }
-
-  function addTranscript(role, text, extras) {
-    const entry = Object.assign({
-      role: role,
-      text: text || '',
-      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-    }, extras || {});
-    state.transcript.push(entry);
-    renderTranscript();
-    return state.transcript.length - 1;
-  }
-
-  function updateTranscriptByMap(map, id, patch) {
-    if (!map.has(id)) {
-      const index = addTranscript(patch.role || 'assistant', patch.text || '', patch);
-      map.set(id, index);
-      return;
-    }
-    const index = map.get(id);
-    Object.assign(state.transcript[index], patch);
+  function startConversation(){
+    setConversationMeta();
+    setScreen('conversation');
+    setStatus('listening');
+    state.messages = [{sender:'ai',text:'Сәлеметсіз бе! Мен сіздің виртуалды репетітормін. Өзіңізді таныстырыңыз.',translation:'Здравствуйте! Я ваш виртуальный репетитор. Представьтесь, пожалуйста.'}];
     renderTranscript();
   }
 
-  async function requestMicrophone() {
-    els.permissionError.hidden = true;
-    try {
-      state.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setScreen('conversation');
-      renderConversationInfo();
-      await startRealtimeSession();
-    } catch (error) {
-      els.permissionError.hidden = false;
-      els.permissionError.textContent = 'Не удалось получить доступ к микрофону. Разреши микрофон в браузере и попробуй ещё раз.';
-    }
+  function simulateTurn(){
+    if(state.status !== 'listening') return;
+    setStatus('processing');
+    state.messages.push({sender:'user',text:'Менің атым Алексей. Мен студентмін.',translation:'Меня зовут Алексей. Я студент.',correction:'Менің атым Алексей. Мен студент боламын.',explanation:'В казахском языке для профессии используется более естественная форма с глаголом.'});
+    renderTranscript();
+    clearAiTimers();
+    aiTimers.push(setTimeout(function(){
+      setStatus('ai');
+      aiTimers.push(setTimeout(function(){
+        state.messages.push({sender:'ai',text:'Жақсы! Сіз қайдан келдіңіз?',translation:'Хорошо! Откуда вы?'});
+        renderTranscript();
+        setStatus('listening');
+      }, 3000));
+    }, 2000));
   }
 
-  async function startRealtimeSession() {
-    cleanupConnection(false);
-    state.transcript = [];
-    state.assistantMessageMap = new Map();
-    state.userMessageMap = new Map();
-    renderTranscript();
-    state.sessionStartedAt = Date.now();
-    setSessionStatus('thinking', 'Подключение');
+  function closeSummary(){
+    summaryModal.hidden = true;
+    document.body.style.overflow = '';
+  }
 
-    const tokenResult = await request('/api/ai/voice/token', {
-      method: 'POST',
-      body: JSON.stringify({
-        scenario: state.selectedScenario.title,
-        level: state.selectedLevel,
-        voice: state.selectedLevel === 'A1' ? 'marin' : 'verse',
-        lessonMode: state.lessonMode ? state.lessonModeLabel : '',
-        lessonTitle: state.lessonTitle,
-        lessonCourseTitle: state.lessonCourseTitle,
-        options: state.options
-      })
-    });
+  function openSummary(){
+    clearAiTimers();
+    summaryModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
 
-    if (!tokenResult || !tokenResult.data || !tokenResult.data.value) {
-      throw new Error((tokenResult && tokenResult.data && tokenResult.data.details) || 'Не удалось создать голосовую сессию');
-    }
-
-    setUsage(tokenResult.data.usage?.used || state.usage.used, tokenResult.data.usage?.limit || state.usage.limit);
-    state.pc = new RTCPeerConnection();
-    state.audio = new Audio();
-    state.audio.autoplay = true;
-    state.pc.ontrack = function (event) {
-      state.audio.srcObject = event.streams[0];
+  scenarioButtons.forEach(function(btn){
+    const icon = btn.querySelector('.voice-scenario-card__icon');
+    const type = btn.dataset.scenario;
+    const svgs = {
+      intro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><path d="M20 8v6"></path><path d="M23 11h-6"></path></svg>',
+      cafe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>',
+      shop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>',
+      taxi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10-5-1.5-4.5A2 2 0 0 0 15.6 5H8.4a2 2 0 0 0-1.9 1.5L5 11m14 0H5m14 0v5a1 1 0 0 1-1 1h-1m-12-6v5a1 1 0 0 0 1 1h1"></path><circle cx="7" cy="16" r="2"></circle><circle cx="17" cy="16" r="2"></circle></svg>',
+      university:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 10-10-5L2 10l10 5 10-5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>',
+      work:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2H10a2 2 0 0 0-2 2v16"></path></svg>'
     };
+    icon.innerHTML = svgs[type] || '';
+    btn.addEventListener('click', function(){ setScenario(type); });
+  });
 
-    const tracks = (state.stream || await navigator.mediaDevices.getUserMedia({ audio: true })).getTracks();
-    tracks.forEach(function (track) {
-      state.pc.addTrack(track, state.stream);
-    });
+  levelButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){ setLevel(btn.dataset.level); });
+  });
 
-    state.dc = state.pc.createDataChannel('oai-events');
-    bindDataChannel(state.dc);
-
-    const offer = await state.pc.createOffer();
-    await state.pc.setLocalDescription(offer);
-
-    const sdpResponse = await fetch('https://api.openai.com/v1/realtime/calls', {
-      method: 'POST',
-      body: offer.sdp,
-      headers: {
-        Authorization: 'Bearer ' + tokenResult.data.value,
-        'Content-Type': 'application/sdp'
-      }
-    });
-
-    if (!sdpResponse.ok) {
-      const errorText = await sdpResponse.text().catch(function () { return ''; });
-      throw new Error(errorText || 'Не удалось подключиться к Realtime API');
-    }
-
-    const answer = { type: 'answer', sdp: await sdpResponse.text() };
-    await state.pc.setRemoteDescription(answer);
-    setSessionStatus('idle', 'Готов к разговору');
-  }
-
-  function bindDataChannel(dc) {
-    dc.addEventListener('open', function () {
-      setSessionStatus('idle', 'Готов к разговору');
-      sendGreetingKickoff();
-    });
-
-    dc.addEventListener('message', function (e) {
-      let event;
-      try {
-        event = JSON.parse(e.data);
-      } catch (error) {
-        return;
-      }
-      handleRealtimeEvent(event);
-    });
-
-    dc.addEventListener('close', function () {
-      setSessionStatus('paused', 'Сессия закрыта');
-    });
-  }
-
-  function sendRealtime(event) {
-    if (!state.dc || state.dc.readyState !== 'open') return;
-    state.dc.send(JSON.stringify(event));
-  }
-
-  function sendGreetingKickoff() {
-    const intro = state.lessonMode && state.lessonModeLabel
-      ? 'Начни короткую сценку по теме урока "' + state.lessonModeLabel + '" и задай первый простой вопрос на казахском.'
-      : 'Начни короткую сценку по сценарию "' + state.selectedScenario.title + '" и задай первый простой вопрос на казахском.';
-    sendRealtime({
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [{ type: 'input_text', text: intro }]
-      }
-    });
-    sendRealtime({ type: 'response.create' });
-  }
-
-  function handleRealtimeEvent(event) {
-    if (!event || !event.type) return;
-
-    if (event.type === 'input_audio_buffer.speech_started') {
-      setSessionStatus('listening', 'Слушаю');
-      return;
-    }
-
-    if (event.type === 'input_audio_buffer.speech_stopped' || event.type === 'input_audio_buffer.committed') {
-      setSessionStatus('thinking', 'Обрабатываю');
-      return;
-    }
-
-    if (event.type === 'conversation.item.input_audio_transcription.completed') {
-      const transcript = event.transcript || '';
-      updateTranscriptByMap(state.userMessageMap, event.item_id || ('u-' + Date.now()), {
-        role: 'user',
-        text: transcript,
-        translation: state.options.showTranslation ? 'Разговорная реплика пользователя' : '',
-        correction: '',
-        explanation: ''
+  startDialogBtn.addEventListener('click', function(){ if(state.scenario) setScreen('permission'); });
+  quickStartBtn.addEventListener('click', function(){ setScenario('intro'); setLevel('A1'); setScreen('permission'); });
+  historyBtnHeader.addEventListener('click', function(){ renderHistory(); setScreen('history'); });
+  backFromHistoryBtn.addEventListener('click', function(){ setScreen('setup'); });
+  allowMicBtn.addEventListener('click', function(){
+    permissionError.hidden = true;
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        stream.getTracks().forEach(function(track){ track.stop(); });
+        startConversation();
+      }).catch(function(){
+        permissionError.textContent = 'Не удалось получить доступ к микрофону. Проверьте настройки браузера.';
+        permissionError.hidden = false;
       });
-      return;
+    } else {
+      startConversation();
     }
+  });
 
-    if (event.type === 'response.output_item.done' || event.type === 'conversation.item.done') {
-      const item = event.item || {};
-      if (item.role !== 'assistant') return;
-      const text = extractItemText(item);
-      if (!text) return;
-      updateTranscriptByMap(state.assistantMessageMap, item.id || ('a-' + Date.now()), {
-        role: 'assistant',
-        text: text
-      });
-      setSessionStatus('idle', 'ИИ отвечает');
-      if (text.includes('дұрыс') || text.includes('айт')) appendErrorTip('ИИ мягко поправил формулировку. Пересмотри последнюю реплику и попробуй сказать её ещё раз точнее.');
-      return;
-    }
+  micBtn.addEventListener('click', function(){ if(state.status !== 'paused') simulateTurn(); });
+  pauseBtn.addEventListener('click', function(){
+    state.paused = !state.paused;
+    if(state.paused){ clearAiTimers(); setStatus('paused'); pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>'; }
+    else { setStatus('listening'); pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>'; }
+  });
+  muteBtn.addEventListener('click', function(){ muteBtn.classList.toggle('is-muted'); });
+  endBtn.addEventListener('click', openSummary);
+  closeSummaryBtn.addEventListener('click', closeSummary);
+  summaryModal.querySelector('.voice-modal__backdrop').addEventListener('click', closeSummary);
+  repeatBtn.addEventListener('click', function(){ closeSummary(); setScreen('permission'); });
+  newScenarioBtn.addEventListener('click', function(){ closeSummary(); setScreen('setup'); });
 
-    if (event.type === 'response.text.delta' || event.type === 'response.audio_transcript.delta') {
-      state.liveAssistantBuffer += event.delta || '';
-      return;
-    }
-
-    if (event.type === 'response.done') {
-      state.liveAssistantBuffer = '';
-      setSessionStatus('idle', 'Готов к разговору');
-      return;
-    }
-
-    if (event.type === 'error') {
-      appendErrorTip((event.error && event.error.message) || 'Произошла ошибка в голосовой сессии.');
-      setSessionStatus('paused', 'Ошибка');
-    }
-  }
-
-  function extractItemText(item) {
-    if (!item || !Array.isArray(item.content)) return '';
-    const parts = [];
-    item.content.forEach(function (part) {
-      if (part.text) parts.push(part.text);
-      if (part.transcript) parts.push(part.transcript);
-    });
-    return parts.join(' ').trim();
-  }
-
-  async function sendTextFallback(mode) {
-    const value = (els.textFallbackInput.value || '').trim();
-    if (!value && !mode) return;
-    const promptText = mode === 'example'
-      ? 'Дай короткий пример ответа ученика для текущей ситуации.'
-      : mode === 'explain'
-      ? 'Очень кратко объясни по-русски, как лучше ответить в этой ситуации, и дай 1 вариант на казахском.'
-      : mode === 'simplify'
-      ? 'Упрости текущий диалог и задай очень простой следующий вопрос на казахском.'
-      : value;
-
-    if (!state.dc || state.dc.readyState !== 'open') {
-      appendErrorTip('Сначала подключи голосовую сессию.');
-      return;
-    }
-
-    addTranscript('user', promptText, {
-      translation: mode ? 'Служебный запрос к ИИ' : '',
-      correction: '',
-      explanation: ''
-    });
-    sendRealtime({
-      type: 'conversation.item.create',
-      item: {
-        type: 'message',
-        role: 'user',
-        content: [{ type: 'input_text', text: promptText }]
-      }
-    });
-    sendRealtime({ type: 'response.create' });
-    els.textFallbackInput.value = '';
-    setSessionStatus('thinking', 'Обрабатываю');
-  }
-
-  function formatDuration(ms) {
-    const total = Math.max(1, Math.round(ms / 1000));
-    const min = Math.floor(total / 60);
-    const sec = total % 60;
-    return min + ' мин ' + String(sec).padStart(2, '0') + ' сек';
-  }
-
-  function buildSummary() {
-    const userMessages = state.transcript.filter(function (item) { return item.role === 'user' && item.text && !item.text.startsWith('Дай короткий пример'); });
-    const duration = formatDuration(Date.now() - state.sessionStartedAt);
-    const strengths = [
-      'Ты не боялся вступать в разговор и поддерживал диалог.',
-      state.selectedLevel === 'A1' ? 'Хорошо использовал простые базовые конструкции.' : 'Пробовал строить более естественные фразы.',
-      'Сценарий был отработан в реальном разговорном формате.'
-    ];
-    const improvements = [
-      'Старайся отвечать чуть полнее, а не одним словом.',
-      'Закрепи полезные фразы из этого сценария и повтори их вслух.',
-      state.lessonMode ? 'Ещё раз повтори тему урока и попробуй использовать её без подсказок.' : 'Попробуй снова пройти тот же сценарий без перехода на русский.'
-    ];
-    const phrases = state.selectedScenario.phrases.slice(0, 3);
-    const next = state.selectedScenario.next;
-
-    els.summaryScenario.textContent = state.selectedScenario.title + ' · ' + state.selectedLevel;
-    els.summaryDuration.textContent = duration;
-    els.summaryCount.textContent = String(userMessages.length);
-    els.summaryStrengths.innerHTML = strengths.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
-    els.summaryImprovements.innerHTML = improvements.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
-    els.summaryPhrases.innerHTML = phrases.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join('');
-    els.summaryNext.textContent = next;
-
-    state.lastSaved = {
-      scenario: state.selectedScenario.title,
-      level: state.selectedLevel,
-      date: new Date().toLocaleString('ru-RU'),
-      duration: duration,
-      count: userMessages.length,
-      modeLabel: state.lessonMode ? 'Разговор по уроку' : 'Обычный сценарий',
-      transcript: state.transcript.slice(-20)
-    };
-  }
-
-  function cleanupConnection(clearTranscript) {
-    if (state.dc) {
-      try { state.dc.close(); } catch (error) {}
-      state.dc = null;
-    }
-    if (state.pc) {
-      try { state.pc.close(); } catch (error) {}
-      state.pc = null;
-    }
-    if (state.stream) {
-      state.stream.getTracks().forEach(function (track) { track.stop(); });
-      state.stream = null;
-    }
-    if (clearTranscript) {
-      state.transcript = [];
+  document.querySelectorAll('[data-help]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      const map = {
+        example:'Пример ответа: Мен Алматыдан келдім — Я приехал из Алматы',
+        explain:'В казахском языке глагол обычно идёт в конце предложения',
+        simplify:'Давайте попробуем более простые фразы'
+      };
+      state.messages.push({sender:'ai',text:map[btn.dataset.help]});
       renderTranscript();
-    }
-  }
+    });
+  });
 
-  function endSession() {
-    cleanupConnection(false);
-    buildSummary();
-    setScreen('summary');
-  }
-
-  function bindConversationEvents() {
-    els.allowMicBtn.addEventListener('click', function () {
-      requestMicrophone().catch(function (error) {
-        els.permissionError.hidden = false;
-        els.permissionError.textContent = error.message || 'Не удалось запустить голосовую сессию.';
-      });
-    });
-    els.sendTextBtn.addEventListener('click', function () { sendTextFallback(''); });
-    els.exampleAnswerBtn.addEventListener('click', function () { sendTextFallback('example'); });
-    els.explainRuBtn.addEventListener('click', function () { sendTextFallback('explain'); });
-    els.simplifyBtn.addEventListener('click', function () { sendTextFallback('simplify'); });
-    els.reconnectBtn.addEventListener('click', function () {
-      requestMicrophone().catch(function (error) {
-        appendErrorTip(error.message || 'Не удалось переподключить сессию.');
-      });
-    });
-    els.muteBtn.addEventListener('click', function () {
-      state.muted = !state.muted;
-      if (state.stream) state.stream.getAudioTracks().forEach(function (track) { track.enabled = !state.muted; });
-      els.muteBtn.textContent = state.muted ? '🔈' : '🔇';
-      appendErrorTip(state.muted ? 'Микрофон выключен.' : 'Микрофон снова включён.');
-    });
-    els.endBtn.addEventListener('click', endSession);
-    els.transcriptList.addEventListener('click', function (event) {
-      const button = event.target.closest('[data-detail-index]');
-      if (!button) return;
-      const article = button.closest('.voice-message');
-      const details = article.querySelector('.voice-message__details');
-      if (!details) return;
-      details.classList.toggle('voice-message__details--visible');
-      button.textContent = details.classList.contains('voice-message__details--visible') ? 'Скрыть разбор' : 'Показать разбор';
-    });
-  }
-
-  function bindSummaryEvents() {
-    els.repeatBtn.addEventListener('click', function () {
-      setScreen('permission');
-    });
-    els.newScenarioBtn.addEventListener('click', function () {
-      setScreen('setup');
-    });
-    els.saveResultBtn.addEventListener('click', function () {
-      if (!state.lastSaved) buildSummary();
-      state.history.unshift(state.lastSaved);
-      state.history = state.history.slice(0, 20);
-      saveHistory();
-      openHistory();
-    });
-  }
-
-  function bindHistoryEvents() {
-    els.openHistoryBtn.addEventListener('click', openHistory);
-    Array.from(document.querySelectorAll('[data-close-history]')).forEach(function (node) {
-      node.addEventListener('click', closeHistory);
-    });
-    window.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') closeHistory();
-    });
-  }
-
-  function init() {
-    loadState();
-    parseLessonMode();
-    bindHeaderMenu();
-    renderScenarios();
-    renderConversationInfo();
-    els.levelHint.textContent = levelHints[state.selectedLevel];
-    bindSetupEvents();
-    bindConversationEvents();
-    bindSummaryEvents();
-    bindHistoryEvents();
-    loadUsage();
-  }
-
-  init();
+  setLevel('A1');
+  renderTranscript();
 })();
