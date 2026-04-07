@@ -390,22 +390,24 @@
   }
 
   function buildAiPayload(userText, action){
-    const scenario = SCENARIOS[state.scenario] || SCENARIOS.intro;
+    const scenarioKey = state.scenario || 'intro';
+    const scenario = SCENARIOS[scenarioKey] || SCENARIOS.intro;
     return {
-      mode:'dialog',
       message:userText,
       action:action || 'message',
       sessionId: state.sessionId,
+      scenarioKey: scenarioKey,
       scenario: scenario.title,
       scenarioGoal: scenario.goal,
-      scenarioDifficulty: state.level === 'A1' ? 'Лёгкий' : (state.level === 'A2' ? 'Средний' : 'Выше среднего'),
+      scenarioDifficulty: scenario.difficulty || (state.level === 'A1' ? 'Лёгкий' : (state.level === 'A2' ? 'Средний' : 'Выше среднего')),
+      scenarioPrompt: scenario.prompt,
+      scenarioHints: scenario.hints,
       supportPhrases: scenario.phrases.map(function(item){ return item.split(' — ')[0]; }),
       history: state.messages.slice(-8).map(function(item){
         return { role:item.sender === 'ai' ? 'assistant' : 'user', text:item.text };
       }),
       meta:{
         lesson: false,
-        prompt: scenario.prompt,
         level: state.level,
         translation: state.options.translation,
         correction: state.options.correction,
@@ -463,65 +465,19 @@
       }
       return {
         text: response.data.assistantText || 'Кешіріңіз, қайталап айта аласыз ба?',
-        ttsText: response.data.ttsText || response.data.assistantText || '',
         translation: response.data.translation || '',
-        correction: response.data.correction && response.data.correction.hasIssue ? response.data.correction.better || '' : '',
-        explanation: response.data.correction ? response.data.correction.explanation || '' : '',
-        meta: response.data.meta || { shouldRepeat:false, isUnclearInput:false }
+        correction: response.data.correction && response.data.correction.hasIssue ? (response.data.correction.better || '') : '',
+        explanation: response.data.correction ? (response.data.correction.explanation || '') : '',
+        meta: response.data.meta || {}
       };
     } catch {
       return buildFallbackReply(userText, action);
     }
   }
 
-  async function playServerTts(text){
-    if (state.muted || !text) return false;
-    const token = localStorage.getItem('token');
-    if (!token) return false;
-    try {
-      const response = await fetch('/api/ai/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          text: text,
-          voice: 'alloy',
-          speed: state.options.slow ? 0.85 : 1
-        })
-      });
-      if (!response.ok) return false;
-      const blob = await response.blob();
-      if (!blob || !blob.size) return false;
-      const url = URL.createObjectURL(blob);
-      await new Promise(function(resolve){
-        const audio = new Audio();
-        audio.src = url;
-        audio.onended = function(){
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        audio.onerror = function(){
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        audio.play().catch(function(){
-          URL.revokeObjectURL(url);
-          resolve();
-        });
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  async function speakText(text){
-    if (state.muted || !text) return;
-    const played = await playServerTts(text);
-    if (played || !('speechSynthesis' in window)) return;
-    await new Promise(function(resolve){
+  function speakText(text){
+    if (state.muted || !text || !('speechSynthesis' in window)) return Promise.resolve();
+    return new Promise(function(resolve){
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'kk-KZ';
       utterance.rate = state.options.slow ? 0.85 : 1;
@@ -563,17 +519,17 @@
       setStatus('processing');
       addMessage({ sender:'user', text:text });
       const aiReply = await askAi(text, 'message');
-      const lastUserMessage = state.messages[state.messages.length - 1];
-      if (lastUserMessage && lastUserMessage.sender === 'user') {
-        lastUserMessage.correction = aiReply.correction || '';
-        lastUserMessage.explanation = aiReply.explanation || '';
+      const lastUser = state.messages[state.messages.length - 1];
+      if (lastUser && lastUser.sender === 'user') {
+        lastUser.correction = aiReply.correction || '';
+        lastUser.explanation = aiReply.explanation || '';
       }
       renderTranscript();
       updateMistakeBox();
       setStatus('ai');
       state.lastAiReply = aiReply.text || '';
       addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
-      await speakText(aiReply.ttsText || aiReply.text || '');
+      await speakText(aiReply.text || '');
       if (!state.paused) setStatus('listening');
     };
 
@@ -599,6 +555,21 @@
     return recognition;
   }
 
+  function getScenarioWelcome(){
+    const scenario = SCENARIOS[state.scenario] || SCENARIOS.intro;
+    const map = {
+      intro: { kk: 'Сәлеметсіз бе! Танысайық. Атыңыз кім?', ru: 'Здравствуйте! Давайте познакомимся. Как вас зовут?' },
+      cafe: { kk: 'Сәлеметсіз бе! Не тапсырыс бересіз?', ru: 'Здравствуйте! Что будете заказывать?' },
+      shop: { kk: 'Сәлеметсіз бе! Сізге не керек?', ru: 'Здравствуйте! Что вам нужно?' },
+      taxi: { kk: 'Сәлеметсіз бе! Қай мекенжайға барамыз?', ru: 'Здравствуйте! По какому адресу едем?' },
+      university: { kk: 'Сәлем! Қандай пән немесе сабақ туралы сөйлесеміз?', ru: 'Привет! О каком предмете или занятии поговорим?' },
+      work: { kk: 'Сәлеметсіз бе! Бүгін қандай жұмыс немесе тапсырма бар?', ru: 'Здравствуйте! Какая сегодня работа или задача?' }
+    };
+    const item = map[state.scenario] || map.intro;
+    if (state.level === 'A1' && state.scenario === 'intro') return item;
+    return item;
+  }
+
   async function startConversation(){
     applyOptionsFromUi();
     setScreen('conversation');
@@ -611,11 +582,8 @@
     state.lastCorrection = null;
     pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>';
     await startAiSession();
-    const scenario = SCENARIOS[state.scenario] || SCENARIOS.intro;
-    const welcomeText = state.level === 'A1'
-      ? 'Сәлеметсіз бе! Қысқа сөйлесейік. Өзіңіз туралы айтып беріңізші.'
-      : 'Сәлеметсіз бе! Бүгін ' + scenario.title.toLowerCase() + ' тақырыбында сөйлесеміз. Бастауға дайынсыз ба?';
-    addMessage({ sender:'ai', text:welcomeText, translation:'Здравствуйте! Давайте немного поговорим. Расскажите о себе.' });
+    const welcome = getScenarioWelcome();
+    addMessage({ sender:'ai', text:welcome.kk, translation:welcome.ru });
     setStatus('listening');
     if (SpeechRecognitionCtor && !state.recognition) state.recognition = createRecognition();
     await speakText(welcomeText);
@@ -630,16 +598,16 @@
       setStatus('processing');
       addMessage({ sender:'user', text:typed });
       askAi(typed, 'message').then(async function(aiReply){
-        const lastUserMessage = state.messages[state.messages.length - 1];
-        if (lastUserMessage && lastUserMessage.sender === 'user') {
-          lastUserMessage.correction = aiReply.correction || '';
-          lastUserMessage.explanation = aiReply.explanation || '';
+        const lastUser = state.messages[state.messages.length - 1];
+        if (lastUser && lastUser.sender === 'user') {
+          lastUser.correction = aiReply.correction || '';
+          lastUser.explanation = aiReply.explanation || '';
         }
         renderTranscript();
         updateMistakeBox();
         setStatus('ai');
         addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
-        await speakText(aiReply.ttsText || aiReply.text || '');
+        await speakText(aiReply.text || '');
         if (!state.paused) setStatus('listening');
       });
       return;
@@ -776,7 +744,7 @@
     const reply = await askAi('Нужна помощь в текущем диалоге', actionMap[action] || 'hint');
     setStatus('ai');
     addMessage({ sender:'ai', text:reply.text || 'Давайте продолжим.', translation: reply.translation || '', explanation: reply.explanation || '' });
-    await speakText(reply.ttsText || reply.text || '');
+    await speakText(reply.text || '');
     if (!state.paused) setStatus('listening');
   }
 

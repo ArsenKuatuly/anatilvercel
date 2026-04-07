@@ -4,6 +4,57 @@ const OpenAI = require("openai");
 
 const DAILY_LIMIT = 50;
 
+const SCENARIOS = {
+  intro: {
+    title: "Знакомство",
+    role: "Новый знакомый",
+    setting: "Первая встреча и короткое знакомство",
+    ask: ["имя", "откуда пользователь", "чем занимается", "интересы"],
+    avoid: ["сложные грамматические объяснения", "длинные монологи"],
+    starter: "Сәлеметсіз бе! Атыңыз кім?"
+  },
+  cafe: {
+    title: "Кафе",
+    role: "Официант или кассир",
+    setting: "Заказ еды и напитков в кафе",
+    ask: ["что заказать", "размер", "цена", "нужно ли что-то еще"],
+    avoid: ["темы вне заказа", "абстрактные вопросы"],
+    starter: "Сәлеметсіз бе! Не тапсырыс бересіз?"
+  },
+  shop: {
+    title: "Магазин",
+    role: "Продавец",
+    setting: "Покупка товара в магазине",
+    ask: ["какой товар нужен", "количество", "цена", "размер или вкус"],
+    avoid: ["долгие описания", "посторонние темы"],
+    starter: "Сәлеметсіз бе! Сізге не керек?"
+  },
+  taxi: {
+    title: "Такси",
+    role: "Водитель такси",
+    setting: "Поездка по адресу",
+    ask: ["адрес", "время", "где остановиться", "маршрут"],
+    avoid: ["сложные рассуждения", "лишние подробности не по поездке"],
+    starter: "Сәлеметсіз бе! Қай мекенжайға барамыз?"
+  },
+  university: {
+    title: "Университет",
+    role: "Одногруппник или преподаватель",
+    setting: "Разговор об учебе, занятии, аудитории или домашнем задании",
+    ask: ["какой предмет", "где аудитория", "есть ли домашнее задание", "нужно ли повторить"],
+    avoid: ["неучебные темы", "слишком сложные академические формулировки"],
+    starter: "Сәлем! Қандай пән немесе сабақ туралы сөйлесеміз?"
+  },
+  work: {
+    title: "Работа",
+    role: "Коллега или руководитель",
+    setting: "Короткий рабочий разговор",
+    ask: ["какая задача", "срок", "готовность", "нужна ли помощь"],
+    avoid: ["лишняя формальность", "долгие объяснения"],
+    starter: "Сәлеметсіз бе! Бүгін қандай тапсырма бар?"
+  }
+};
+
 async function getTodayUsed(userId) {
   const q = await db.query(
     `select used from ai_daily_usage where user_id = $1 and day = current_date`,
@@ -20,6 +71,19 @@ function normalizeText(value) {
     .trim();
 }
 
+function resolveScenario(body) {
+  const key = normalizeText(body?.scenarioKey || "").toLowerCase();
+  if (SCENARIOS[key]) return { key, ...SCENARIOS[key] };
+  const title = normalizeText(body?.scenario || "").toLowerCase();
+  if (title.includes("знаком")) return { key: "intro", ...SCENARIOS.intro };
+  if (title.includes("кафе")) return { key: "cafe", ...SCENARIOS.cafe };
+  if (title.includes("магаз")) return { key: "shop", ...SCENARIOS.shop };
+  if (title.includes("такси")) return { key: "taxi", ...SCENARIOS.taxi };
+  if (title.includes("универ") || title.includes("оқу") || title.includes("сабақ")) return { key: "university", ...SCENARIOS.university };
+  if (title.includes("работ") || title.includes("жұмыс")) return { key: "work", ...SCENARIOS.work };
+  return { key: "intro", ...SCENARIOS.intro };
+}
+
 function isLikelyUnclearInput(text) {
   const value = normalizeText(text);
   if (!value) return true;
@@ -32,47 +96,52 @@ function isLikelyUnclearInput(text) {
   return false;
 }
 
+function scenarioInstruction(scenario, level, body) {
+  const phrases = Array.isArray(body?.supportPhrases) ? body.supportPhrases.slice(0, 8).map(normalizeText).filter(Boolean) : [];
+  const hints = Array.isArray(body?.scenarioHints) ? body.scenarioHints.slice(0, 6).map(normalizeText).filter(Boolean) : [];
+  const prompt = normalizeText(body?.scenarioPrompt || "");
+  return [
+    `Активный сценарий: ${scenario.title}.`,
+    `Твоя роль: ${scenario.role}.`,
+    `Контекст: ${scenario.setting}.`,
+    `Что нужно мягко выяснять по ходу: ${scenario.ask.join(", ")}.`,
+    `Чего избегать: ${scenario.avoid.join(", ")}.`,
+    prompt ? `Сценарная подсказка: ${prompt}.` : "",
+    phrases.length ? `Полезные фразы по теме: ${phrases.join(" | ")}.` : "",
+    hints.length ? `Подсказки для ученика: ${hints.join(" | ")}.` : "",
+    level === "A1" ? "Говори очень просто: 1 короткий вопрос или 1 короткая реплика за раз." : "",
+    level === "A2" ? "Говори просто и бытово, можешь добавить 1 короткое уточнение." : "",
+    level === "B1" ? "Говори естественно, но не перегружай длинными фразами." : ""
+  ].filter(Boolean).join("\n");
+}
+
 function buildVoiceMessages(body) {
   const message = normalizeText(body?.message || "");
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
-  const scenario = normalizeText(body?.scenario || "Обычный разговор");
-  const goal = normalizeText(body?.scenarioGoal || "Поддержать короткий диалог");
-  const level = normalizeText(body?.level || body?.meta?.level || "A1");
+  const level = normalizeText(body?.meta?.level || body?.level || "A1");
   const action = normalizeText(body?.action || "message");
-  const phrases = Array.isArray(body?.supportPhrases) ? body.supportPhrases.slice(0, 8).map(normalizeText).filter(Boolean) : [];
+  const scenario = resolveScenario(body);
 
   const messages = [
     {
       role: "system",
       content: [
         "Ты — голосовой ИИ-репетитор платформы AnaTil для изучения казахского языка.",
-        "Это именно короткий разговорный voice-диалог, а не длинный урок.",
-        `Сценарий: ${scenario}.`,
-        `Цель: ${goal}.`,
+        "Это короткий разговорный тренажер, а не длинный урок.",
         `Уровень ученика: ${level}.`,
-        phrases.length ? `Полезные фразы по теме: ${phrases.join(" | ")}.` : "",
-        "Главная реплика всегда должна быть на казахском.",
-        "Говори естественно, просто и коротко: 1–2 предложения.",
-        "Для A1 используй очень простые слова и короткие вопросы.",
-        "Для A2 — бытовой разговор без сложных конструкций.",
-        "Для B1 — естественная речь, но без перегруза.",
-        "Если речь ученика неясная, странная или похожа на ошибку распознавания, не пытайся глубоко угадывать смысл.",
-        "В таком случае вежливо попроси повторить по-казахски короткой фразой.",
-        "Если action=hint, дай пример краткого ответа ученика на казахском и короткий перевод на русском.",
-        "Если action=repeat, повтори вопрос проще на казахском и дай короткий перевод на русском.",
-        "Если action=explain, очень кратко объясни на русском и дай улучшенный вариант ответа на казахском.",
+        scenarioInstruction(scenario, level, body),
+        "Главная реплика всегда на казахском.",
+        "Отвечай как персонаж выбранного сценария, а не как учитель в общем чате.",
+        "Держись только темы активного сценария.",
+        "Если action=message, продолжай именно эту сцену и задавай следующий уместный вопрос по сценарию.",
+        "Если action=hint, дай пример короткого ответа ученика на казахском и короткий перевод на русском.",
+        "Если action=repeat, повтори свою последнюю мысль проще на казахском и дай короткий перевод.",
+        "Если action=explain, очень кратко объясни на русском и дай улучшенный вариант ответа ученика на казахском.",
+        "Если реплика ученика неясная или похожа на плохое распознавание речи, вежливо попроси повторить на казахском.",
+        "Не уходи в другие темы и не меняй роль сценария.",
         "Верни строго один JSON-объект без markdown и без лишнего текста.",
-        'Формат: {"assistantText":"...","ttsText":"...","translation":"...","correction":{"hasIssue":false,"better":"","explanation":""},"meta":{"shouldRepeat":false,"isUnclearInput":false}}',
-        "assistantText: основная реплика собеседника на казахском.",
-        "ttsText: как правило то же самое, что assistantText. Можно слегка упростить для более естественной озвучки, но смысл должен совпадать.",
-        "translation: короткий перевод assistantText на русский, если он полезен. Иначе пустая строка.",
-        "correction.hasIssue: true только если ошибка ученика понятна и реально можно мягко исправить.",
-        "correction.better: исправленный или более естественный вариант реплики ученика на казахском.",
-        "correction.explanation: короткое объяснение на русском.",
-        "meta.shouldRepeat: true если лучше попросить повторить.",
-        "meta.isUnclearInput: true если фраза похожа на плохое распознавание речи.",
-        "Не добавляй никаких других полей."
-      ].filter(Boolean).join("\n")
+        '{"assistantText":"...","ttsText":"...","translation":"...","correction":{"hasIssue":false,"better":"","explanation":""},"meta":{"shouldRepeat":false,"isUnclearInput":false}}'
+      ].join("\n")
     }
   ];
 
@@ -86,16 +155,14 @@ function buildVoiceMessages(body) {
 
   messages.push({
     role: "user",
-    content: `action=${action}\nРеплика ученика: ${message}`
+    content: `action=${action}\nСценарий=${scenario.title}\nРеплика ученика: ${message}`
   });
 
   return messages;
 }
 
-function fallbackVoiceReply(message, body) {
-  const text = normalizeText(message);
-  const scenario = normalizeText(body?.scenario || "Знакомство");
-  const unclear = isLikelyUnclearInput(text);
+function fallbackByScenario(body, unclear) {
+  const scenario = resolveScenario(body);
   if (unclear) {
     return {
       assistantText: "Кешіріңіз, сөзіңізді толық түсінбедім. Қайталап айта аласыз ба?",
@@ -113,31 +180,32 @@ function fallbackVoiceReply(message, body) {
     };
   }
 
-  if (scenario === "Кафе") {
-    return {
-      assistantText: "Жақсы, тағы не қалайсыз?",
-      ttsText: "Жақсы, тағы не қалайсыз?",
-      translation: "Хорошо, что еще хотите?",
-      correction: { hasIssue: false, better: "", explanation: "" },
-      meta: { shouldRepeat: false, isUnclearInput: false }
-    };
-  }
+  const map = {
+    intro: ["Танысқаныма қуаныштымын. Сіз қай қаладан келдіңіз?", "Приятно познакомиться. Из какого вы города?"],
+    cafe: ["Жақсы, тағы не қалайсыз?", "Хорошо, что еще хотите?"],
+    shop: ["Қандай тауар керек? Бағасын да айта аламын.", "Какой товар нужен? Я могу сказать и цену."],
+    taxi: ["Жақсы, нақты мекенжайды айтыңызшы.", "Хорошо, скажите точный адрес, пожалуйста."],
+    university: ["Сабақ қай уақытта басталады деп ойлайсыз?", "Как вы думаете, во сколько начинается занятие?"],
+    work: ["Жақсы, бұл тапсырманы қашан аяқтайсыз?", "Хорошо, когда вы закончите эту задачу?"]
+  };
+
+  const [assistantText, translation] = map[scenario.key] || map.intro;
 
   return {
-    assistantText: "Жақсы. Тағы бір сөйлем айтыңызшы.",
-    ttsText: "Жақсы. Тағы бір сөйлем айтыңызшы.",
-    translation: "Хорошо. Скажите еще одно предложение.",
+    assistantText,
+    ttsText: assistantText,
+    translation,
     correction: { hasIssue: false, better: "", explanation: "" },
     meta: { shouldRepeat: false, isUnclearInput: false }
   };
 }
 
-function sanitizeReply(raw, message, body) {
+function sanitizeReply(raw, body) {
   try {
     const parsed = JSON.parse(raw || "{}");
     return {
-      assistantText: normalizeText(parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?"),
-      ttsText: normalizeText(parsed?.ttsText || parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?"),
+      assistantText: normalizeText(parsed?.assistantText || fallbackByScenario(body, false).assistantText),
+      ttsText: normalizeText(parsed?.ttsText || parsed?.assistantText || fallbackByScenario(body, false).assistantText),
       translation: normalizeText(parsed?.translation || ""),
       correction: {
         hasIssue: !!parsed?.correction?.hasIssue,
@@ -150,7 +218,7 @@ function sanitizeReply(raw, message, body) {
       }
     };
   } catch {
-    return fallbackVoiceReply(message, body);
+    return fallbackByScenario(body, false);
   }
 }
 
@@ -189,16 +257,16 @@ module.exports = async (req, res) => {
 
     let reply;
     if (isLikelyUnclearInput(cleanMessage)) {
-      reply = fallbackVoiceReply(cleanMessage, req.body);
+      reply = fallbackByScenario(req.body, true);
     } else {
       const openai = new OpenAI({ apiKey, timeout: 25000 });
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: buildVoiceMessages(req.body),
-        temperature: 0.4,
+        temperature: 0.45,
         response_format: { type: "json_object" }
       });
-      reply = sanitizeReply(completion.choices?.[0]?.message?.content || "{}", cleanMessage, req.body);
+      reply = sanitizeReply(completion.choices?.[0]?.message?.content || "{}", req.body);
     }
 
     await db.query(
