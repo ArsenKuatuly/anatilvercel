@@ -27,7 +27,7 @@ button,input{font:inherit}
 button{cursor:pointer}
 button:disabled{cursor:not-allowed}
 .voice-shell{max-width:1280px;margin:0 auto;padding:0 24px}
-.voice-app{min-height:100vh;background:var(--bg);padding:120px 0 0}
+.voice-app{min-height:100vh;background:var(--bg);padding:24px 0 0}
 .voice-header{margin-bottom:24px}
 .voice-header__inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:28px 24px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(135deg,#ffffff 0%,#eef4ff 100%);box-shadow:var(--shadow-md)}
 .voice-header__copy{flex:1;min-width:0}
