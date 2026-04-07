@@ -178,25 +178,8 @@ function buildVoiceMessages(body) {
 function fallbackVoiceReply(message, body) {
   const text = normalizeText(message);
   const scenario = getScenario(body);
-  const unclear = isLikelyUnclearInput(text);
-  if (unclear) {
-    return {
-      assistantText: "Кешіріңіз, сөзіңізді толық түсінбедім. Қайталап айта аласыз ба?",
-      ttsText: "Кешіріңіз, сөзіңізді толық түсінбедім. Қайталап айта аласыз ба?",
-      translation: "Извините, я не до конца понял. Можете повторить?",
-      correction: {
-        hasIssue: false,
-        better: "",
-        explanation: "Речь распознана неясно. Попробуйте сказать медленнее и короче."
-      },
-      meta: {
-        shouldRepeat: true,
-        isUnclearInput: true
-      }
-    };
-  }
-
   const action = normalizeText(body?.action || "message");
+
   if (action === "start") {
     const startMap = {
       intro: {
@@ -234,9 +217,27 @@ function fallbackVoiceReply(message, body) {
     return {
       assistantText: line,
       ttsText: line,
-      translation: "Начало диалога по выбранному сценарию.",
+      translation: "",
       correction: { hasIssue: false, better: "", explanation: "" },
       meta: { shouldRepeat: false, isUnclearInput: false }
+    };
+  }
+
+  const unclear = isLikelyUnclearInput(text);
+  if (unclear) {
+    return {
+      assistantText: "Кешіріңіз, сөзіңізді толық түсінбедім. Қайталап айта аласыз ба?",
+      ttsText: "Кешіріңіз, сөзіңізді толық түсінбедім. Қайталап айта аласыз ба?",
+      translation: "Извините, я не до конца понял. Можете повторить?",
+      correction: {
+        hasIssue: false,
+        better: "",
+        explanation: "Речь распознана неясно. Попробуйте сказать медленнее и короче."
+      },
+      meta: {
+        shouldRepeat: true,
+        isUnclearInput: true
+      }
     };
   }
 
