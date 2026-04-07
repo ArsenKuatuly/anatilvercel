@@ -289,17 +289,6 @@
     updateMistakeBox();
   }
 
-  function patchLastUserMessage(patch){
-    for (let i = state.messages.length - 1; i >= 0; i -= 1) {
-      if (state.messages[i] && state.messages[i].sender === 'user') {
-        state.messages[i] = Object.assign({}, state.messages[i], patch || {});
-        break;
-      }
-    }
-    renderTranscript();
-    updateMistakeBox();
-  }
-
   function renderTranscript(){
     transcriptList.innerHTML = state.messages.map(function(message, index){
       const isUser = message.sender === 'user';
@@ -473,20 +462,66 @@
         usageBadge.textContent = 'Сегодня: ' + state.usage.used + '/' + state.usage.limit + ' диалогов';
       }
       return {
-        text: String(response.data.assistantText || ''),
-        correction: response.data.correction && response.data.correction.hasIssue ? String(response.data.correction.better || '') : '',
-        translation: response.data.correction ? String(response.data.correction.translation || '') : '',
-        explanation: response.data.correction ? String(response.data.correction.explanation || '') : '',
-        meta: response.data.meta || {}
+        text: response.data.assistantText || 'Кешіріңіз, қайталап айта аласыз ба?',
+        ttsText: response.data.ttsText || response.data.assistantText || '',
+        translation: response.data.translation || '',
+        correction: response.data.correction && response.data.correction.hasIssue ? response.data.correction.better || '' : '',
+        explanation: response.data.correction ? response.data.correction.explanation || '' : '',
+        meta: response.data.meta || { shouldRepeat:false, isUnclearInput:false }
       };
     } catch {
       return buildFallbackReply(userText, action);
     }
   }
 
-  function speakText(text){
-    if (state.muted || !text || !('speechSynthesis' in window)) return Promise.resolve();
-    return new Promise(function(resolve){
+  async function playServerTts(text){
+    if (state.muted || !text) return false;
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    try {
+      const response = await fetch('/api/ai/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({
+          text: text,
+          voice: 'alloy',
+          speed: state.options.slow ? 0.85 : 1
+        })
+      });
+      if (!response.ok) return false;
+      const blob = await response.blob();
+      if (!blob || !blob.size) return false;
+      const url = URL.createObjectURL(blob);
+      await new Promise(function(resolve){
+        const audio = new Audio();
+        audio.src = url;
+        audio.onended = function(){
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        audio.onerror = function(){
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        audio.play().catch(function(){
+          URL.revokeObjectURL(url);
+          resolve();
+        });
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function speakText(text){
+    if (state.muted || !text) return;
+    const played = await playServerTts(text);
+    if (played || !('speechSynthesis' in window)) return;
+    await new Promise(function(resolve){
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'kk-KZ';
       utterance.rate = state.options.slow ? 0.85 : 1;
@@ -528,11 +563,17 @@
       setStatus('processing');
       addMessage({ sender:'user', text:text });
       const aiReply = await askAi(text, 'message');
-      patchLastUserMessage({ correction: aiReply.correction || '', translation: aiReply.translation || '', explanation: aiReply.explanation || '' });
+      const lastUserMessage = state.messages[state.messages.length - 1];
+      if (lastUserMessage && lastUserMessage.sender === 'user') {
+        lastUserMessage.correction = aiReply.correction || '';
+        lastUserMessage.explanation = aiReply.explanation || '';
+      }
+      renderTranscript();
+      updateMistakeBox();
       setStatus('ai');
       state.lastAiReply = aiReply.text || '';
-      addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.' });
-      await speakText(aiReply.text || '');
+      addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
+      await speakText(aiReply.ttsText || aiReply.text || '');
       if (!state.paused) setStatus('listening');
     };
 
@@ -589,10 +630,16 @@
       setStatus('processing');
       addMessage({ sender:'user', text:typed });
       askAi(typed, 'message').then(async function(aiReply){
-        patchLastUserMessage({ correction: aiReply.correction || '', translation: aiReply.translation || '', explanation: aiReply.explanation || '' });
+        const lastUserMessage = state.messages[state.messages.length - 1];
+        if (lastUserMessage && lastUserMessage.sender === 'user') {
+          lastUserMessage.correction = aiReply.correction || '';
+          lastUserMessage.explanation = aiReply.explanation || '';
+        }
+        renderTranscript();
+        updateMistakeBox();
         setStatus('ai');
-        addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.' });
-        await speakText(aiReply.text || '');
+        addMessage({ sender:'ai', text:aiReply.text || 'Жауап дайын.', translation: aiReply.translation || '' });
+        await speakText(aiReply.ttsText || aiReply.text || '');
         if (!state.paused) setStatus('listening');
       });
       return;
@@ -729,7 +776,7 @@
     const reply = await askAi('Нужна помощь в текущем диалоге', actionMap[action] || 'hint');
     setStatus('ai');
     addMessage({ sender:'ai', text:reply.text || 'Давайте продолжим.', translation: reply.translation || '', explanation: reply.explanation || '' });
-    await speakText(reply.text || '');
+    await speakText(reply.ttsText || reply.text || '');
     if (!state.paused) setStatus('listening');
   }
 
