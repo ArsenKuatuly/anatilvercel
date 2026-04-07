@@ -650,14 +650,16 @@
     state.lastCorrection = null;
     pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>';
     await startAiSession();
-    const scenario = SCENARIOS[state.scenario] || SCENARIOS.intro;
-    const welcomeText = state.level === 'A1'
-      ? 'Сәлеметсіз бе! Қысқа сөйлесейік. Өзіңіз туралы айтып беріңізші.'
-      : 'Сәлеметсіз бе! Бүгін ' + scenario.title.toLowerCase() + ' тақырыбында сөйлесеміз. Бастауға дайынсыз ба?';
-    addMessage({ sender:'ai', text:welcomeText, translation:'Здравствуйте! Давайте немного поговорим. Расскажите о себе.' });
+
+    const opener = await askAi('', 'start');
+    const fallbackStarter = buildFallbackReply('', 'start');
+    const welcomeText = (opener && opener.text) || fallbackStarter.text;
+    const welcomeTranslation = (opener && opener.translation) || fallbackStarter.translation || '';
+
+    addMessage({ sender:'ai', text:welcomeText, translation:welcomeTranslation });
     setStatus('listening');
     if (SpeechRecognitionCtor && !state.recognition) state.recognition = createRecognition();
-    await speakText(welcomeText);
+    await speakText((opener && opener.ttsText) || welcomeText);
   }
 
   function startListening(){

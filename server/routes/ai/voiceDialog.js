@@ -140,8 +140,9 @@ function buildVoiceMessages(body) {
         "Для B1 — естественная речь, но без перегруза.",
         "Если речь ученика неясная, странная или похожа на ошибку распознавания, не пытайся глубоко угадывать смысл.",
         "В таком случае вежливо попроси повторить по-казахски короткой фразой.",
+        "Если action=start, начни разговор первой уместной репликой именно по текущему сценарию. Не используй знакомство, если сценарий не intro.",
         "Если action=hint, дай пример краткого ответа ученика на казахском и короткий перевод на русском именно по текущему сценарию.",
-        "Если action=repeat, повтори вопрос проще на казахском и дай короткий перевод на русском именно по текущему сценарию.",
+        "Если action=repeat, повтори последний уместный вопрос проще на казахском и дай короткий перевод на русском именно по текущему сценарию.",
         "Если action=explain, очень кратко объясни на русском и дай улучшенный вариант ответа на казахском.",
         "Верни строго один JSON-объект без markdown и без лишнего текста.",
         '{"assistantText":"...","ttsText":"...","translation":"...","correction":{"hasIssue":false,"better":"","explanation":""},"meta":{"shouldRepeat":false,"isUnclearInput":false}}',
@@ -196,6 +197,49 @@ function fallbackVoiceReply(message, body) {
   }
 
   const action = normalizeText(body?.action || "message");
+  if (action === "start") {
+    const startMap = {
+      intro: {
+        A1: "Сәлеметсіз бе! Сіздің атыңыз кім?",
+        A2: "Сәлем! Өзіңіз туралы қысқаша айтып беріңізші.",
+        B1: "Сәлем! Өзіңізді таныстырып, немен айналысатыныңызды айтып беріңізші."
+      },
+      cafe: {
+        A1: "Сәлеметсіз бе! Не қалайсыз?",
+        A2: "Сәлеметсіз бе! Не ішесіз немесе жейсіз?",
+        B1: "Сәлеметсіз бе! Бүгін не тапсырыс бергіңіз келеді?"
+      },
+      shop: {
+        A1: "Сәлеметсіз бе! Сізге не керек?",
+        A2: "Сәлем! Қандай тауар іздеп жүрсіз?",
+        B1: "Сәлеметсіз бе! Қандай зат керек екенін айта аласыз ба?"
+      },
+      taxi: {
+        A1: "Сәлеметсіз бе! Қайда барасыз?",
+        A2: "Сәлем! Қай мекенжайға барамыз?",
+        B1: "Сәлеметсіз бе! Қай бағытқа барамыз, мекенжайды айтыңызшы."
+      },
+      university: {
+        A1: "Сәлем! Бүгін қандай сабақ бар?",
+        A2: "Сәлем! Бүгін қай пән немесе қай аудитория керек?",
+        B1: "Сәлеметсіз бе! Бүгінгі сабақ, аудитория немесе тапсырма туралы не білгіңіз келеді?"
+      },
+      work: {
+        A1: "Сәлем! Бүгін қандай тапсырма бар?",
+        A2: "Сәлеметсіз бе! Қандай жұмыс істеп жатырсыз?",
+        B1: "Сәлем! Қазіргі тапсырмаңыз, мерзімі немесе жиналыс туралы айтып беріңізші."
+      }
+    };
+    const line = startMap[scenario.key]?.[normalizeText(body?.level || body?.meta?.level || "A1")] || scenario.fallback;
+    return {
+      assistantText: line,
+      ttsText: line,
+      translation: "Начало диалога по выбранному сценарию.",
+      correction: { hasIssue: false, better: "", explanation: "" },
+      meta: { shouldRepeat: false, isUnclearInput: false }
+    };
+  }
+
   if (action === "hint") {
     const hintMap = {
       intro: ["Менің атым Арсен.", "Мен Алматыданмын."],
@@ -290,8 +334,9 @@ module.exports = async (req, res) => {
     }
 
     const { message, sessionId } = req.body || {};
+    const action = normalizeText(req.body?.action || "message");
     const cleanMessage = normalizeText(message);
-    if (!cleanMessage) {
+    if (!cleanMessage && action !== "start") {
       return res.status(400).json({ error: "Message is required" });
     }
 
@@ -305,7 +350,9 @@ module.exports = async (req, res) => {
     }
 
     let reply;
-    if (isLikelyUnclearInput(cleanMessage)) {
+    if (action === "start") {
+      reply = fallbackVoiceReply(cleanMessage, req.body);
+    } else if (isLikelyUnclearInput(cleanMessage)) {
       reply = fallbackVoiceReply(cleanMessage, req.body);
     } else {
       const openai = new OpenAI({ apiKey, timeout: 25000 });
