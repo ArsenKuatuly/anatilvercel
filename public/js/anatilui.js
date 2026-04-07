@@ -386,6 +386,43 @@
     try { return JSON.parse(match[0]); } catch (error) { return null; }
   }
 
+  function parseDialogResponse(raw) {
+    if (!raw) {
+      return {
+        reply: 'Жақсы, жалғастырайық.',
+        correction: { hasIssue: false, better: '', explanation: '' }
+      };
+    }
+
+    if (typeof raw === 'object') {
+      return {
+        reply: String(raw.reply || 'Жақсы, жалғастырайық.').trim(),
+        correction: {
+          hasIssue: !!(raw.correction && raw.correction.hasIssue),
+          better: String(raw.correction && raw.correction.better || '').trim(),
+          explanation: String(raw.correction && raw.correction.explanation || '').trim()
+        }
+      };
+    }
+
+    const parsed = extractJson(raw);
+    if (parsed && typeof parsed === 'object') {
+      return {
+        reply: String(parsed.reply || 'Жақсы, жалғастырайық.').trim(),
+        correction: {
+          hasIssue: !!(parsed.correction && parsed.correction.hasIssue),
+          better: String(parsed.correction && parsed.correction.better || '').trim(),
+          explanation: String(parsed.correction && parsed.correction.explanation || '').trim()
+        }
+      };
+    }
+
+    return {
+      reply: String(raw).trim() || 'Жақсы, жалғастырайық.',
+      correction: { hasIssue: false, better: '', explanation: '' }
+    };
+  }
+
   function normalizeSessionMode(mode) {
     if (mode === 'sentence_check' || mode === 'check') return 'sentence';
     if (mode === 'lesson_tutor' || mode === 'tutor') return 'tutor';
@@ -599,33 +636,75 @@
 
   function renderDialogMessages() {
     if (!els.dialogMessages) return;
+
     els.dialogMessages.innerHTML = state.dialog.messages.map(function (item) {
-      return '<div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>';
+      const roleClass = item.role === 'user'
+        ? 'ai-chat-message ai-chat-message--user'
+        : 'ai-chat-message ai-chat-message--ai';
+
+      const feedbackHtml = item.role === 'user' && item.feedback
+        ? (
+            '<div class="ai-chat-feedback">' +
+              (item.feedback.better
+                ? '<div class="ai-chat-feedback__line"><strong>Исправленный вариант:</strong> ' + escapeHtml(item.feedback.better) + '</div>'
+                : '') +
+              (item.feedback.explanation
+                ? '<div class="ai-chat-feedback__line"><strong>Почему:</strong> ' + escapeHtml(item.feedback.explanation) + '</div>'
+                : '') +
+            '</div>'
+          )
+        : '';
+
+      const metaHtml = item.meta
+        ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>'
+        : '';
+
+      return (
+        '<div class="' + roleClass + '">' +
+          '<div class="ai-chat-message__text">' + escapeHtml(item.text) + '</div>' +
+          metaHtml +
+          feedbackHtml +
+        '</div>'
+      );
     }).join('');
+
     els.dialogMessages.scrollTop = els.dialogMessages.scrollHeight;
-    els.dialogMessagesCount.textContent = String(state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length);
+
+    els.dialogMessagesCount.textContent = String(
+      state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length
+    );
     els.dialogErrorsCount.textContent = String(state.dialog.errors);
     els.dialogHintsCount.textContent = String(state.dialog.hints);
-    const progress = Math.max(10, Math.min(100, state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length * 20));
+
+    const progress = Math.max(
+      10,
+      Math.min(100, state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length * 20)
+    );
+
     els.dialogProgressBar.style.width = progress + '%';
     els.dialogProgressText.textContent = 'Прогресс диалога: ' + progress + '%';
   }
-
   function openDialogScenario(scenarioId) {
     const scenario = dialogScenarios.find(function (item) { return item.id === scenarioId; }) || dialogScenarios[0];
+
+    const starters = {
+      cafe: 'Сәлеметсіз бе! Қош келдіңіз. Не аласыз?',
+      shop: 'Сәлеметсіз бе! Сізге не керек?',
+      taxi: 'Сәлеметсіз бе! Қай жаққа барасыз?',
+      university: 'Сәлеметсіз бе! Қандай сұрағыңыз бар?',
+      meeting: 'Сәлем! Танысқаныма қуаныштымын. Өзіңізді таныстырып жібересіз бе?'
+    };
+
     state.activeSessionId = null;
     state.dialog.scenarioId = scenario.id;
     state.dialog.started = true;
-    const firstReplicaMap = {
-      cafe: 'Сәлеметсіз бе! Не ішесіз?',
-      shop: 'Сәлеметсіз бе! Сізге не керек?',
-      taxi: 'Сәлеметсіз бе! Қай мекенжайға барамыз?',
-      university: 'Сәлеметсіз бе! Қандай сұрағыңыз бар?',
-      meeting: 'Сәлем! Танысқаныма қуаныштымын. Атыңыз кім?'
-    };
-    state.dialog.messages = [{ role: 'assistant', text: firstReplicaMap[scenario.id] || 'Сәлеметсіз бе! Бүгін сізге қалай көмектесе аламын?', meta: 'Сценарий: ' + scenario.name }];
+    state.dialog.messages = [{
+      role: 'assistant',
+      text: starters[scenario.id] || 'Сәлеметсіз бе! Бүгін сізге қалай көмектесе аламын?'
+    }];
     state.dialog.hints = 0;
     state.dialog.errors = 0;
+
     els.dialogScenarioStep.hidden = true;
     els.dialogChatStep.hidden = false;
     els.dialogScenarioTitle.textContent = scenario.name;
@@ -633,13 +712,14 @@
     els.dialogScenarioDifficulty.textContent = scenario.difficulty;
     els.dialogGoalText.textContent = scenario.goal;
     els.dialogScenarioEmoji.textContent = scenario.emoji;
+
     els.dialogPhraseList.innerHTML = scenario.phrases.map(function (phrase) {
       const parts = phrase.split(' — ');
       return '<div class="ai-phrase-item"><strong>' + escapeHtml(parts[0]) + '</strong><span>' + escapeHtml(parts[1] || '') + '</span></div>';
     }).join('');
+
     renderDialogMessages();
   }
-
   function closeDialogScenario() {
     els.dialogScenarioStep.hidden = false;
     els.dialogChatStep.hidden = true;
@@ -649,43 +729,75 @@
 
   async function sendDialogMessage(kind) {
     if (!state.dialog.started) return;
-    const scenario = dialogScenarios.find(function (item) { return item.id === state.dialog.scenarioId; }) || dialogScenarios[0];
+
+    const scenario = dialogScenarios.find(function (item) {
+      return item.id === state.dialog.scenarioId;
+    }) || dialogScenarios[0];
+
     let text = '';
-    if (kind === 'hint') text = 'Подскажи короткий естественный ответ ученика именно для текущей реплики собеседника.';
-    else if (kind === 'repeat') text = 'Повтори последнюю реплику собеседника проще и понятнее.';
-    else if (kind === 'explain') text = 'Объясни, как ответить естественнее именно в этом сценарии.';
+
+    if (kind === 'hint') text = 'Подскажи короткий естественный ответ для этой ситуации.';
+    else if (kind === 'repeat') text = 'Повтори последний вопрос проще.';
+    else if (kind === 'explain') text = 'Как ответить естественнее?';
     else text = (els.dialogInput.value || '').trim();
+
     if (!text) return;
 
+    let lastUserMessageRef = null;
+
     if (kind === 'message') {
-      state.dialog.messages.push({ role: 'user', text: text });
+      lastUserMessageRef = { role: 'user', text: text };
+      state.dialog.messages.push(lastUserMessageRef);
       els.dialogInput.value = '';
+      renderDialogMessages();
     }
 
     setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
+
     try {
       const raw = await aiChat({
         mode: 'dialog',
         action: kind,
         message: text,
-        history: state.dialog.messages.slice(-8),
+        history: state.dialog.messages.slice(-8).map(function (item) {
+          return { role: item.role, text: item.text };
+        }),
         scenario: scenario.name,
         scenarioGoal: scenario.goal,
         scenarioDifficulty: scenario.difficulty,
         supportPhrases: scenario.phrases,
         meta: { scenario: scenario.name }
       });
-      const reply = raw || 'Жақсы, жалғастырайық.';
-      state.dialog.messages.push({ role: 'assistant', text: reply });
+
+      const parsed = parseDialogResponse(raw);
+      const reply = parsed.reply || 'Жақсы, жалғастырайық.';
+      const correction = parsed.correction || { hasIssue: false, better: '', explanation: '' };
+
+      if (kind === 'message' && lastUserMessageRef && correction.hasIssue) {
+        lastUserMessageRef.feedback = {
+          better: correction.better || '',
+          explanation: correction.explanation || ''
+        };
+        state.dialog.errors += 1;
+        state.sessionStats.errors += 1;
+      }
+
+      state.dialog.messages.push({
+        role: 'assistant',
+        text: reply
+      });
+
       if (kind === 'hint') state.dialog.hints += 1;
+
       if (kind === 'message') {
         state.achievements.dialogs += 1;
         state.sessionStats.minutes += 2;
       }
-      state.dialog.errors += /ошиб/i.test(reply) ? 1 : 0;
+
       increaseUsage(1);
       updateStatsView();
       renderDialogMessages();
+
       pushHistory({
         modeLabel: 'Диалог',
         title: 'Диалог: ' + scenario.name,
@@ -696,14 +808,16 @@
       });
     } catch (error) {
       console.error(error);
-      state.dialog.messages.push({ role: 'assistant', text: 'Жақсы, тағы бір рет айтып көріңізші.' });
+      state.dialog.messages.push({
+        role: 'assistant',
+        text: 'Кешіріңіз, тағы бір рет айтып көріңізші.'
+      });
       renderDialogMessages();
     } finally {
       setButtonLoading(els.sendDialogBtn, false);
       saveState();
     }
   }
-
   function renderTutorTopics() {
     const topics = [
       { title: 'Барыс септік (-ге/-ға)', text: 'Направление и цель', active: true },

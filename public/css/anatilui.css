@@ -1636,3 +1636,26 @@ button {
 .ai-result-stack--hidden[hidden] {
   display: none !important;
 }
+
+
+.ai-chat-message__text {
+  white-space: pre-wrap;
+}
+
+.ai-chat-feedback {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.ai-chat-feedback__line {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.ai-chat-feedback__line + .ai-chat-feedback__line {
+  margin-top: 6px;
+}
