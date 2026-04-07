@@ -110,6 +110,59 @@ function getScenario(body) {
   return { key: "intro", ...SCENARIO_CONFIG.intro };
 }
 
+
+function extractTopicFragment(message) {
+  const text = normalizeText(message).toLowerCase();
+  if (!text) return "";
+  const patterns = [
+    /маған\s+(.+?)\s+(беріңізші|беріңіз|қажет|керек)$/i,
+    /маған\s+(.+?)$/i,
+    /бір\s+(.+?)\s+(беріңізші|беріңіз)$/i,
+    /(.+?)\s+(керек|қажет)$/i,
+    /(.+?)\s+(алайын|аламын)$/i
+  ];
+  for (const rx of patterns) {
+    const m = text.match(rx);
+    if (m && m[1]) return normalizeText(m[1]);
+  }
+  return "";
+}
+
+function buildNaturalScenarioReply(message, body) {
+  const scenario = getScenario(body);
+  const topic = extractTopicFragment(message);
+  switch (scenario.key) {
+    case "cafe":
+      if (topic) return `${topic[0] ? topic[0].toUpperCase() + topic.slice(1) : topic}. Жақсы, тағы не аласыз?`;
+      return "Жақсы, тапсырысыңызды қабылдадым. Тағы не аласыз?";
+    case "shop":
+      if (topic) return `${topic[0] ? topic[0].toUpperCase() + topic.slice(1) : topic} бар. Тағы бір нәрсе керек пе?`;
+      return "Жақсы, қарап көрейік. Тағы не керек?";
+    case "taxi":
+      return "Жақсы, мекенжайды нақтырақ айтыңызшы.";
+    case "university":
+      return "Жақсы, осы тақырып бойынша нақты не керек?";
+    case "work":
+      return "Жақсы, қазір қай бөлігін істеп жатырсыз?";
+    default:
+      return scenario.followups[0] || scenario.fallback;
+  }
+}
+
+function looksLikeParrotReply(userMessage, assistantText) {
+  const user = normalizeText(userMessage).toLowerCase();
+  const assistant = normalizeText(assistantText).toLowerCase();
+  if (!user || !assistant) return false;
+  if (assistant === user) return true;
+  if (assistant.startsWith(user + ',') || assistant.startsWith(user + '.') || assistant.startsWith(user + ' ')) return true;
+  const userWords = user.split(/\s+/).filter(Boolean);
+  if (userWords.length >= 3) {
+    const overlapStart = userWords.slice(0, Math.min(userWords.length, 5)).join(' ');
+    if (assistant.startsWith(overlapStart)) return true;
+  }
+  return false;
+}
+
 function buildVoiceMessages(body) {
   const message = normalizeText(body?.message || "");
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
@@ -140,9 +193,14 @@ function buildVoiceMessages(body) {
         "Для B1 — естественная речь, но без перегруза.",
         "Если речь ученика неясная, странная или похожа на ошибку распознавания, не пытайся глубоко угадывать смысл.",
         "В таком случае вежливо попроси повторить по-казахски короткой фразой.",
-        "Если action=start, начни разговор первой уместной репликой именно по текущему сценарию. Не используй знакомство, если сценарий не intro.",
+        "Отвечай именно как собеседник по роли, а не как проверка предложения.",
+        "Не копируй целиком фразу ученика в assistantText. Не начинай ответ с дословного повторения его реплики.",
+        "Если ученик что-то просит или заказывает, сначала естественно подтверди или отреагируй, потом задай один следующий уместный вопрос.",
+        "Исправление фразы ученика можно писать только в correction.better, но не в assistantText.",
+        "Пример для кафе: ученик="Маған бір латте беріңізші" -> assistantText="Әрине, бір латте. Тағы не аласыз?".",
+        "Плохой пример для кафе: assistantText="Маған бір латте беріңізші, тағы не аласыз?" — так нельзя.",
         "Если action=hint, дай пример краткого ответа ученика на казахском и короткий перевод на русском именно по текущему сценарию.",
-        "Если action=repeat, повтори последний уместный вопрос проще на казахском и дай короткий перевод на русском именно по текущему сценарию.",
+        "Если action=repeat, повтори вопрос проще на казахском и дай короткий перевод на русском именно по текущему сценарию.",
         "Если action=explain, очень кратко объясни на русском и дай улучшенный вариант ответа на казахском.",
         "Верни строго один JSON-объект без markdown и без лишнего текста.",
         '{"assistantText":"...","ttsText":"...","translation":"...","correction":{"hasIssue":false,"better":"","explanation":""},"meta":{"shouldRepeat":false,"isUnclearInput":false}}',
@@ -178,51 +236,6 @@ function buildVoiceMessages(body) {
 function fallbackVoiceReply(message, body) {
   const text = normalizeText(message);
   const scenario = getScenario(body);
-  const action = normalizeText(body?.action || "message");
-
-  if (action === "start") {
-    const startMap = {
-      intro: {
-        A1: "Сәлеметсіз бе! Сіздің атыңыз кім?",
-        A2: "Сәлем! Өзіңіз туралы қысқаша айтып беріңізші.",
-        B1: "Сәлем! Өзіңізді таныстырып, немен айналысатыныңызды айтып беріңізші."
-      },
-      cafe: {
-        A1: "Сәлеметсіз бе! Не қалайсыз?",
-        A2: "Сәлеметсіз бе! Не ішесіз немесе жейсіз?",
-        B1: "Сәлеметсіз бе! Бүгін не тапсырыс бергіңіз келеді?"
-      },
-      shop: {
-        A1: "Сәлеметсіз бе! Сізге не керек?",
-        A2: "Сәлем! Қандай тауар іздеп жүрсіз?",
-        B1: "Сәлеметсіз бе! Қандай зат керек екенін айта аласыз ба?"
-      },
-      taxi: {
-        A1: "Сәлеметсіз бе! Қайда барасыз?",
-        A2: "Сәлем! Қай мекенжайға барамыз?",
-        B1: "Сәлеметсіз бе! Қай бағытқа барамыз, мекенжайды айтыңызшы."
-      },
-      university: {
-        A1: "Сәлем! Бүгін қандай сабақ бар?",
-        A2: "Сәлем! Бүгін қай пән немесе қай аудитория керек?",
-        B1: "Сәлеметсіз бе! Бүгінгі сабақ, аудитория немесе тапсырма туралы не білгіңіз келеді?"
-      },
-      work: {
-        A1: "Сәлем! Бүгін қандай тапсырма бар?",
-        A2: "Сәлеметсіз бе! Қандай жұмыс істеп жатырсыз?",
-        B1: "Сәлем! Қазіргі тапсырмаңыз, мерзімі немесе жиналыс туралы айтып беріңізші."
-      }
-    };
-    const line = startMap[scenario.key]?.[normalizeText(body?.level || body?.meta?.level || "A1")] || scenario.fallback;
-    return {
-      assistantText: line,
-      ttsText: line,
-      translation: "",
-      correction: { hasIssue: false, better: "", explanation: "" },
-      meta: { shouldRepeat: false, isUnclearInput: false }
-    };
-  }
-
   const unclear = isLikelyUnclearInput(text);
   if (unclear) {
     return {
@@ -241,6 +254,7 @@ function fallbackVoiceReply(message, body) {
     };
   }
 
+  const action = normalizeText(body?.action || "message");
   if (action === "hint") {
     const hintMap = {
       intro: ["Менің атым Арсен.", "Мен Алматыданмын."],
@@ -297,20 +311,25 @@ function fallbackVoiceReply(message, body) {
 function sanitizeReply(raw, message, body) {
   try {
     const parsed = JSON.parse(raw || "{}");
-    return {
-      assistantText: normalizeText(parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?"),
-      ttsText: normalizeText(parsed?.ttsText || parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?"),
-      translation: normalizeText(parsed?.translation || ""),
-      correction: {
-        hasIssue: !!parsed?.correction?.hasIssue,
-        better: normalizeText(parsed?.correction?.better || ""),
-        explanation: normalizeText(parsed?.correction?.explanation || "")
-      },
-      meta: {
-        shouldRepeat: !!parsed?.meta?.shouldRepeat,
-        isUnclearInput: !!parsed?.meta?.isUnclearInput
-      }
+    let assistantText = normalizeText(parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?");
+    let ttsText = normalizeText(parsed?.ttsText || parsed?.assistantText || assistantText);
+    const translation = normalizeText(parsed?.translation || "");
+    const correction = {
+      hasIssue: !!parsed?.correction?.hasIssue,
+      better: normalizeText(parsed?.correction?.better || ""),
+      explanation: normalizeText(parsed?.correction?.explanation || "")
     };
+    const meta = {
+      shouldRepeat: !!parsed?.meta?.shouldRepeat,
+      isUnclearInput: !!parsed?.meta?.isUnclearInput
+    };
+
+    if (normalizeText(body?.action || 'message') === 'message' && looksLikeParrotReply(message, assistantText)) {
+      assistantText = buildNaturalScenarioReply(message, body);
+      ttsText = assistantText;
+    }
+
+    return { assistantText, ttsText, translation, correction, meta };
   } catch {
     return fallbackVoiceReply(message, body);
   }
@@ -338,7 +357,7 @@ module.exports = async (req, res) => {
     const action = normalizeText(req.body?.action || "message");
     const rawMessage = req.body?.message ?? req.body?.text ?? req.body?.userText ?? "";
     const cleanMessage = normalizeText(rawMessage);
-    if (!cleanMessage && action !== "start") {
+    if (action !== "start" && !cleanMessage) {
       return res.status(400).json({ error: "Message is required" });
     }
 
@@ -353,7 +372,7 @@ module.exports = async (req, res) => {
 
     let reply;
     if (action === "start") {
-      reply = fallbackVoiceReply("", req.body);
+      reply = fallbackVoiceReply("ok", req.body);
     } else if (isLikelyUnclearInput(cleanMessage)) {
       reply = fallbackVoiceReply(cleanMessage, req.body);
     } else {

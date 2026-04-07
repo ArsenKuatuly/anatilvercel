@@ -650,13 +650,12 @@
     state.lastCorrection = null;
     pauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h4v16H6zM14 4h4v16h-4z"></path></svg>';
     await startAiSession();
-
-    const starter = buildFallbackReply('', 'start');
-    addMessage({ sender:'ai', text:starter.text, translation:starter.translation || '' });
-    state.lastAiReply = starter.text || '';
+    const opener = buildFallbackReply('', 'start');
+    addMessage({ sender:'ai', text:opener.text, translation: opener.translation || '' });
+    state.lastAiReply = opener.text || '';
     setStatus('listening');
     if (SpeechRecognitionCtor && !state.recognition) state.recognition = createRecognition();
-    await speakText(starter.ttsText || starter.text || '');
+    await speakText(opener.ttsText || opener.text || '');
   }
 
   function startListening(){
