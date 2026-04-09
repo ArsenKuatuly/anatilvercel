@@ -4,6 +4,8 @@ const { readJson } = require("../lib/body");
 // ===== STATIC REQUIRES (ВАЖНО ДЛЯ VERCEL) =====
 const authLogin = require("../server/routes/auth/login.js");
 const authRegister = require("../server/routes/auth/register.js");
+const authForgotPassword = require("../server/routes/auth/forgot-password.js");
+const authResetPassword = require("../server/routes/auth/reset-password.js");
 const authMe = require("../server/routes/auth/me.js");
 
 const aiChat = require("../server/routes/ai/chat.js");
@@ -19,7 +21,7 @@ const saveResult = require("../server/routes/save-result.js");
 
 const myCourse = require("../server/routes/my-course.js");
 const myActiveCourse = require("../server/routes/my-active-course.js");
-const myCourses = require("../server/routes/my-courses.js"); // если файла нет — удали 1 строку и роут ниже
+const myCourses = require("../server/routes/my-courses.js");
 
 const progressCurrent = require("../server/routes/lessons/progress/current.js");
 
@@ -38,11 +40,9 @@ const certificateByCourse = require("../server/routes/certificate/[courseId].js"
 
 const myAchievements = require("../server/routes/achievements/my");
 
-// ===== LIBRARY =====
 const libraryMaterials = require("../server/routes/library/materials.js");
 const libraryState = require("../server/routes/library/state.js");
 
-// ===== ADMIN =====
 const adminUsers = require("../server/routes/admin/users.js");
 const adminUserUpdate = require("../server/routes/admin/userUpdate.js");
 const adminUserReset = require("../server/routes/admin/userReset.js");
@@ -64,8 +64,6 @@ const aiSessionStart = require("../server/routes/ai/sessionStart.js");
 const aiUsageToday = require("../server/routes/ai/usageToday.js");
 const testWritingScore = require("../server/routes/ai/testWritingScore.js");
 
-
-// ===== tiny router =====
 function matchPath(pathname, pattern) {
     const a = String(pathname).split("/").filter(Boolean);
     const b = String(pattern).split("/").filter(Boolean);
@@ -82,10 +80,8 @@ function matchPath(pathname, pattern) {
 
 module.exports = async (req, res) => {
     try {
-        // CORS + preflight
         if (setCors(req, res)) return;
 
-        // parse JSON body once
         if (["POST", "PATCH", "PUT"].includes(req.method)) {
             const ct = String(req.headers["content-type"] || "");
             if (ct.includes("application/json")) {
@@ -105,56 +101,44 @@ module.exports = async (req, res) => {
         const path = url.pathname;
         const method = req.method;
 
-        // ===== AUTH =====
         if (path === "/api/auth/login" && method === "POST") return authLogin(req, res);
         if (path === "/api/auth/register" && method === "POST") return authRegister(req, res);
+        if (path === "/api/auth/forgot-password" && method === "POST") return authForgotPassword(req, res);
+        if (path === "/api/auth/reset-password" && method === "POST") return authResetPassword(req, res);
         if (path === "/api/auth/me" && method === "GET") return authMe(req, res);
 
-        // ===== AI =====
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
         if (path === "/api/ai/voice-dialog" && method === "POST") return aiVoiceDialog(req, res);
         if (path === "/api/ai/tts" && method === "POST") return aiTts(req, res);
         if (path === "/api/ai/session/start" && method === "POST") return aiSessionStart(req, res);
         if (path === "/api/ai/usage/today" && method === "GET") return aiUsageToday(req, res);
-        if (path === "/api/ai/test-writing-score" && method === "POST") {
-            return testWritingScore(req, res);
-        }
+        if (path === "/api/ai/test-writing-score" && method === "POST") return testWritingScore(req, res);
 
-        // ===== PROFILE =====
         if (path === "/api/profile" && (method === "GET" || method === "POST")) return profile(req, res);
         if (path === "/api/profile/avatar" && method === "POST") return profileAvatar(req, res);
 
-        // ===== RESULTS =====
         if (path === "/api/my-result" && method === "GET") return myResult(req, res);
         if (path === "/api/test-history" && method === "GET") return testHistory(req, res);
         if (path === "/api/save-result" && method === "POST") return saveResult(req, res);
 
-        // ===== COURSES =====
         if (path === "/api/my-course" && method === "GET") return myCourse(req, res);
         if (path === "/api/my-active-course" && method === "GET") return myActiveCourse(req, res);
         if (path === "/api/my-courses" && method === "GET") return myCourses(req, res);
 
-        // ===== LESSONS =====
         if (path === "/api/lessons/progress/current" && method === "GET") return progressCurrent(req, res);
         if (path === "/api/lesson/complete" && method === "POST") return lessonComplete(req, res);
         if (path === "/api/continue-lesson" && method === "GET") return continueLesson(req, res);
 
+        if (path === "/api/achievements/my" && method === "GET") return myAchievements(req, res);
 
-        if (path === "/api/achievements/my" && method === "GET") {
-            return myAchievements(req, res);
-        }
-
-        // ===== LIBRARY =====
         if (path === "/api/library/materials" && method === "GET") return libraryMaterials(req, res);
         if (path === "/api/library/state" && method === "POST") return libraryState(req, res);
 
-        // ===== ADMIN =====
         if (path === "/api/admin/users" && method === "GET") return adminUsers(req, res);
         if (path === "/api/admin/courses" && method === "GET") return adminCourses(req, res);
         if (path === "/api/admin/tasks" && method === "GET") return adminTasks(req, res);
         if (path === "/api/admin/library/materials" && method === "GET") return adminLibraryMaterials(req, res);
 
-        // /api/admin/users/:id
         {
             const p = matchPath(path, "/api/admin/users/:id");
             if (p && method === "PATCH") {
@@ -164,7 +148,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/users/:id/reset
         {
             const p = matchPath(path, "/api/admin/users/:id/reset");
             if (p && method === "POST") {
@@ -174,7 +157,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/courses/:courseId/modules
         {
             const p = matchPath(path, "/api/admin/courses/:courseId/modules");
             if (p && method === "GET") {
@@ -184,7 +166,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/modules/:moduleId/lessons
         {
             const p = matchPath(path, "/api/admin/modules/:moduleId/lessons");
             if (p && method === "GET") {
@@ -194,7 +175,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/lessons/:lessonId
         {
             const p = matchPath(path, "/api/admin/lessons/:lessonId");
             if (p && method === "PATCH") {
@@ -204,7 +184,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/tasks/:taskId
         {
             const p = matchPath(path, "/api/admin/tasks/:taskId");
             if (p && method === "GET") {
@@ -219,17 +198,15 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/admin/questions/:id
         {
-            const p = matchPath(path, "/api/admin/questions/:id");
+            const p = matchPath(path, "/api/admin/questions/:questionId");
             if (p && method === "PATCH") {
                 req.query = req.query || {};
-                req.query.id = p.id;
+                req.query.questionId = p.questionId;
                 return adminQuestionUpdate(req, res);
             }
         }
 
-        // /api/admin/library/materials/:id
         {
             const p = matchPath(path, "/api/admin/library/materials/:id");
             if (p && method === "PATCH") {
@@ -239,18 +216,6 @@ module.exports = async (req, res) => {
             }
         }
 
-
-        // /api/lesson/:id
-        {
-            const p = matchPath(path, "/api/lesson/:id");
-            if (p && method === "GET") {
-                req.query = req.query || {};
-                req.query.id = p.id;
-                return lessonById(req, res);
-            }
-        }
-
-        // /api/course/:slug
         {
             const p = matchPath(path, "/api/course/:slug");
             if (p && method === "GET") {
@@ -260,9 +225,17 @@ module.exports = async (req, res) => {
             }
         }
 
-        // /api/course/:courseId/task
         {
-            const p = matchPath(path, "/api/course/:courseId/task");
+            const p = matchPath(path, "/api/lesson/:id");
+            if (p && method === "GET") {
+                req.query = req.query || {};
+                req.query.id = p.id;
+                return lessonById(req, res);
+            }
+        }
+
+        {
+            const p = matchPath(path, "/api/:courseId/task");
             if (p && method === "GET") {
                 req.query = req.query || {};
                 req.query.courseId = p.courseId;
@@ -270,7 +243,6 @@ module.exports = async (req, res) => {
             }
         }
 
-        // ===== TASK =====
         {
             const p = matchPath(path, "/api/task/:taskId");
             if (p && method === "GET") {
@@ -308,8 +280,8 @@ module.exports = async (req, res) => {
         }
 
         return res.status(404).json({ success: false, message: "Not found" });
-    } catch (e) {
-        console.error("api/app error:", e);
+    } catch (err) {
+        console.error("api/app error:", err);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };

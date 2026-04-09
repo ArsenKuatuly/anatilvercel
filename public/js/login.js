@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById("loginBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
     const message = document.getElementById("message");
     const loginInput = document.getElementById("login");
     const passwordInput = document.querySelector(".js-password");
@@ -43,11 +44,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ login, password })
+                body: JSON.stringify({ login, password }),
             });
 
             const result = await res.json().catch(() => null);
-
             if (!result) {
                 setMsg("Сервер вернул некорректный ответ", false);
                 return;
@@ -59,13 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             localStorage.setItem("token", result.token);
-
             setMsg("Вход выполнен", true);
-
             setTimeout(() => {
                 window.location.href = "/dashboard.html";
             }, 200);
-
         } catch {
             setMsg("Ошибка соединения с сервером", false);
         } finally {
@@ -81,10 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    const forgotBtn = document.getElementById("forgotBtn");
     if (forgotBtn) {
         forgotBtn.addEventListener("click", () => {
-            setMsg("Функция восстановления пароля пока не подключена", false);
+            window.location.href = "/forgot-password.html";
         });
     }
 });

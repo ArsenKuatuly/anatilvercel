@@ -1,28 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
     const registerBtn = document.getElementById("registerBtn");
     const message = document.getElementById("message");
+    const loginInput = document.getElementById("login");
+    const emailInput = document.getElementById("email");
+    const passwordInputs = document.querySelectorAll(".js-password");
 
-    if (!registerBtn || !message) return;
+    if (!registerBtn || !message || !loginInput || !emailInput || passwordInputs.length < 2) return;
 
     registerBtn.addEventListener("click", async () => {
-        const loginInput = document.getElementById("login");
-        const passwordInputs = document.querySelectorAll(".js-password");
-
-        if (!loginInput || passwordInputs.length < 2) return;
-
         const password = passwordInputs[0];
         const passwordRepeat = passwordInputs[1];
 
         resetMessage();
-        clearInputErrors([loginInput, password, passwordRepeat]);
+        clearInputErrors([loginInput, emailInput, password, passwordRepeat]);
 
-        if (!loginInput.value.trim() || !password.value || !passwordRepeat.value) {
-            showError("Заполните все поля", [loginInput, password, passwordRepeat]);
+        if (!loginInput.value.trim() || !emailInput.value.trim() || !password.value || !passwordRepeat.value) {
+            showError("Заполните все поля", [loginInput, emailInput, password, passwordRepeat]);
             return;
         }
 
         if (loginInput.value.trim().length < 3) {
             showError("Логин должен содержать минимум 3 символа", [loginInput]);
+            return;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+            showError("Введите корректный email", [emailInput]);
             return;
         }
 
@@ -44,26 +47,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     login: loginInput.value.trim(),
-                    password: password.value
-                })
+                    email: emailInput.value.trim().toLowerCase(),
+                    password: password.value,
+                }),
             });
 
             const result = await safeJson(res);
-
             if (!result || !result.success) {
                 setMessage((result && result.message) || "Ошибка регистрации", "error");
                 return;
             }
 
             localStorage.setItem("token", result.token);
-
             setMessage("Регистрация успешна", "success");
 
             setTimeout(() => {
                 window.location.href = "/onboarding.html";
-            }, 500);
-
-        } catch (e) {
+            }, 400);
+        } catch {
             setMessage("Ошибка соединения с сервером", "error");
         } finally {
             setLoading(false);
