@@ -444,29 +444,6 @@
     return parseResponsePayload(data) || '';
   }
 
-  async function aiChatDialog(payload) {
-    const sessionId = state.activeSessionId || await ensureSession(payload.mode || state.mode, payload.meta || {});
-    const requestPayload = Object.assign({}, payload, sessionId ? { sessionId: sessionId } : {});
-    const data = await request('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestPayload)
-    });
-    const usage = data && (data.usage || data.data && data.data.usage);
-    if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
-
-    const reply = parseResponsePayload(data) || '';
-    const correctionSource = data && (data.correction || data.data && data.data.correction) || {};
-    return {
-      reply: reply,
-      correction: {
-        hasIssue: !!correctionSource.hasIssue,
-        better: typeof correctionSource.better === 'string' ? correctionSource.better.trim() : '',
-        explanation: typeof correctionSource.explanation === 'string' ? correctionSource.explanation.trim() : ''
-      }
-    };
-  }
-
   function formatMeta(prefix, messages, words, errors) {
     return prefix + ' • ' + messages + ' сообщ. • ' + words + ' слов • ' + errors + ' ошибок';
   }
@@ -641,10 +618,11 @@
   function renderDialogMessages() {
     if (!els.dialogMessages) return;
     els.dialogMessages.innerHTML = state.dialog.messages.map(function (item) {
-      const correction = item.correction && item.correction.hasIssue
-        ? '<div class="ai-chat-message__correction"><strong>Исправление:</strong> ' + escapeHtml(item.correction.better || '') + (item.correction.explanation ? '<span class="ai-chat-message__correction-note">' + escapeHtml(item.correction.explanation) + '</span>' : '') + '</div>'
-        : '';
-      return '<div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + correction + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>';
+      var correctionHtml = '';
+      if (item.role === 'user' && item.correction && item.correction.hasIssue && item.correction.better) {
+        correctionHtml = '<div class="ai-chat-correction"><div class="ai-chat-correction__title">Исправление</div><div class="ai-chat-correction__text">' + escapeHtml(item.correction.better) + '</div>' + (item.correction.explanation ? '<div class="ai-chat-correction__hint">' + escapeHtml(item.correction.explanation) + '</div>' : '') + '</div>';
+      }
+      return '<div class="ai-chat-item ai-chat-item--' + (item.role === 'user' ? 'user' : 'ai') + '"><div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>' + correctionHtml + '</div>';
     }).join('');
     els.dialogMessages.scrollTop = els.dialogMessages.scrollHeight;
     els.dialogMessagesCount.textContent = String(state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length);
@@ -687,10 +665,12 @@
   async function sendDialogMessage(kind) {
     if (!state.dialog.started) return;
     const scenario = dialogScenarios.find(function (item) { return item.id === state.dialog.scenarioId; }) || dialogScenarios[0];
+    const lastAssistantMessage = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'assistant'; });
+    const lastUserMessage = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'user'; });
     let text = '';
     if (kind === 'hint') text = 'Подскажи короткий ответ для этой ситуации.';
     else if (kind === 'repeat') text = 'Повтори последний вопрос и сформулируй его проще.';
-    else if (kind === 'explain') text = 'Объясни, как ответить лучше и естественнее.';
+    else if (kind === 'explain') text = 'Объясни, как сказать мой последний ответ лучше и естественнее.';
     else text = (els.dialogInput.value || '').trim();
     if (!text) return;
 
@@ -699,35 +679,62 @@
       els.dialogInput.value = '';
     }
 
-    setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
+    const triggerButton = kind === 'hint' ? els.showHintBtn : kind === 'repeat' ? els.dialogRepeatBtn : kind === 'explain' ? els.dialogExplainBtn : els.sendDialogBtn;
+    setButtonLoading(triggerButton, true, kind === 'hint' ? 'Думаю...' : kind === 'repeat' ? 'Повторяем...' : kind === 'explain' ? 'Подсказываю...' : 'Отправляем...');
     try {
-      const response = await aiChatDialog({
-        mode: 'dialog',
-        action: kind,
-        message: text,
-        history: state.dialog.messages.slice(-8),
-        scenario: scenario.name,
-        scenarioGoal: scenario.goal,
-        scenarioDifficulty: scenario.difficulty,
-        supportPhrases: scenario.phrases,
-        meta: { scenario: scenario.name }
+      const sessionId = state.activeSessionId || await ensureSession('dialog', { scenario: scenario.name });
+      const response = await request('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'dialog',
+          action: kind,
+          message: text,
+          history: state.dialog.messages.slice(-10).map(function (item) {
+            return { role: item.role, text: item.text, meta: item.meta || '' };
+          }),
+          scenario: scenario.name,
+          scenarioGoal: scenario.goal,
+          scenarioDifficulty: scenario.difficulty,
+          supportPhrases: scenario.phrases,
+          lastAssistantText: lastAssistantMessage ? lastAssistantMessage.text : '',
+          lastUserText: lastUserMessage ? lastUserMessage.text : '',
+          sessionId: sessionId || undefined
+        })
       });
-      const reply = response && response.reply ? response.reply : 'Жақсы, тапсырысыңызды нақтылап айтыңызшы.';
-      const correction = response && response.correction ? response.correction : null;
+      const usage = response && response.usage;
+      if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
+      const reply = ensureText(response && response.reply, 'Жақсы, тағы бір рет айтып көріңізші.');
+      const correction = response && response.correction ? {
+        hasIssue: !!response.correction.hasIssue,
+        better: ensureText(response.correction.better, '').trim(),
+        explanation: ensureText(response.correction.explanation, '').trim()
+      } : null;
+
       if (kind === 'message' && correction && correction.hasIssue) {
-        for (let index = state.dialog.messages.length - 1; index >= 0; index -= 1) {
-          if (state.dialog.messages[index].role === 'user' && !state.dialog.messages[index].correction) {
-            state.dialog.messages[index].correction = correction;
+        for (var i = state.dialog.messages.length - 1; i >= 0; i -= 1) {
+          if (state.dialog.messages[i].role === 'user' && !state.dialog.messages[i].correction) {
+            state.dialog.messages[i].correction = correction;
             break;
           }
         }
+        state.dialog.errors += 1;
       }
-      state.dialog.messages.push({ role: 'assistant', text: reply });
-      if (kind === 'hint') state.dialog.hints += 1;
+
+      var meta = '';
+      if (kind === 'hint') {
+        state.dialog.hints += 1;
+        meta = 'Подсказка';
+      } else if (kind === 'repeat') {
+        meta = 'Повтор вопроса';
+      } else if (kind === 'explain') {
+        meta = 'Как сказать лучше';
+      }
+
+      state.dialog.messages.push({ role: 'assistant', text: reply, meta: meta });
       if (kind === 'message') {
         state.achievements.dialogs += 1;
         state.sessionStats.minutes += 2;
-        if (correction && correction.hasIssue) state.dialog.errors += 1;
       }
       increaseUsage(1);
       updateStatsView();
@@ -745,7 +752,7 @@
       state.dialog.messages.push({ role: 'assistant', text: 'Жақсы, тағы бір рет айтып көріңізші.' });
       renderDialogMessages();
     } finally {
-      setButtonLoading(els.sendDialogBtn, false);
+      setButtonLoading(triggerButton, false);
       saveState();
     }
   }
