@@ -92,15 +92,30 @@ function extractTopicFragment(message) {
 function buildScenarioFallbackReply(body, message) {
   const scenario = normalizeText(body?.scenario || "").toLowerCase();
   const topic = extractTopicFragment(message);
+  const normalizedMessage = normalizeText(message).toLowerCase();
+
   if (scenario.includes("каф")) {
-    if (topic) return `Жақсы, ${topic}. Тағы не аласыз?`;
-    return "Жақсы, тапсырысыңызды қабылдадым. Тағы не аласыз?";
+    if (/осымен болды|болды|жетеді/.test(normalizedMessage)) {
+      return "Жақсы, түсіндім. Тағы ештеңе керек емес пе?";
+    }
+    if (/бағасы|қанша/.test(normalizedMessage)) {
+      return "Бағасы үш жүз теңге. Тағы бірдеңе аласыз ба?";
+    }
+    if (/сәлем/.test(normalizedMessage) && /кофе|латте|шай|капучино/.test(normalizedMessage)) {
+      return "Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?";
+    }
+    if (topic) return `Жақсы, бір ${topic}. Тағы не аласыз?`;
+    return "Жақсы, не қалайтыныңызды айтыңызшы.";
   }
-  if (scenario.includes("магаз")) return "Жақсы, қарап көрейік. Тағы не керек?";
+
+  if (scenario.includes("магаз")) {
+    if (/қанша|бағасы/.test(normalizedMessage)) return "Бағасы осы жерде жазылған. Тағы қандай тауар керек?";
+    return "Жақсы, қай тауар керек екенін айтыңызшы.";
+  }
   if (scenario.includes("такси")) return "Жақсы, нақты мекенжайды айтыңызшы.";
-  if (scenario.includes("универс")) return "Жақсы, осы тақырып бойынша нақты не керек?";
-  if (scenario.includes("работ")) return "Жақсы, қазір қай бөлігін істеп жатырсыз?";
-  return "Жақсы, жалғастырайық.";
+  if (scenario.includes("универс")) return "Жақсы, қандай сұрағыңыз бар?";
+  if (scenario.includes("знаком") || scenario.includes("кездес") || scenario.includes("meeting")) return "Сәлем! Өзіңіз туралы қысқаша айтып беріңізші.";
+  return "Жақсы, нақтырақ айтып көріңізші.";
 }
 
 function looksLikeBrokenDialogReply(userMessage, assistantText) {
@@ -108,12 +123,16 @@ function looksLikeBrokenDialogReply(userMessage, assistantText) {
   const assistant = normalizeText(assistantText).toLowerCase();
   if (!assistant) return true;
   if (assistant.startsWith("{") || assistant.includes('"correction"')) return true;
+  if (/^жақсы,\s*жалғастырайық\.?$/.test(assistant)) return true;
+  if (/^жалғастырайық\.?$/.test(assistant)) return true;
+  if (/^жақсы\.?$/.test(assistant)) return true;
+  if (/сценарий:/.test(assistant)) return true;
   if (!user) return false;
   if (assistant === user) return true;
   if (assistant.startsWith(user + ",") || assistant.startsWith(user + ".") || assistant.startsWith(user + " ")) return true;
   const userWords = user.split(/\s+/).filter(Boolean);
-  if (userWords.length >= 3) {
-    const overlap = userWords.slice(0, Math.min(userWords.length, 5)).join(" ");
+  if (userWords.length >= 2) {
+    const overlap = userWords.slice(0, Math.min(userWords.length, 4)).join(" ");
     if (assistant.startsWith(overlap)) return true;
   }
   return false;
@@ -264,6 +283,8 @@ function buildMessages(body) {
           "Никогда не копируй correction.better в поле reply. Никогда не показывай пользователю сырой JSON в обычной реплике.",
           "Никогда не отвечай одной лишь переформулированной фразой ученика.",
           "Если ученик сказал 'Маған латте', нормальный reply официанта может быть вроде 'Жақсы, бір латте. Тағы не аласыз?'",
+          "Для сценария кафе веди себя именно как официант: приветствие, принятие заказа, короткое уточнение, завершение заказа. Не отвечай пустыми фразами вроде 'Жақсы, жалғастырайық'.",
+          "Если ученик пишет неполно или с ошибками, всё равно пойми намерение и ответь по ситуации. Например: 'Сәлеметсіз бе, кофе' -> 'Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?'",
           "Если action=message, ответь СТРОГО одним JSON-объектом без markdown.",
           "Формат JSON для action=message:",
           '{"reply":"...","correction":{"hasIssue":true,"better":"...","explanation":"..."}}',
