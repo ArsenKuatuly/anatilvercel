@@ -1,74 +1,99 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenInput = document.getElementById("token");
-    const passwordInputs = document.querySelectorAll(".js-password");
-    const submitBtn = document.getElementById("resetPasswordBtn");
-    const message = document.getElementById("message");
+document.addEventListener('DOMContentLoaded', async () => {
+  const passwordInputs = document.querySelectorAll('.js-password');
+  const submitBtn = document.getElementById('resetPasswordBtn');
+  const message = document.getElementById('message');
+  const statusHint = document.getElementById('resetStatusHint');
 
-    if (!tokenInput || !submitBtn || !message || passwordInputs.length < 2) return;
+  if (!submitBtn || !message || passwordInputs.length < 2 || !window.supabase) return;
 
-    tokenInput.value = params.get("token") || "";
+  function setMessage(text, ok) {
+    message.textContent = text || '';
+    message.className = 'auth__message';
+    if (!text) return;
+    message.classList.add(ok ? 'auth__message--success' : 'auth__message--error');
+  }
 
-    function setMessage(text, ok) {
-        message.textContent = text || "";
-        message.className = "auth__message";
-        if (!text) return;
-        message.classList.add(ok ? "auth__message--success" : "auth__message--error");
+  function clearErrors() {
+    passwordInputs.forEach((input) => input.classList.remove('auth__input--error'));
+  }
+
+  let supabaseClient = null;
+
+  try {
+    const cfgRes = await fetch('/api/auth/config');
+    const cfg = await cfgRes.json().catch(() => null);
+    if (!cfgRes.ok || !cfg?.success || !cfg.url || !cfg.anonKey) {
+      setMessage('Не удалось инициализировать восстановление пароля', false);
+      submitBtn.disabled = true;
+      return;
     }
 
-    function clearErrors() {
-        tokenInput.classList.remove("auth__input--error");
-        passwordInputs.forEach((input) => input.classList.remove("auth__input--error"));
+    supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    if (hashParams.get('error_description')) {
+      setMessage(decodeURIComponent(hashParams.get('error_description')), false);
+      submitBtn.disabled = true;
+      return;
     }
 
-    submitBtn.addEventListener("click", async () => {
-        clearErrors();
-        setMessage("", false);
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data?.session) {
+      if (statusHint) {
+        statusHint.textContent = 'Откройте эту страницу только по ссылке из письма Supabase.';
+      }
+      setMessage('Сессия восстановления не найдена. Откройте ссылку из письма ещё раз.', false);
+      submitBtn.disabled = true;
+      return;
+    }
 
-        const token = tokenInput.value.trim();
-        const password = passwordInputs[0].value;
-        const repeat = passwordInputs[1].value;
+    if (statusHint) {
+      statusHint.textContent = 'Ссылка подтверждена. Теперь можно задать новый пароль.';
+    }
+  } catch (e) {
+    console.error('reset-password init error:', e);
+    setMessage('Ошибка инициализации страницы', false);
+    submitBtn.disabled = true;
+    return;
+  }
 
-        if (!token) {
-            tokenInput.classList.add("auth__input--error");
-            setMessage("Токен не найден. Откройте ссылку из письма ещё раз", false);
-            return;
-        }
+  submitBtn.addEventListener('click', async () => {
+    clearErrors();
+    setMessage('', false);
 
-        if (password.length < 6) {
-            passwordInputs[0].classList.add("auth__input--error");
-            setMessage("Пароль должен содержать минимум 6 символов", false);
-            return;
-        }
+    const password = passwordInputs[0].value;
+    const repeat = passwordInputs[1].value;
 
-        if (password !== repeat) {
-            passwordInputs.forEach((input) => input.classList.add("auth__input--error"));
-            setMessage("Пароли не совпадают", false);
-            return;
-        }
+    if (password.length < 6) {
+      passwordInputs[0].classList.add('auth__input--error');
+      setMessage('Пароль должен содержать минимум 6 символов', false);
+      return;
+    }
 
-        submitBtn.disabled = true;
-        try {
-            const res = await fetch("/api/auth/reset-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token, password }),
-            });
-            const result = await res.json().catch(() => null);
-            if (!result) {
-                setMessage("Сервер вернул некорректный ответ", false);
-                return;
-            }
-            setMessage(result.message || (result.success ? "Пароль обновлён" : "Ошибка"), !!result.success);
-            if (result.success) {
-                setTimeout(() => {
-                    window.location.href = "/auth.html";
-                }, 1200);
-            }
-        } catch {
-            setMessage("Ошибка соединения с сервером", false);
-        } finally {
-            submitBtn.disabled = false;
-        }
-    });
+    if (password !== repeat) {
+      passwordInputs.forEach((input) => input.classList.add('auth__input--error'));
+      setMessage('Пароли не совпадают', false);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    try {
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) {
+        setMessage(error.message || 'Не удалось обновить пароль', false);
+        return;
+      }
+
+      setMessage('Пароль успешно обновлён', true);
+      await supabaseClient.auth.signOut().catch(() => {});
+      setTimeout(() => {
+        window.location.href = '/auth.html';
+      }, 1200);
+    } catch (e) {
+      console.error('reset-password submit error:', e);
+      setMessage('Ошибка соединения с сервером', false);
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 });
