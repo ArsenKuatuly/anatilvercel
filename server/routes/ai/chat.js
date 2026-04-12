@@ -13,12 +13,20 @@ async function getTodayUsed(userId) {
   return Number(q.rows[0]?.used || 0);
 }
 
+function normalizeText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/[“”]/g, '"')
+    .replace(/[’]/g, "'")
+    .trim();
+}
+
 function detectReplyLanguage(text, preferredLanguage) {
   const preferred = String(preferredLanguage || "").toLowerCase();
   if (preferred === "kz" || preferred === "kk") return "kz";
   if (preferred === "ru") return "ru";
 
-  const value = String(text || "").trim();
+  const value = normalizeText(text);
   const hasKazakhLetters = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/.test(value);
   if (hasKazakhLetters) return "kz";
 
@@ -53,8 +61,85 @@ function makeBaseSystem({ replyLanguage = "ru", scope = "protected" } = {}) {
   ].join("\n");
 }
 
+function extractJsonObject(text) {
+  const raw = String(text || "").trim();
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch {}
+  const cleaned = raw.replace(/^```json\s*/i, "").replace(/^```/, "").replace(/```$/, "").trim();
+  try { return JSON.parse(cleaned); } catch {}
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try { return JSON.parse(match[0]); } catch { return null; }
+}
+
+function extractTopicFragment(message) {
+  const text = normalizeText(message).toLowerCase();
+  if (!text) return "";
+  const patterns = [
+    /маған\s+(.+?)\s+(беріңізші|беріңіз|қажет|керек)$/i,
+    /маған\s+(.+?)$/i,
+    /бір\s+(.+?)\s+(беріңізші|беріңіз)$/i,
+    /(.+?)\s+(керек|қажет)$/i,
+    /(.+?)\s+(алайын|аламын)$/i
+  ];
+  for (const rx of patterns) {
+    const m = text.match(rx);
+    if (m && m[1]) return normalizeText(m[1]);
+  }
+  return "";
+}
+
+function buildScenarioFallbackReply(body, message) {
+  const scenario = normalizeText(body?.scenario || "").toLowerCase();
+  const topic = extractTopicFragment(message);
+  if (scenario.includes("каф")) {
+    if (topic) return `Жақсы, ${topic}. Тағы не аласыз?`;
+    return "Жақсы, тапсырысыңызды қабылдадым. Тағы не аласыз?";
+  }
+  if (scenario.includes("магаз")) return "Жақсы, қарап көрейік. Тағы не керек?";
+  if (scenario.includes("такси")) return "Жақсы, нақты мекенжайды айтыңызшы.";
+  if (scenario.includes("универс")) return "Жақсы, осы тақырып бойынша нақты не керек?";
+  if (scenario.includes("работ")) return "Жақсы, қазір қай бөлігін істеп жатырсыз?";
+  return "Жақсы, жалғастырайық.";
+}
+
+function looksLikeBrokenDialogReply(userMessage, assistantText) {
+  const user = normalizeText(userMessage).toLowerCase();
+  const assistant = normalizeText(assistantText).toLowerCase();
+  if (!assistant) return true;
+  if (assistant.startsWith("{") || assistant.includes('"correction"')) return true;
+  if (!user) return false;
+  if (assistant === user) return true;
+  if (assistant.startsWith(user + ",") || assistant.startsWith(user + ".") || assistant.startsWith(user + " ")) return true;
+  const userWords = user.split(/\s+/).filter(Boolean);
+  if (userWords.length >= 3) {
+    const overlap = userWords.slice(0, Math.min(userWords.length, 5)).join(" ");
+    if (assistant.startsWith(overlap)) return true;
+  }
+  return false;
+}
+
+function sanitizeDialogPayload(raw, body, message) {
+  const parsed = extractJsonObject(raw) || {};
+  let reply = normalizeText(parsed?.reply || "");
+  const correction = {
+    hasIssue: !!parsed?.correction?.hasIssue,
+    better: normalizeText(parsed?.correction?.better || ""),
+    explanation: normalizeText(parsed?.correction?.explanation || "")
+  };
+
+  if (looksLikeBrokenDialogReply(message, reply)) {
+    reply = buildScenarioFallbackReply(body, message);
+  }
+
+  return {
+    reply: reply || buildScenarioFallbackReply(body, message),
+    correction
+  };
+}
+
 function buildPublicIndexMessages(body) {
-  const message = String(body?.message || "").trim().slice(0, PUBLIC_MAX_CHARS);
+  const message = normalizeText(body?.message).slice(0, PUBLIC_MAX_CHARS);
   const replyLanguage = detectReplyLanguage(message, body?.preferredLanguage);
 
   return [
@@ -81,7 +166,7 @@ function buildPublicIndexMessages(body) {
 }
 
 function buildProtectedGeneralMessages(body) {
-  const message = String(body?.message || "").trim();
+  const message = normalizeText(body?.message);
   const replyLanguage = detectReplyLanguage(message, body?.preferredLanguage);
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
 
@@ -114,7 +199,7 @@ function buildProtectedGeneralMessages(body) {
 
 function buildMessages(body) {
   const mode = String(body?.mode || "general");
-  const message = String(body?.message || "").trim();
+  const message = normalizeText(body?.message);
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
   const scope = String(body?.scope || "").toLowerCase();
 
@@ -174,14 +259,15 @@ function buildMessages(body) {
           "Ты должен отвечать как реальный собеседник в этой ситуации.",
           "Не пиши 'Сценарий:', 'Исправление:' и другие служебные слова в обычной реплике.",
           "Главная реплика должна быть естественной, короткой и живой, как в настоящем разговоре.",
-          "Самое важное: reply - это всегда следующий ход собеседника по сценарию, а не повтор и не исправленный вариант фразы ученика.",
-          "Даже если ученик ошибся, ты сначала понимаешь его намерение, а в reply продолжаешь диалог дальше по ситуации.",
-          "Никогда не копируй correction.better в поле reply.",
+          "Самое важное: reply - это ВСЕГДА только следующий ход собеседника по сценарию, а не повтор и не исправленный вариант фразы ученика.",
+          "Даже если ученик ошибся, ты сначала мысленно понимаешь его намерение, а в reply продолжаешь диалог дальше по ситуации. Не отвечай JSON-строкой внутри reply.",
+          "Никогда не копируй correction.better в поле reply. Никогда не показывай пользователю сырой JSON в обычной реплике.",
           "Никогда не отвечай одной лишь переформулированной фразой ученика.",
+          "Если ученик сказал 'Маған латте', нормальный reply официанта может быть вроде 'Жақсы, бір латте. Тағы не аласыз?'",
           "Если action=message, ответь СТРОГО одним JSON-объектом без markdown.",
           "Формат JSON для action=message:",
           '{"reply":"...","correction":{"hasIssue":true,"better":"...","explanation":"..."}}',
-          "reply: только следующая естественная реплика собеседника на казахском, 1-2 короткие реплики.",
+          "reply: только следующая естественная реплика собеседника на казахском, 1-2 короткие реплики. Не пиши текст от лица ученика.",
           "correction.hasIssue: true если у ученика есть заметная ошибка, иначе false.",
           "correction.better: более естественный или исправленный вариант фразы ученика на казахском. Если ошибок нет, верни пустую строку.",
           "correction.explanation: очень короткое объяснение на русском. Если ошибок нет, верни пустую строку.",
@@ -222,6 +308,7 @@ function buildMessages(body) {
     const lesson = body?.lessonTitle || "не указан";
     const course = body?.lessonCourseTitle || "не указан";
     const progress = Number(body?.lessonProgress || 0);
+    const action = body?.action || "default";
     const lessonContent = body?.lessonContent ? String(body.lessonContent).slice(0, 5000) : "";
 
     return [
@@ -239,7 +326,7 @@ function buildMessages(body) {
           "1. Короткое объяснение темы простыми словами.",
           "2. 2 примера на казахском с коротким переводом.",
           "3. Частая ошибка или подсказка.",
-          "4. Мини практика: 1 маленькое задание.",
+          "4. Мини-практика: 1 маленькое задание.",
           "Если вопрос ученика слишком общий, всё равно привяжи ответ к текущему уроку.",
           "Если action=exercise, сделай упор на задание.",
           "Если action=check, задай маленькую проверку понимания.",
@@ -332,7 +419,9 @@ module.exports = async (req, res) => {
           : undefined,
     });
 
-    const reply = completion.choices?.[0]?.message?.content || "";
+    const rawReply = completion.choices?.[0]?.message?.content || "";
+    const dialogPayload = req.body?.mode === "dialog" ? sanitizeDialogPayload(rawReply, req.body, message) : null;
+    const reply = dialogPayload ? dialogPayload.reply : rawReply;
 
     let session = null;
     if (!isPublicIndex && user) {
@@ -367,6 +456,7 @@ module.exports = async (req, res) => {
     const used = user ? await getTodayUsed(user.id) : 0;
     return res.json({
       reply,
+      correction: dialogPayload ? dialogPayload.correction : undefined,
       usage: user
         ? { used, limit: DAILY_LIMIT, remaining: Math.max(DAILY_LIMIT - used, 0) }
         : null,

@@ -133,8 +133,8 @@ function buildNaturalScenarioReply(message, body) {
   const topic = extractTopicFragment(message);
   switch (scenario.key) {
     case "cafe":
-      if (topic) return `${topic[0] ? topic[0].toUpperCase() + topic.slice(1) : topic}. Жақсы, тағы не аласыз?`;
-      return "Жақсы, тапсырысыңызды қабылдадым. Тағы не аласыз?";
+      if (topic) return `Әрине, ${topic}. Тағы не аласыз?`;
+      return "Әрине. Тағы не аласыз?";
     case "shop":
       if (topic) return `${topic[0] ? topic[0].toUpperCase() + topic.slice(1) : topic} бар. Тағы бір нәрсе керек пе?`;
       return "Жақсы, қарап көрейік. Тағы не керек?";
@@ -159,6 +159,18 @@ function looksLikeParrotReply(userMessage, assistantText) {
   if (userWords.length >= 3) {
     const overlapStart = userWords.slice(0, Math.min(userWords.length, 5)).join(' ');
     if (assistant.startsWith(overlapStart)) return true;
+  }
+  return false;
+}
+
+function looksLikeRoleBreak(body, assistantText) {
+  const scenario = getScenario(body);
+  const text = normalizeText(assistantText).toLowerCase();
+  if (!text) return true;
+  if (text.startsWith('{') || text.includes('"assistantText"')) return true;
+  if (scenario.key === 'cafe') {
+    if (/бағасы .*шот беріңізші/.test(text)) return true;
+    if (/қандай сусын қалайсыз/.test(text) && /кофе/.test(text)) return true;
   }
   return false;
 }
@@ -194,8 +206,8 @@ function buildVoiceMessages(body) {
         "Если речь ученика неясная, странная или похожа на ошибку распознавания, не пытайся глубоко угадывать смысл.",
         "В таком случае вежливо попроси повторить по-казахски короткой фразой.",
         "Отвечай именно как собеседник по роли, а не как проверка предложения.",
-        "Не копируй целиком фразу ученика в assistantText. Не начинай ответ с дословного повторения его реплики.",
-        "Если ученик что-то просит или заказывает, сначала естественно подтверди или отреагируй, потом задай один следующий уместный вопрос.",
+        "Не копируй целиком фразу ученика в assistantText. Не начинай ответ с дословного повторения его реплики. Не говори за ученика и не подсказывай его реплику как будто это твой ответ.",
+        "Если ученик что-то просит или заказывает, сначала естественно подтверди или отреагируй, потом задай один следующий уместный вопрос. Ты всегда остаешься в роли официанта, продавца, водителя или другого собеседника из сценария.",
         "Исправление фразы ученика можно писать только в correction.better, но не в assistantText.",
         "Пример для кафе: ученик=«Маған бір латте беріңізші» -> assistantText=«Әрине, бір латте. Тағы не аласыз?».",
         "Плохой пример для кафе: assistantText=«Маған бір латте беріңізші, тағы не аласыз?» — так нельзя.",
@@ -324,7 +336,7 @@ function sanitizeReply(raw, message, body) {
       isUnclearInput: !!parsed?.meta?.isUnclearInput
     };
 
-    if (normalizeText(body?.action || 'message') === 'message' && looksLikeParrotReply(message, assistantText)) {
+    if (normalizeText(body?.action || 'message') === 'message' && (looksLikeParrotReply(message, assistantText) || looksLikeRoleBreak(body, assistantText))) {
       assistantText = buildNaturalScenarioReply(message, body);
       ttsText = assistantText;
     }

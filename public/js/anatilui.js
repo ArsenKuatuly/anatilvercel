@@ -365,15 +365,33 @@
   }
 
   function parseResponsePayload(payload) {
+    function parseNestedReply(value) {
+      if (typeof value !== 'string') return null;
+      const text = value.trim();
+      if (!text) return '';
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed.reply === 'string') return parsed.reply;
+      } catch (error) {}
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[0]);
+          if (parsed && typeof parsed.reply === 'string') return parsed.reply;
+        } catch (error) {}
+      }
+      return text;
+    }
+
     if (!payload) return null;
-    if (typeof payload === 'string') return payload;
-    if (typeof payload.reply === 'string') return payload.reply;
+    if (typeof payload === 'string') return parseNestedReply(payload);
+    if (typeof payload.reply === 'string') return parseNestedReply(payload.reply);
     if (typeof payload.message === 'string') return payload.message;
     if (typeof payload.text === 'string') return payload.text;
     if (typeof payload.response === 'string') return payload.response;
     if (typeof payload.result === 'string') return payload.result;
     if (payload.data) return parseResponsePayload(payload.data);
-    if (Array.isArray(payload.choices) && payload.choices[0] && payload.choices[0].message) return payload.choices[0].message.content;
+    if (Array.isArray(payload.choices) && payload.choices[0] && payload.choices[0].message) return parseNestedReply(payload.choices[0].message.content);
     return null;
   }
 
