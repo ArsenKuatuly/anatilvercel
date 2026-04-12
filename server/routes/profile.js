@@ -48,13 +48,15 @@ module.exports = async (req, res) => {
 
         if (req.method === "POST") {
             const body = req.body || {};
+
             const first_name = (body.first_name || "").trim();
             const last_name = (body.last_name || "").trim();
             const phone = (body.phone || "").trim();
-            const email = (body.email || "").trim();
             const location = (body.location || "").trim();
 
-            // update, если профиль есть; иначе insert
+            const hasEmailField = Object.prototype.hasOwnProperty.call(body, "email");
+            const email = hasEmailField ? String(body.email || "").trim().toLowerCase() : null;
+
             await db.query(
                 `
                     WITH updated AS (
@@ -62,14 +64,29 @@ module.exports = async (req, res) => {
                     SET first_name = $1,
                         last_name  = $2,
                         phone      = $3,
-                        email      = $4,
+                        email      = COALESCE($4, email),
                         location   = $5,
                         updated_at = NOW()
                     WHERE user_id = $6
                         RETURNING id
-        )
-                    INSERT INTO user_profiles (user_id, first_name, last_name, phone, email, location, updated_at)
-                    SELECT $6, $1, $2, $3, $4, $5, NOW()
+                    )
+                    INSERT INTO user_profiles (
+                        user_id,
+                        first_name,
+                        last_name,
+                        phone,
+                        email,
+                        location,
+                        updated_at
+                    )
+                    SELECT
+                        $6,
+                        $1,
+                        $2,
+                        $3,
+                        COALESCE($4, ''),
+                        $5,
+                        NOW()
                         WHERE NOT EXISTS (SELECT 1 FROM updated)
                 `,
                 [first_name, last_name, phone, email, location, user.id]
