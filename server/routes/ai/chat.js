@@ -96,7 +96,7 @@ function buildScenarioFallbackReply(body, message) {
 
   if (scenario.includes("каф")) {
     if (/осымен болды|болды|жетеді/.test(normalizedMessage)) {
-      return "Жақсы, тапсырысыңыз қабылданды. Рахмет!";
+      return "Жақсы, түсіндім. Тағы ештеңе керек емес пе?";
     }
     if (/бағасы|қанша/.test(normalizedMessage)) {
       return "Бағасы үш жүз теңге. Тағы бірдеңе аласыз ба?";
@@ -118,30 +118,15 @@ function buildScenarioFallbackReply(body, message) {
   return "Жақсы, нақтырақ айтып көріңізші.";
 }
 
-function getLastAssistantFromHistory(history) {
-  if (!Array.isArray(history)) return "";
-  for (let i = history.length - 1; i >= 0; i -= 1) {
-    const item = history[i];
-    if (item && item.role === "assistant" && item.text) return normalizeText(item.text).toLowerCase();
-  }
-  return "";
-}
-
-function looksLikeBrokenDialogReply(userMessage, assistantText, history) {
+function looksLikeBrokenDialogReply(userMessage, assistantText) {
   const user = normalizeText(userMessage).toLowerCase();
   const assistant = normalizeText(assistantText).toLowerCase();
-  const lastAssistant = getLastAssistantFromHistory(history);
   if (!assistant) return true;
   if (assistant.startsWith("{") || assistant.includes('"correction"')) return true;
   if (/^жақсы,\s*жалғастырайық\.?$/.test(assistant)) return true;
   if (/^жалғастырайық\.?$/.test(assistant)) return true;
   if (/^жақсы\.?$/.test(assistant)) return true;
-  if (/^жақсы,\s*түсіндім\.?$/.test(assistant)) return true;
-  if (/^тағы\s+не\s+қалайсыз\??$/.test(assistant)) return true;
-  if (/^сәлеметсіз бе!?\s*тағы не қалайсыз\??$/.test(assistant)) return true;
   if (/сценарий:/.test(assistant)) return true;
-  if (lastAssistant && assistant === lastAssistant) return true;
-  if (lastAssistant && assistant.replace(/[!?.,]/g, '') === lastAssistant.replace(/[!?.,]/g, '')) return true;
   if (!user) return false;
   if (assistant === user) return true;
   if (assistant.startsWith(user + ",") || assistant.startsWith(user + ".") || assistant.startsWith(user + " ")) return true;
@@ -162,7 +147,7 @@ function sanitizeDialogPayload(raw, body, message) {
     explanation: normalizeText(parsed?.correction?.explanation || "")
   };
 
-  if (looksLikeBrokenDialogReply(message, reply, body?.history)) {
+  if (looksLikeBrokenDialogReply(message, reply)) {
     reply = buildScenarioFallbackReply(body, message);
   }
 
@@ -475,11 +460,20 @@ module.exports = async (req, res) => {
         const sid = Number(sessionId);
         if (Number.isFinite(sid) && sid > 0) {
           const s = await db.query(
-            `select id, title, mode from ai_sessions where id = $1 and user_id = $2 limit 1`,
+            `select id, mode, scenario, lesson_id from ai_sessions where id = $1 and user_id = $2 limit 1`,
             [sid, user.id]
           );
           if (s.rows[0]) {
-            session = s.rows[0];
+            session = {
+              ...s.rows[0],
+              title: s.rows[0].scenario
+                ? `Диалог: ${s.rows[0].scenario}`
+                : s.rows[0].mode === 'sentence'
+                  ? 'Проверка предложения'
+                  : s.rows[0].mode === 'tutor'
+                    ? 'Репетитор по уроку'
+                    : 'AI сессия'
+            };
             await db.query(
               `insert into ai_messages (session_id, role, content) values ($1,'user',$2), ($1,'assistant',$3)`,
               [sid, message, reply]
