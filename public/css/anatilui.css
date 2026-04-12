@@ -1311,6 +1311,25 @@ button {
   opacity: .8;
 }
 
+.ai-chat-message__correction {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ai-chat-message--ai .ai-chat-message__correction {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.ai-chat-message__correction-note {
+  display: block;
+  margin-top: 6px;
+  opacity: .9;
+}
+
 .ai-phrase-list,
 .ai-topic-list,
 .ai-category-list {
