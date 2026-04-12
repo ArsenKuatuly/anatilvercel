@@ -96,7 +96,7 @@ function buildScenarioFallbackReply(body, message) {
 
   if (scenario.includes("каф")) {
     if (/осымен болды|болды|жетеді/.test(normalizedMessage)) {
-      return "Жақсы, түсіндім. Тағы ештеңе керек емес пе?";
+      return "Түсіндім. Тағы ештеңе керек емес пе?";
     }
     if (/бағасы|қанша/.test(normalizedMessage)) {
       return "Бағасы үш жүз теңге. Тағы бірдеңе аласыз ба?";
@@ -104,18 +104,18 @@ function buildScenarioFallbackReply(body, message) {
     if (/сәлем/.test(normalizedMessage) && /кофе|латте|шай|капучино/.test(normalizedMessage)) {
       return "Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?";
     }
-    if (topic) return `Жақсы, бір ${topic}. Тағы не аласыз?`;
-    return "Жақсы, не қалайтыныңызды айтыңызшы.";
+    if (topic) return `Бір ${topic}. Тағы не аласыз?`;
+    return "Не қалайтыныңызды айтыңызшы.";
   }
 
   if (scenario.includes("магаз")) {
     if (/қанша|бағасы/.test(normalizedMessage)) return "Бағасы осы жерде жазылған. Тағы қандай тауар керек?";
-    return "Жақсы, қай тауар керек екенін айтыңызшы.";
+    return "Қай тауар керек екенін айтыңызшы.";
   }
-  if (scenario.includes("такси")) return "Жақсы, нақты мекенжайды айтыңызшы.";
-  if (scenario.includes("универс")) return "Жақсы, қандай сұрағыңыз бар?";
+  if (scenario.includes("такси")) return "Нақты мекенжайды айтыңызшы.";
+  if (scenario.includes("универс")) return "Қандай сұрағыңыз бар?";
   if (scenario.includes("знаком") || scenario.includes("кездес") || scenario.includes("meeting")) return "Сәлем! Өзіңіз туралы қысқаша айтып беріңізші.";
-  return "Жақсы, нақтырақ айтып көріңізші.";
+  return "Нақтырақ айтып көріңізші.";
 }
 
 function looksLikeBrokenDialogReply(userMessage, assistantText) {
@@ -138,9 +138,21 @@ function looksLikeBrokenDialogReply(userMessage, assistantText) {
   return false;
 }
 
+function cleanDialogReplyText(text, hasHistory = false) {
+  let value = normalizeText(text);
+  if (!value) return "";
+  value = value.replace(/^Жақсы[,!.]?\s+/i, "");
+  if (hasHistory) {
+    value = value.replace(/^Сәлеметсіз бе[,!.]?\s+/i, "");
+  }
+  value = normalizeText(value);
+  return value;
+}
+
 function sanitizeDialogPayload(raw, body, message) {
   const parsed = extractJsonObject(raw) || {};
-  let reply = normalizeText(parsed?.reply || "");
+  const history = Array.isArray(body?.history) ? body.history : [];
+  let reply = cleanDialogReplyText(parsed?.reply || "", history.length > 1);
   const correction = {
     hasIssue: !!parsed?.correction?.hasIssue,
     better: normalizeText(parsed?.correction?.better || ""),
@@ -148,11 +160,11 @@ function sanitizeDialogPayload(raw, body, message) {
   };
 
   if (looksLikeBrokenDialogReply(message, reply)) {
-    reply = buildScenarioFallbackReply(body, message);
+    reply = cleanDialogReplyText(buildScenarioFallbackReply(body, message), history.length > 1);
   }
 
   return {
-    reply: reply || buildScenarioFallbackReply(body, message),
+    reply: reply || cleanDialogReplyText(buildScenarioFallbackReply(body, message), history.length > 1),
     correction
   };
 }

@@ -627,6 +627,59 @@
     return null;
   }
 
+  function cleanDialogReplyText(text) {
+    var value = String(text || '').trim();
+    if (!value) return '';
+    value = value.replace(/^Жақсы[,!\.]?\s+/i, '');
+    if (state.dialog.messages.length > 1) {
+      value = value.replace(/^Сәлеметсіз бе[,!\.]?\s+/i, '');
+    }
+    value = value.replace(/^\s+|\s+$/g, '');
+    if (!value) return '';
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
+  function inferDialogCorrection(text, scenarioName) {
+    var raw = String(text || '').trim();
+    if (!raw) return null;
+    var lower = raw.toLowerCase();
+    var scenario = String(scenarioName || '').toLowerCase();
+
+    if (scenario.indexOf('каф') !== -1) {
+      if (/^маған\s+бір\s+(.+)$/.test(lower) && !/(беріңізші|беріңіз)/.test(lower)) {
+        var item = raw.replace(/^маған\s+бір\s+/i, '').trim();
+        return {
+          better: 'Маған бір ' + item + ' беріңізші.',
+          explanation: 'Вежливее добавить «беріңізші».'
+        };
+      }
+      if (/^сәлеметсіз бе[,\s]+маған\s+бір\s+(.+)$/.test(lower) && !/(беріңізші|беріңіз)/.test(lower)) {
+        var item2 = raw.replace(/^сәлеметсіз бе[,\s]+маған\s+бір\s+/i, '').trim();
+        return {
+          better: 'Маған бір ' + item2 + ' беріңізші.',
+          explanation: 'Можно сразу назвать заказ в вежливой форме.'
+        };
+      }
+      if (/^кофе$|^латте$|^шай$|^капучино$/i.test(raw)) {
+        return {
+          better: 'Маған бір ' + raw.toLowerCase() + ' беріңізші.',
+          explanation: 'Лучше оформить заказ полной фразой.'
+        };
+      }
+    }
+    return null;
+  }
+
+  function inferDialogHint(lastUserText, scenarioName) {
+    var scenario = String(scenarioName || '').toLowerCase();
+    if (scenario.indexOf('каф') !== -1) {
+      var correction = inferDialogCorrection(lastUserText, scenarioName);
+      if (correction && correction.better) return correction.better;
+      return 'Маған бір кофе беріңізші.';
+    }
+    return 'Қысқа әрі сыпайы жауап беріңіз.';
+  }
+
   function buildDialogHelpers(item) {
     if (!item || item.role !== 'user') return '';
     var blocks = [];
@@ -713,29 +766,35 @@
         supportPhrases: scenario.phrases,
         meta: { scenario: scenario.name }
       });
-      const reply = parseResponsePayload(data) || 'Жақсы, жалғастырайық.';
+      const rawReply = parseResponsePayload(data) || '';
+      const reply = cleanDialogReplyText(rawReply);
       const correction = data && data.correction ? data.correction : null;
       const lastUserMessage = getLastUserDialogMessage();
+      const inferredCorrection = lastUserMessage ? inferDialogCorrection(lastUserMessage.text, scenario.name) : null;
+      const effectiveBetter = correction && correction.better ? correction.better : (inferredCorrection ? inferredCorrection.better : '');
+      const effectiveExplanation = correction && correction.explanation ? correction.explanation : (inferredCorrection ? inferredCorrection.explanation : '');
 
       if (kind === 'hint') {
-        if (lastUserMessage) lastUserMessage.hintText = reply;
+        if (lastUserMessage) lastUserMessage.hintText = reply || inferDialogHint(lastUserMessage.text, scenario.name);
         state.dialog.hints += 1;
       } else if (kind === 'explain') {
         if (lastUserMessage) {
-          lastUserMessage.betterText = correction && correction.better ? correction.better : '';
-          lastUserMessage.betterExplanation = reply || (correction && correction.explanation ? correction.explanation : '');
-          if (!lastUserMessage.correctionText && correction && correction.hasIssue && correction.better) {
-            lastUserMessage.correctionText = correction.better;
-            lastUserMessage.correctionExplanation = correction.explanation || '';
+          lastUserMessage.betterText = effectiveBetter || inferDialogHint(lastUserMessage.text, scenario.name);
+          lastUserMessage.betterExplanation = reply || effectiveExplanation || 'Можно ответить короче и естественнее.';
+          if (!lastUserMessage.correctionText && effectiveBetter) {
+            lastUserMessage.correctionText = effectiveBetter;
+            lastUserMessage.correctionExplanation = effectiveExplanation || '';
           }
         }
       } else {
-        if (lastUserMessage && correction && correction.hasIssue && correction.better) {
-          lastUserMessage.correctionText = correction.better;
-          lastUserMessage.correctionExplanation = correction.explanation || '';
-          state.dialog.errors += 1;
+        if (lastUserMessage && effectiveBetter) {
+          if (!lastUserMessage.correctionText || lastUserMessage.correctionText !== effectiveBetter) {
+            lastUserMessage.correctionText = effectiveBetter;
+            lastUserMessage.correctionExplanation = effectiveExplanation || '';
+            state.dialog.errors += 1;
+          }
         }
-        state.dialog.messages.push({ role: 'assistant', text: reply, meta: kind === 'repeat' ? 'Повтори вопрос' : '' });
+        state.dialog.messages.push({ role: 'assistant', text: reply || 'Түсіндім. Тағы не қалайсыз?', meta: kind === 'repeat' ? 'Повтори вопрос' : '' });
       }
 
       if (kind === 'message') {
@@ -755,7 +814,21 @@
       });
     } catch (error) {
       console.error(error);
-      state.dialog.messages.push({ role: 'assistant', text: 'Жақсы, тағы бір рет айтып көріңізші.' });
+      const lastUserMessage = getLastUserDialogMessage();
+      if (kind === 'hint' && lastUserMessage) {
+        lastUserMessage.hintText = inferDialogHint(lastUserMessage.text, scenario.name);
+        state.dialog.hints += 1;
+      } else if (kind === 'explain' && lastUserMessage) {
+        const inferredCorrection = inferDialogCorrection(lastUserMessage.text, scenario.name);
+        lastUserMessage.betterText = inferredCorrection && inferredCorrection.better ? inferredCorrection.better : inferDialogHint(lastUserMessage.text, scenario.name);
+        lastUserMessage.betterExplanation = inferredCorrection && inferredCorrection.explanation ? inferredCorrection.explanation : 'Можно ответить чуть естественнее.';
+        if (inferredCorrection && inferredCorrection.better) {
+          lastUserMessage.correctionText = inferredCorrection.better;
+          lastUserMessage.correctionExplanation = inferredCorrection.explanation || '';
+        }
+      } else {
+        state.dialog.messages.push({ role: 'assistant', text: 'Тағы бір рет айтып көріңізші.' });
+      }
       renderDialogMessages();
     } finally {
       setButtonLoading(els.sendDialogBtn, false);
