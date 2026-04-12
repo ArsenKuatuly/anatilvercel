@@ -3,6 +3,7 @@ const db = require("../../../lib/db");
 const OpenAI = require("openai");
 
 const DAILY_LIMIT = 50;
+const PUBLIC_MAX_CHARS = 1500;
 
 async function getTodayUsed(userId) {
   const q = await db.query(
@@ -12,19 +13,117 @@ async function getTodayUsed(userId) {
   return Number(q.rows[0]?.used || 0);
 }
 
+function detectReplyLanguage(text, preferredLanguage) {
+  const preferred = String(preferredLanguage || "").toLowerCase();
+  if (preferred === "kz" || preferred === "kk") return "kz";
+  if (preferred === "ru") return "ru";
+
+  const value = String(text || "").trim();
+  const hasKazakhLetters = /[әіңғүұқөһӘІҢҒҮҰҚӨҺ]/.test(value);
+  if (hasKazakhLetters) return "kz";
+
+  const kazakhWords = [
+    "сәлем", "рахмет", "қалай", "қазақ", "тілі", "үйрен", "үйрену", "сөйлеу",
+    "бола", "керек", "маған", "сіз", "біз", "мен", "қайда", "неге", "қашан"
+  ];
+  const normalized = value.toLowerCase();
+  if (kazakhWords.some((word) => normalized.includes(word))) return "kz";
+
+  return "ru";
+}
+
+function makeBaseSystem({ replyLanguage = "ru", scope = "protected" } = {}) {
+  const isKazakh = replyLanguage === "kz";
+  const languageRule = isKazakh
+    ? "Пользователь пишет на казахском. Отвечай на казахском языке. Если нужно объяснить термин, можешь коротко уточнить его простыми словами."
+    : "По умолчанию отвечай на русском языке. Если в ответе нужен пример на казахском, сначала дай краткое объяснение на русском, потом пример.";
+
+  const scopeRule = scope === "public_index"
+    ? "Ты работаешь в публичном чате главной страницы. Здесь нельзя уходить в полноценное обучение, глубокую проверку текстов и длинные упражнения."
+    : "Ты работаешь во внутреннем чате после регистрации. Здесь можно помогать по обучению, грамматике, лексике, переводу и навигации по платформе.";
+
+  return [
+    "Ты - AI помощник платформы AnaTil для изучения казахского языка.",
+    scopeRule,
+    languageRule,
+    "Не используй удлиненный дефис.",
+    "Не используй смайлики.",
+    "Пиши естественно, дружелюбно и понятно.",
+    "Не выдумывай функции платформы и не обещай то, чего точно нет.",
+  ].join("\n");
+}
+
+function buildPublicIndexMessages(body) {
+  const message = String(body?.message || "").trim().slice(0, PUBLIC_MAX_CHARS);
+  const replyLanguage = detectReplyLanguage(message, body?.preferredLanguage);
+
+  return [
+    {
+      role: "system",
+      content: [
+        makeBaseSystem({ replyLanguage, scope: "public_index" }),
+        "Роль: помощник на главной странице AnaTil.",
+        "Объясняй, что платформа помогает русскоязычным пользователям изучать казахский язык через уроки, упражнения, тесты и AI практику.",
+        "Объясняй, чему пользователь сможет научиться: грамматика, лексика, полезные фразы, понимание речи и более уверенное общение.",
+        "Помогай понять, с чего начать: зарегистрироваться, войти, пройти тест на уровень или начать обучение.",
+        "Если пользователь спрашивает, что есть на сайте, рассказывай про курсы, уроки, AI практику, профиль и прогресс, но только как про доступные разделы платформы без лишних деталей.",
+        "Если вопрос требует полноценной проверки фраз, глубокого разбора грамматики, длительной практики или диалога, мягко скажи, что после регистрации бот сможет помочь подробнее.",
+        "Если пользователь задает общий вопрос по знаниям о казахском языке, можешь кратко ответить, но не превращай ответ в полноценный урок на много абзацев.",
+        "Обычно отвечай в 2-5 предложениях.",
+        "Если человек спрашивает, куда нажать или что делать дальше, давай конкретный следующий шаг.",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: message,
+    },
+  ];
+}
+
+function buildProtectedGeneralMessages(body) {
+  const message = String(body?.message || "").trim();
+  const replyLanguage = detectReplyLanguage(message, body?.preferredLanguage);
+  const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
+
+  const messages = [
+    {
+      role: "system",
+      content: [
+        makeBaseSystem({ replyLanguage, scope: "protected" }),
+        "Роль: основной AI помощник пользователя внутри платформы AnaTil.",
+        "Помогай по грамматике, лексике, переводу, построению фраз, кратким объяснениям и учебной навигации.",
+        "Если пользователь просит проверить фразу, сначала дай исправленный вариант, затем коротко объясни ошибку и при необходимости дай 1 пример.",
+        "Если пользователь просит объяснить тему, сначала дай прямой ответ, потом короткое объяснение и пример, если он нужен.",
+        "Если пользователь спрашивает, что делать на платформе дальше, подскажи подходящий следующий шаг: урок, тест, AI практика, профиль или прогресс.",
+        "По умолчанию не делай ответы слишком длинными. Обычно 2-6 предложений, если пользователь не просит подробнее.",
+      ].join("\n"),
+    },
+  ];
+
+  history.forEach((item) => {
+    if (!item || !item.role || !item.text) return;
+    messages.push({
+      role: item.role === "assistant" ? "assistant" : "user",
+      content: String(item.text),
+    });
+  });
+
+  messages.push({ role: "user", content: message });
+  return messages;
+}
+
 function buildMessages(body) {
   const mode = String(body?.mode || "general");
   const message = String(body?.message || "").trim();
   const history = Array.isArray(body?.history) ? body.history.slice(-8) : [];
+  const scope = String(body?.scope || "").toLowerCase();
 
-  const baseSystem = [
-    "Ты — ИИ-ассистент образовательной платформы AnaTil для изучения казахского языка.",
-    "Главная задача: отвечать строго по выбранному режиму и не уходить в сторону.",
-    "Язык объяснений: русский. Примеры и реплики на практике: казахский.",
-    "Тон: дружелюбный, спокойный, профессиональный.",
-    "Не используй смайлики.",
-    "Не выдумывай правила. Если не уверен, выбирай простое и безопасное объяснение.",
-  ].join("\n");
+  if (scope === "public_index") {
+    return buildPublicIndexMessages(body);
+  }
+
+  const replyLanguage = detectReplyLanguage(message, body?.preferredLanguage);
+  const baseSystem = makeBaseSystem({ replyLanguage, scope: "protected" });
 
   if (mode === "sentence_check") {
     const lesson = body?.lessonTitle ? `Текущий урок: ${body.lessonTitle}.` : "";
@@ -42,9 +141,9 @@ function buildMessages(body) {
           "Формат JSON:",
           '{"corrected":"...","errors":["..."],"rule":"...","examples":["...","...","..."],"task":"..."}',
           "corrected: исправленный вариант предложения на казахском.",
-          "errors: массив коротких ошибок и объяснений на русском. Если ошибок нет, верни [\"Серьёзных ошибок нет\"].",
+          'errors: массив коротких ошибок и объяснений на русском. Если ошибок нет, верни ["Серьёзных ошибок нет"].',
           "rule: одно понятное правило на русском.",
-          "examples: 3 коротких примера на казахском с переводом в одной строке через тире.",
+          "examples: 3 коротких примера на казахском с переводом в одной строке через обычный дефис.",
           "task: одно короткое задание по этой же теме.",
         ].join("\n"),
       },
@@ -75,11 +174,10 @@ function buildMessages(body) {
           "Ты должен отвечать как реальный собеседник в этой ситуации.",
           "Не пиши 'Сценарий:', 'Исправление:' и другие служебные слова в обычной реплике.",
           "Главная реплика должна быть естественной, короткой и живой, как в настоящем разговоре.",
-          "Самое важное: reply — это ВСЕГДА следующий ход собеседника по сценарию, а не повтор и не исправленный вариант фразы ученика.",
-          "Даже если ученик ошибся, ты сначала мысленно понимаешь его намерение, а в reply продолжаешь диалог дальше по ситуации.",
+          "Самое важное: reply - это всегда следующий ход собеседника по сценарию, а не повтор и не исправленный вариант фразы ученика.",
+          "Даже если ученик ошибся, ты сначала понимаешь его намерение, а в reply продолжаешь диалог дальше по ситуации.",
           "Никогда не копируй correction.better в поле reply.",
           "Никогда не отвечай одной лишь переформулированной фразой ученика.",
-          "Если ученик сказал 'Маған латте', нормальный reply официанта может быть вроде 'Жақсы, бір латте. Тағы бірдеңе аласыз ба?'",
           "Если action=message, ответь СТРОГО одним JSON-объектом без markdown.",
           "Формат JSON для action=message:",
           '{"reply":"...","correction":{"hasIssue":true,"better":"...","explanation":"..."}}',
@@ -124,7 +222,6 @@ function buildMessages(body) {
     const lesson = body?.lessonTitle || "не указан";
     const course = body?.lessonCourseTitle || "не указан";
     const progress = Number(body?.lessonProgress || 0);
-    const action = body?.action || "default";
     const lessonContent = body?.lessonContent ? String(body.lessonContent).slice(0, 5000) : "";
 
     return [
@@ -142,7 +239,7 @@ function buildMessages(body) {
           "1. Короткое объяснение темы простыми словами.",
           "2. 2 примера на казахском с коротким переводом.",
           "3. Частая ошибка или подсказка.",
-          "4. Мини-практика: 1 маленькое задание.",
+          "4. Мини практика: 1 маленькое задание.",
           "Если вопрос ученика слишком общий, всё равно привяжи ответ к текущему уроку.",
           "Если action=exercise, сделай упор на задание.",
           "Если action=check, задай маленькую проверку понимания.",
@@ -171,8 +268,8 @@ function buildMessages(body) {
           '{"words":[{"word":"...","translation":"...","example":"...","exampleTranslation":"...","category":"...","saved":false}],"test":{"word":"...","options":["..."]}}',
           `Сгенерируй ${count} полезных слов по теме.`,
           "example должен быть коротким предложением на казахском.",
-          "exampleTranslation — короткий перевод на русском.",
-          "В test.word используй одно из слов из списка, а options сделай из 3 вариантов, где первый — правильный перевод.",
+          "exampleTranslation - короткий перевод на русском.",
+          "В test.word используй одно из слов из списка, а options сделай из 3 вариантов, где первый - правильный перевод.",
         ].join("\n"),
       },
       {
@@ -182,10 +279,7 @@ function buildMessages(body) {
     ];
   }
 
-  return [
-    { role: "system", content: baseSystem },
-    { role: "user", content: message },
-  ];
+  return buildProtectedGeneralMessages(body);
 }
 
 module.exports = async (req, res) => {
@@ -194,37 +288,42 @@ module.exports = async (req, res) => {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    let user;
-    try {
-      user = requireUser(req);
-    } catch {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "OPENAI_API_KEY missing" });
     }
 
     const { message, sessionId } = req.body || {};
+    const scope = String(req.body?.scope || "").toLowerCase();
+    const isPublicIndex = scope === "public_index";
+
     if (!message) {
       return res.status(400).json({ error: "Message is required" });
     }
 
-    const used0 = await getTodayUsed(user.id);
-    if (used0 >= DAILY_LIMIT) {
-      return res.status(429).json({
-        error: "Daily limit reached",
-        details: "AI лимит на сегодня исчерпан",
-        usage: { used: used0, limit: DAILY_LIMIT, remaining: 0 },
-      });
+    let user = null;
+    if (!isPublicIndex) {
+      try {
+        user = requireUser(req);
+      } catch {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const used0 = await getTodayUsed(user.id);
+      if (used0 >= DAILY_LIMIT) {
+        return res.status(429).json({
+          error: "Daily limit reached",
+          details: "AI лимит на сегодня исчерпан",
+          usage: { used: used0, limit: DAILY_LIMIT, remaining: 0 },
+        });
+      }
     }
 
     const openai = new OpenAI({ apiKey, timeout: 20000 });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: buildMessages(req.body),
-      temperature: 0.25,
+      temperature: isPublicIndex ? 0.35 : 0.25,
       response_format:
         req.body?.mode === "sentence_check" ||
         req.body?.mode === "vocabulary" ||
@@ -235,44 +334,42 @@ module.exports = async (req, res) => {
 
     const reply = completion.choices?.[0]?.message?.content || "";
 
-    await db.query(
-      `
-      insert into ai_daily_usage (user_id, day, used)
-      values ($1, current_date, 1)
-      on conflict (user_id, day)
-      do update set used = ai_daily_usage.used + 1
-      `,
-      [user.id]
-    );
-
     let session = null;
-    if (sessionId) {
-      const sid = Number(sessionId);
-      if (!Number.isNaN(sid) && sid > 0) {
-        const s = await db.query(
-          `
-          update ai_sessions
-          set message_pairs = message_pairs + 1
-          where id = $1 and user_id = $2
-          returning id, mode, lesson_id, scenario, started_at, ended_at, message_pairs
-          `,
-          [sid, user.id]
-        );
+    if (!isPublicIndex && user) {
+      await db.query(
+        `
+        insert into ai_daily_usage (user_id, day, used)
+        values ($1, current_date, 1)
+        on conflict (user_id, day)
+        do update set used = ai_daily_usage.used + 1
+        `,
+        [user.id]
+      );
 
-        if (s.rows[0]) {
-          session = s.rows[0];
-          await db.query(
-            `insert into ai_messages (session_id, role, content) values ($1,'user',$2), ($1,'assistant',$3)`,
-            [sid, message, reply]
+      if (sessionId) {
+        const sid = Number(sessionId);
+        if (Number.isFinite(sid) && sid > 0) {
+          const s = await db.query(
+            `select id, title, mode from ai_sessions where id = $1 and user_id = $2 limit 1`,
+            [sid, user.id]
           );
+          if (s.rows[0]) {
+            session = s.rows[0];
+            await db.query(
+              `insert into ai_messages (session_id, role, content) values ($1,'user',$2), ($1,'assistant',$3)`,
+              [sid, message, reply]
+            );
+          }
         }
       }
     }
 
-    const used = await getTodayUsed(user.id);
+    const used = user ? await getTodayUsed(user.id) : 0;
     return res.json({
       reply,
-      usage: { used, limit: DAILY_LIMIT, remaining: Math.max(DAILY_LIMIT - used, 0) },
+      usage: user
+        ? { used, limit: DAILY_LIMIT, remaining: Math.max(DAILY_LIMIT - used, 0) }
+        : null,
       session,
     });
   } catch (err) {
