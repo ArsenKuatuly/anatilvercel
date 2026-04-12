@@ -96,49 +96,52 @@ function buildScenarioFallbackReply(body, message) {
 
   if (scenario.includes("каф")) {
     if (/осымен болды|болды|жетеді/.test(normalizedMessage)) {
-      return "Жақсы, түсіндім. Тағы ештеңе керек емес пе?";
+      return "Жақсы, тапсырысыңыз қабылданды. Рахмет!";
     }
     if (/бағасы|қанша/.test(normalizedMessage)) {
       return "Бағасы үш жүз теңге. Тағы бірдеңе аласыз ба?";
     }
-    if (/латте/.test(normalizedMessage)) {
-      return "Жақсы, бір латте. Үлкен бе, әлде орташа ма?";
-    }
-    if (/капучино/.test(normalizedMessage)) {
-      return "Жақсы, бір капучино. Үлкен бе, әлде орташа ма?";
-    }
-    if (/шай/.test(normalizedMessage)) {
-      return "Жақсы, бір шай. Қара шай ма, әлде көк шай ма?";
-    }
-    if (/кофе/.test(normalizedMessage)) {
-      return "Жақсы, бір кофе. Қант қосайын ба?";
-    }
     if (/сәлем/.test(normalizedMessage) && /кофе|латте|шай|капучино/.test(normalizedMessage)) {
-      return "Сәлеметсіз бе! Жақсы, тапсырысыңызды қабылдадым. Тағы не аласыз?";
+      return "Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?";
     }
     if (topic) return `Жақсы, бір ${topic}. Тағы не аласыз?`;
-    return "Сәлеметсіз бе! Не ішесіз?";
+    return "Жақсы, не қалайтыныңызды айтыңызшы.";
   }
 
   if (scenario.includes("магаз")) {
     if (/қанша|бағасы/.test(normalizedMessage)) return "Бағасы осы жерде жазылған. Тағы қандай тауар керек?";
-    return "Қандай тауар керек?";
+    return "Жақсы, қай тауар керек екенін айтыңызшы.";
   }
-  if (scenario.includes("такси")) return "Қай жерге барасыз?";
-  if (scenario.includes("универс")) return "Қандай сұрағыңыз бар?";
+  if (scenario.includes("такси")) return "Жақсы, нақты мекенжайды айтыңызшы.";
+  if (scenario.includes("универс")) return "Жақсы, қандай сұрағыңыз бар?";
   if (scenario.includes("знаком") || scenario.includes("кездес") || scenario.includes("meeting")) return "Сәлем! Өзіңіз туралы қысқаша айтып беріңізші.";
   return "Жақсы, нақтырақ айтып көріңізші.";
 }
 
-function looksLikeBrokenDialogReply(userMessage, assistantText) {
+function getLastAssistantFromHistory(history) {
+  if (!Array.isArray(history)) return "";
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const item = history[i];
+    if (item && item.role === "assistant" && item.text) return normalizeText(item.text).toLowerCase();
+  }
+  return "";
+}
+
+function looksLikeBrokenDialogReply(userMessage, assistantText, history) {
   const user = normalizeText(userMessage).toLowerCase();
   const assistant = normalizeText(assistantText).toLowerCase();
+  const lastAssistant = getLastAssistantFromHistory(history);
   if (!assistant) return true;
   if (assistant.startsWith("{") || assistant.includes('"correction"')) return true;
   if (/^жақсы,\s*жалғастырайық\.?$/.test(assistant)) return true;
   if (/^жалғастырайық\.?$/.test(assistant)) return true;
   if (/^жақсы\.?$/.test(assistant)) return true;
+  if (/^жақсы,\s*түсіндім\.?$/.test(assistant)) return true;
+  if (/^тағы\s+не\s+қалайсыз\??$/.test(assistant)) return true;
+  if (/^сәлеметсіз бе!?\s*тағы не қалайсыз\??$/.test(assistant)) return true;
   if (/сценарий:/.test(assistant)) return true;
+  if (lastAssistant && assistant === lastAssistant) return true;
+  if (lastAssistant && assistant.replace(/[!?.,]/g, '') === lastAssistant.replace(/[!?.,]/g, '')) return true;
   if (!user) return false;
   if (assistant === user) return true;
   if (assistant.startsWith(user + ",") || assistant.startsWith(user + ".") || assistant.startsWith(user + " ")) return true;
@@ -150,23 +153,6 @@ function looksLikeBrokenDialogReply(userMessage, assistantText) {
   return false;
 }
 
-function isGenericDialogReply(assistantText) {
-  const assistant = normalizeText(assistantText).toLowerCase();
-  if (!assistant) return true;
-  return [
-    /^жақсы[.!?]?$/,
-    /^түсіндім[.!?]?$/,
-    /^жақсы,\s*түсіндім[.!?]?$/,
-    /^жақсы,\s*түсіндім\.\s*$/,
-    /^жақсы,\s*тағы бір рет айтып көріңізші[.!?]?$/,
-    /^тағы бір рет айтып көріңізші[.!?]?$/,
-    /^жақсы,\s*нақтылап айтыңызшы[.!?]?$/,
-    /^нақтылап айтыңызшы[.!?]?$/,
-    /^жақсы,\s*жалғастырайық[.!?]?$/,
-    /^жалғастырайық[.!?]?$/,
-  ].some((rx) => rx.test(assistant));
-}
-
 function sanitizeDialogPayload(raw, body, message) {
   const parsed = extractJsonObject(raw) || {};
   let reply = normalizeText(parsed?.reply || "");
@@ -176,7 +162,7 @@ function sanitizeDialogPayload(raw, body, message) {
     explanation: normalizeText(parsed?.correction?.explanation || "")
   };
 
-  if (looksLikeBrokenDialogReply(message, reply) || isGenericDialogReply(reply)) {
+  if (looksLikeBrokenDialogReply(message, reply, body?.history)) {
     reply = buildScenarioFallbackReply(body, message);
   }
 
