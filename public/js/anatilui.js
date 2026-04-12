@@ -431,7 +431,7 @@
     }
   }
 
-  async function aiChat(payload) {
+  async function aiChat(payload, options) {
     const sessionId = state.activeSessionId || await ensureSession(payload.mode || state.mode, payload.meta || {});
     const requestPayload = Object.assign({}, payload, sessionId ? { sessionId: sessionId } : {});
     const data = await request('/api/ai/chat', {
@@ -441,6 +441,7 @@
     });
     const usage = data && (data.usage || data.data && data.data.usage);
     if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
+    if (options && options.fullResponse) return data || null;
     return parseResponsePayload(data) || '';
   }
 
@@ -619,10 +620,17 @@
     if (!els.dialogMessages) return;
     els.dialogMessages.innerHTML = state.dialog.messages.map(function (item) {
       var correctionHtml = '';
-      if (item.role === 'user' && item.correction && item.correction.hasIssue && item.correction.better) {
-        correctionHtml = '<div class="ai-chat-correction"><div class="ai-chat-correction__title">Исправление</div><div class="ai-chat-correction__text">' + escapeHtml(item.correction.better) + '</div>' + (item.correction.explanation ? '<div class="ai-chat-correction__hint">' + escapeHtml(item.correction.explanation) + '</div>' : '') + '</div>';
+      if (item.role === 'user' && item.correction && (item.correction.better || item.correction.explanation)) {
+        correctionHtml = '<div class="ai-chat-correction">'
+          + '<div class="ai-chat-correction__title">Исправление</div>'
+          + (item.correction.better ? '<div class="ai-chat-correction__better">' + escapeHtml(item.correction.better) + '</div>' : '')
+          + (item.correction.explanation ? '<div class="ai-chat-correction__explanation">' + escapeHtml(item.correction.explanation) + '</div>' : '')
+          + '</div>';
       }
-      return '<div class="ai-chat-item ai-chat-item--' + (item.role === 'user' ? 'user' : 'ai') + '"><div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>' + correctionHtml + '</div>';
+      return '<div class="ai-chat-message-wrap ' + (item.role === 'user' ? 'ai-chat-message-wrap--user' : 'ai-chat-message-wrap--ai') + '">'
+        + '<div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>'
+        + correctionHtml
+        + '</div>';
     }).join('');
     els.dialogMessages.scrollTop = els.dialogMessages.scrollHeight;
     els.dialogMessagesCount.textContent = String(state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length);
@@ -665,73 +673,68 @@
   async function sendDialogMessage(kind) {
     if (!state.dialog.started) return;
     const scenario = dialogScenarios.find(function (item) { return item.id === state.dialog.scenarioId; }) || dialogScenarios[0];
-    const lastAssistantMessage = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'assistant'; });
-    const lastUserMessage = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'user'; });
+    const lastAssistant = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'assistant'; });
+    const lastUser = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'user'; });
     let text = '';
-    if (kind === 'hint') text = 'Подскажи короткий ответ для этой ситуации.';
-    else if (kind === 'repeat') text = 'Повтори последний вопрос и сформулируй его проще.';
-    else if (kind === 'explain') text = 'Объясни, как сказать мой последний ответ лучше и естественнее.';
+    if (kind === 'hint') text = 'Подскажи короткий ответ ученика для этой ситуации.';
+    else if (kind === 'repeat') text = 'Повтори последний вопрос собеседника проще.';
+    else if (kind === 'explain') text = 'Покажи, как сказать лучше и естественнее.';
     else text = (els.dialogInput.value || '').trim();
     if (!text) return;
 
+    var userMessageIndex = -1;
     if (kind === 'message') {
       state.dialog.messages.push({ role: 'user', text: text });
+      userMessageIndex = state.dialog.messages.length - 1;
       els.dialogInput.value = '';
     }
 
-    const triggerButton = kind === 'hint' ? els.showHintBtn : kind === 'repeat' ? els.dialogRepeatBtn : kind === 'explain' ? els.dialogExplainBtn : els.sendDialogBtn;
-    setButtonLoading(triggerButton, true, kind === 'hint' ? 'Думаю...' : kind === 'repeat' ? 'Повторяем...' : kind === 'explain' ? 'Подсказываю...' : 'Отправляем...');
+    setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
     try {
-      const sessionId = state.activeSessionId || await ensureSession('dialog', { scenario: scenario.name });
-      const response = await request('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'dialog',
-          action: kind,
-          message: text,
-          history: state.dialog.messages.slice(-10).map(function (item) {
-            return { role: item.role, text: item.text, meta: item.meta || '' };
-          }),
-          scenario: scenario.name,
-          scenarioGoal: scenario.goal,
-          scenarioDifficulty: scenario.difficulty,
-          supportPhrases: scenario.phrases,
-          lastAssistantText: lastAssistantMessage ? lastAssistantMessage.text : '',
-          lastUserText: lastUserMessage ? lastUserMessage.text : '',
-          sessionId: sessionId || undefined
-        })
-      });
-      const usage = response && response.usage;
-      if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
-      const reply = ensureText(response && response.reply, 'Жақсы, тағы бір рет айтып көріңізші.');
-      const correction = response && response.correction ? {
-        hasIssue: !!response.correction.hasIssue,
-        better: ensureText(response.correction.better, '').trim(),
-        explanation: ensureText(response.correction.explanation, '').trim()
-      } : null;
+      const data = await aiChat({
+        mode: 'dialog',
+        action: kind,
+        message: text,
+        history: state.dialog.messages.slice(-10),
+        scenario: scenario.name,
+        scenarioGoal: scenario.goal,
+        scenarioDifficulty: scenario.difficulty,
+        supportPhrases: scenario.phrases,
+        meta: { scenario: scenario.name },
+        lastAssistantText: lastAssistant ? lastAssistant.text : '',
+        lastUserText: lastUser ? lastUser.text : ''
+      }, { fullResponse: true });
 
-      if (kind === 'message' && correction && correction.hasIssue) {
+      const reply = parseResponsePayload(data) || 'Жақсы, түсіндім.';
+      const correction = data && data.correction ? data.correction : null;
+
+      if (kind === 'message' && userMessageIndex >= 0 && correction && (correction.better || correction.explanation || correction.hasIssue)) {
+        state.dialog.messages[userMessageIndex].correction = {
+          hasIssue: !!correction.hasIssue,
+          better: correction.better || '',
+          explanation: correction.explanation || ''
+        };
+        if (correction.hasIssue) state.dialog.errors += 1;
+      }
+
+      if (kind === 'explain' && correction && lastUser && state.dialog.messages.length) {
         for (var i = state.dialog.messages.length - 1; i >= 0; i -= 1) {
-          if (state.dialog.messages[i].role === 'user' && !state.dialog.messages[i].correction) {
-            state.dialog.messages[i].correction = correction;
+          if (state.dialog.messages[i].role === 'user') {
+            state.dialog.messages[i].correction = {
+              hasIssue: !!correction.hasIssue,
+              better: correction.better || '',
+              explanation: correction.explanation || ''
+            };
             break;
           }
         }
-        state.dialog.errors += 1;
       }
 
-      var meta = '';
-      if (kind === 'hint') {
-        state.dialog.hints += 1;
-        meta = 'Подсказка';
-      } else if (kind === 'repeat') {
-        meta = 'Повтор вопроса';
-      } else if (kind === 'explain') {
-        meta = 'Как сказать лучше';
+      if (reply) {
+        state.dialog.messages.push({ role: 'assistant', text: reply });
       }
 
-      state.dialog.messages.push({ role: 'assistant', text: reply, meta: meta });
+      if (kind === 'hint') state.dialog.hints += 1;
       if (kind === 'message') {
         state.achievements.dialogs += 1;
         state.sessionStats.minutes += 2;
@@ -749,10 +752,10 @@
       });
     } catch (error) {
       console.error(error);
-      state.dialog.messages.push({ role: 'assistant', text: 'Жақсы, тағы бір рет айтып көріңізші.' });
+      state.dialog.messages.push({ role: 'assistant', text: kind === 'repeat' ? 'Сұрағымды қайталайын: Не ішесіз?' : 'Түсінбедім, тағы бір рет айтып көріңізші.' });
       renderDialogMessages();
     } finally {
-      setButtonLoading(triggerButton, false);
+      setButtonLoading(els.sendDialogBtn, false);
       saveState();
     }
   }

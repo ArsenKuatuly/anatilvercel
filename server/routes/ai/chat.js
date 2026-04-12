@@ -89,10 +89,43 @@ function extractTopicFragment(message) {
   return "";
 }
 
+function getLastHistoryText(history, role) {
+  const items = Array.isArray(history) ? history : [];
+  for (let i = items.length - 1; i >= 0; i -= 1) {
+    const item = items[i];
+    if (item && item.role === role && item.text) return normalizeText(item.text);
+  }
+  return "";
+}
+
 function buildScenarioFallbackReply(body, message) {
   const scenario = normalizeText(body?.scenario || "").toLowerCase();
+  const action = normalizeText(body?.action || "message").toLowerCase();
   const topic = extractTopicFragment(message);
   const normalizedMessage = normalizeText(message).toLowerCase();
+  const lastAssistant = normalizeText(body?.lastAssistantText || getLastHistoryText(body?.history, "assistant"));
+  const lastUser = normalizeText(body?.lastUserText || getLastHistoryText(body?.history, "user"));
+
+  if (action === "repeat") {
+    if (lastAssistant) return lastAssistant;
+    if (scenario.includes("каф")) return "Не ішесіз?";
+    if (scenario.includes("магаз")) return "Сізге не керек?";
+    if (scenario.includes("такси")) return "Қай мекенжайға барасыз?";
+    if (scenario.includes("универс")) return "Қандай сұрағыңыз бар?";
+    return "Қайталап айтамын, не айтқыңыз келді?";
+  }
+
+  if (action === "hint") {
+    if (scenario.includes("каф")) return topic ? `Маған бір ${topic} беріңізші.` : "Маған бір латте беріңізші.";
+    if (scenario.includes("магаз")) return "Бұл қанша тұрады?";
+    if (scenario.includes("такси")) return "Мені осы мекенжайға апарыңызшы.";
+    if (scenario.includes("универс")) return "Менде бір сұрақ бар.";
+    return lastUser || "Қысқа жауап беріп көріңіз.";
+  }
+
+  if (action === "explain") {
+    return "Қысқа әрі сыпайы түрде айтқан дұрыс.";
+  }
 
   if (scenario.includes("каф")) {
     if (/осымен болды|болды|жетеді/.test(normalizedMessage)) {
@@ -102,10 +135,10 @@ function buildScenarioFallbackReply(body, message) {
       return "Бағасы үш жүз теңге. Тағы бірдеңе аласыз ба?";
     }
     if (/сәлем/.test(normalizedMessage) && /кофе|латте|шай|капучино/.test(normalizedMessage)) {
-      return "Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?";
+      return /латте/.test(normalizedMessage) ? "Сәлеметсіз бе! Жақсы, бір латте. Үлкен бе, әлде орташа ма?" : "Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?";
     }
-    if (topic) return `Жақсы, бір ${topic}. Тағы не аласыз?`;
-    return "Жақсы, не қалайтыныңызды айтыңызшы.";
+    if (topic) return `Жақсы, бір ${topic}. Үлкен бе, әлде орташа ма?`;
+    return "Сәлеметсіз бе! Не ішесіз?";
   }
 
   if (scenario.includes("магаз")) {
@@ -146,6 +179,10 @@ function sanitizeDialogPayload(raw, body, message) {
     better: normalizeText(parsed?.correction?.better || ""),
     explanation: normalizeText(parsed?.correction?.explanation || "")
   };
+
+  if (!correction.better && body?.action === "explain") {
+    correction.better = normalizeText(body?.lastUserText || getLastHistoryText(body?.history, "user") || message);
+  }
 
   if (looksLikeBrokenDialogReply(message, reply)) {
     reply = buildScenarioFallbackReply(body, message);
@@ -264,8 +301,6 @@ function buildMessages(body) {
     const difficulty = body?.scenarioDifficulty || "Лёгкий";
     const action = body?.action || "message";
     const support = Array.isArray(body?.supportPhrases) ? body.supportPhrases.join(" | ") : "";
-    const lastAssistantText = normalizeText(body?.lastAssistantText || "");
-    const lastUserText = normalizeText(body?.lastUserText || "");
 
     const messages = [
       {
@@ -277,8 +312,6 @@ function buildMessages(body) {
           `Цель ученика: ${goal}.`,
           `Сложность: ${difficulty}.`,
           support ? `Полезные фразы: ${support}.` : "",
-          lastAssistantText ? `Последний вопрос/реплика собеседника: ${lastAssistantText}` : "",
-          lastUserText ? `Последний ответ ученика: ${lastUserText}` : "",
           "Ты должен отвечать как реальный собеседник в этой ситуации.",
           "Не пиши 'Сценарий:', 'Исправление:' и другие служебные слова в обычной реплике.",
           "Главная реплика должна быть естественной, короткой и живой, как в настоящем разговоре.",
@@ -287,8 +320,8 @@ function buildMessages(body) {
           "Никогда не копируй correction.better в поле reply. Никогда не показывай пользователю сырой JSON в обычной реплике.",
           "Никогда не отвечай одной лишь переформулированной фразой ученика.",
           "Если ученик сказал 'Маған латте', нормальный reply официанта может быть вроде 'Жақсы, бір латте. Тағы не аласыз?'",
-          "Для сценария кафе веди себя именно как официант: приветствие, принятие заказа, короткое уточнение размера или детали заказа, затем продолжение заказа. Не отвечай пустыми фразами вроде 'Жақсы, жалғастырайық' и не проси слишком абстрактно 'нақтылап айтыңызшы', если намерение уже понятно.",
-          "Если ученик пишет неполно или с ошибками, всё равно пойми намерение и ответь по ситуации. Например: 'Сәлеметсіз бе, кофе' -> 'Сәлеметсіз бе! Жақсы, бір кофе. Үлкен бе, әлде кіші ме?' или 'Жақсы, бір кофе. Тағы не аласыз?'",
+          "Для сценария кафе веди себя именно как официант: приветствие, принятие заказа, короткое уточнение, завершение заказа. Не отвечай пустыми фразами вроде 'Жақсы, жалғастырайық'.",
+          "Если ученик пишет неполно или с ошибками, всё равно пойми намерение и ответь по ситуации. Например: 'Сәлеметсіз бе, кофе' -> 'Сәлеметсіз бе! Жақсы, бір кофе. Тағы не аласыз?'",
           "Если action=message, ответь СТРОГО одним JSON-объектом без markdown.",
           "Формат JSON для action=message:",
           '{"reply":"...","correction":{"hasIssue":true,"better":"...","explanation":"..."}}',
@@ -298,15 +331,15 @@ function buildMessages(body) {
           "correction.explanation: очень короткое объяснение на русском. Если ошибок нет, верни пустую строку.",
           "Если action=hint, ответь СТРОГО JSON-объектом:",
           '{"reply":"...","correction":{"hasIssue":false,"better":"","explanation":""}}',
-          "В reply дай короткий пример того, как ученик может ответить по-казахски именно на последний вопрос собеседника.",
+          "В reply дай короткий пример того, как ученик может ответить по-казахски.",
           "Если action=repeat, ответь СТРОГО JSON-объектом:",
           '{"reply":"...","correction":{"hasIssue":false,"better":"","explanation":""}}',
-          "В reply повтори именно последнюю реплику собеседника проще на казахском. Не продолжай диалог дальше.",
+          "В reply повтори последний вопрос проще на казахском.",
           "Если action=explain, ответь СТРОГО JSON-объектом:",
           '{"reply":"...","correction":{"hasIssue":false,"better":"...","explanation":"..."}}',
-          "В reply дай очень короткий совет на русском, как ответить естественнее в текущей ситуации.",
-          "В better дай более естественный вариант последнего ответа ученика на казахском.",
-          "В correction.explanation дай короткое объяснение на русском.",
+          "В reply дай очень короткий совет на русском.",
+          "В better дай более естественный вариант ответа ученика на казахском.",
+          "В explanation дай короткое объяснение на русском.",
           "Не превращай ответ в длинный урок.",
           "Не дублируй исправление внутри reply.",
         ].filter(Boolean).join("\n"),
