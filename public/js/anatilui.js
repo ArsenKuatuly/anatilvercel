@@ -371,13 +371,13 @@
       if (!text) return '';
       try {
         const parsed = JSON.parse(text);
-        if (parsed && typeof parsed.reply === 'string') return parsed.reply;
+        if (parsed && (typeof parsed.reply === 'string' || parsed.correction)) return parsed;
       } catch (error) {}
       const match = text.match(/\{[\s\S]*\}/);
       if (match) {
         try {
           const parsed = JSON.parse(match[0]);
-          if (parsed && typeof parsed.reply === 'string') return parsed.reply;
+          if (parsed && (typeof parsed.reply === 'string' || parsed.correction)) return parsed;
         } catch (error) {}
       }
       return text;
@@ -385,6 +385,7 @@
 
     if (!payload) return null;
     if (typeof payload === 'string') return parseNestedReply(payload);
+    if (payload.correction) return payload;
     if (typeof payload.reply === 'string') return parseNestedReply(payload.reply);
     if (typeof payload.message === 'string') return payload.message;
     if (typeof payload.text === 'string') return payload.text;
@@ -431,7 +432,7 @@
     }
   }
 
-  async function aiChat(payload, options) {
+  async function aiChat(payload) {
     const sessionId = state.activeSessionId || await ensureSession(payload.mode || state.mode, payload.meta || {});
     const requestPayload = Object.assign({}, payload, sessionId ? { sessionId: sessionId } : {});
     const data = await request('/api/ai/chat', {
@@ -441,7 +442,6 @@
     });
     const usage = data && (data.usage || data.data && data.data.usage);
     if (usage) setUsage(usage.used || state.usage.used, usage.limit || state.usage.total);
-    if (options && options.fullResponse) return data || null;
     return parseResponsePayload(data) || '';
   }
 
@@ -616,21 +616,20 @@
     }).join('');
   }
 
+  function renderDialogMessageBody(item) {
+    var html = '<div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '"><div>' + escapeHtml(item.text) + '</div>';
+    if (item.correction && item.correction.hasIssue && (item.correction.better || item.correction.explanation)) {
+      html += '<div class="ai-chat-message__correction"><strong>Исправление:</strong> ' + escapeHtml(item.correction.better || '') + (item.correction.explanation ? '<div class="ai-chat-message__correction-note">' + escapeHtml(item.correction.explanation) + '</div>' : '') + '</div>';
+    }
+    if (item.meta) html += '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>';
+    html += '</div>';
+    return html;
+  }
+
   function renderDialogMessages() {
     if (!els.dialogMessages) return;
     els.dialogMessages.innerHTML = state.dialog.messages.map(function (item) {
-      var correctionHtml = '';
-      if (item.role === 'user' && item.correction && (item.correction.better || item.correction.explanation)) {
-        correctionHtml = '<div class="ai-chat-correction">'
-          + '<div class="ai-chat-correction__title">Исправление</div>'
-          + (item.correction.better ? '<div class="ai-chat-correction__better">' + escapeHtml(item.correction.better) + '</div>' : '')
-          + (item.correction.explanation ? '<div class="ai-chat-correction__explanation">' + escapeHtml(item.correction.explanation) + '</div>' : '')
-          + '</div>';
-      }
-      return '<div class="ai-chat-message-wrap ' + (item.role === 'user' ? 'ai-chat-message-wrap--user' : 'ai-chat-message-wrap--ai') + '">'
-        + '<div class="ai-chat-message ' + (item.role === 'user' ? 'ai-chat-message--user' : 'ai-chat-message--ai') + '">' + escapeHtml(item.text) + (item.meta ? '<span class="ai-chat-message__meta">' + escapeHtml(item.meta) + '</span>' : '') + '</div>'
-        + correctionHtml
-        + '</div>';
+      return renderDialogMessageBody(item);
     }).join('');
     els.dialogMessages.scrollTop = els.dialogMessages.scrollHeight;
     els.dialogMessagesCount.textContent = String(state.dialog.messages.filter(function (item) { return item.role === 'user'; }).length);
@@ -673,71 +672,66 @@
   async function sendDialogMessage(kind) {
     if (!state.dialog.started) return;
     const scenario = dialogScenarios.find(function (item) { return item.id === state.dialog.scenarioId; }) || dialogScenarios[0];
-    const lastAssistant = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'assistant'; });
-    const lastUser = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'user'; });
     let text = '';
-    if (kind === 'hint') text = 'Подскажи короткий ответ ученика для этой ситуации.';
-    else if (kind === 'repeat') text = 'Повтори последний вопрос собеседника проще.';
-    else if (kind === 'explain') text = 'Покажи, как сказать лучше и естественнее.';
+    if (kind === 'hint') text = 'Подскажи короткий ответ для этой ситуации.';
+    else if (kind === 'repeat') text = 'Повтори последний вопрос и сформулируй его проще.';
+    else if (kind === 'explain') text = 'Объясни, как ответить лучше и естественнее.';
     else text = (els.dialogInput.value || '').trim();
     if (!text) return;
 
-    var userMessageIndex = -1;
+    let userMessageRef = null;
     if (kind === 'message') {
-      state.dialog.messages.push({ role: 'user', text: text });
-      userMessageIndex = state.dialog.messages.length - 1;
+      userMessageRef = { role: 'user', text: text };
+      state.dialog.messages.push(userMessageRef);
       els.dialogInput.value = '';
+      renderDialogMessages();
     }
 
     setButtonLoading(els.sendDialogBtn, true, 'Отправляем...');
     try {
-      const data = await aiChat({
+      const response = await aiChat({
         mode: 'dialog',
         action: kind,
         message: text,
-        history: state.dialog.messages.slice(-10),
+        history: state.dialog.messages.slice(-8),
         scenario: scenario.name,
         scenarioGoal: scenario.goal,
         scenarioDifficulty: scenario.difficulty,
         supportPhrases: scenario.phrases,
-        meta: { scenario: scenario.name },
-        lastAssistantText: lastAssistant ? lastAssistant.text : '',
-        lastUserText: lastUser ? lastUser.text : ''
-      }, { fullResponse: true });
+        meta: { scenario: scenario.name }
+      });
 
-      const reply = parseResponsePayload(data) || 'Жақсы, түсіндім.';
-      const correction = data && data.correction ? data.correction : null;
+      const payload = (response && typeof response === 'object' && !Array.isArray(response)) ? response : { reply: String(response || '').trim() };
+      const reply = String(payload.reply || '').trim() || 'Сәлеметсіз бе! Тағы не қалайсыз?';
+      const correction = payload && payload.correction ? payload.correction : null;
 
-      if (kind === 'message' && userMessageIndex >= 0 && correction && (correction.better || correction.explanation || correction.hasIssue)) {
-        state.dialog.messages[userMessageIndex].correction = {
+      if (kind === 'message' && userMessageRef && correction && correction.hasIssue) {
+        userMessageRef.correction = {
           hasIssue: !!correction.hasIssue,
           better: correction.better || '',
           explanation: correction.explanation || ''
         };
-        if (correction.hasIssue) state.dialog.errors += 1;
       }
 
-      if (kind === 'explain' && correction && lastUser && state.dialog.messages.length) {
-        for (var i = state.dialog.messages.length - 1; i >= 0; i -= 1) {
-          if (state.dialog.messages[i].role === 'user') {
-            state.dialog.messages[i].correction = {
-              hasIssue: !!correction.hasIssue,
-              better: correction.better || '',
-              explanation: correction.explanation || ''
-            };
-            break;
-          }
+      if (kind === 'explain' && correction && correction.better) {
+        const lastUserMessage = state.dialog.messages.slice().reverse().find(function (item) { return item.role === 'user'; });
+        if (lastUserMessage) {
+          lastUserMessage.correction = {
+            hasIssue: true,
+            better: correction.better || '',
+            explanation: correction.explanation || ''
+          };
         }
       }
 
-      if (reply) {
-        state.dialog.messages.push({ role: 'assistant', text: reply });
-      }
-
+      state.dialog.messages.push({ role: 'assistant', text: reply });
       if (kind === 'hint') state.dialog.hints += 1;
       if (kind === 'message') {
         state.achievements.dialogs += 1;
         state.sessionStats.minutes += 2;
+      }
+      if (kind === 'message' && correction && correction.hasIssue) {
+        state.dialog.errors += 1;
       }
       increaseUsage(1);
       updateStatsView();
@@ -752,7 +746,7 @@
       });
     } catch (error) {
       console.error(error);
-      state.dialog.messages.push({ role: 'assistant', text: kind === 'repeat' ? 'Сұрағымды қайталайын: Не ішесіз?' : 'Түсінбедім, тағы бір рет айтып көріңізші.' });
+      state.dialog.messages.push({ role: 'assistant', text: 'Сәлеметсіз бе! Тағы бір рет айтыңызшы, мен көмектесейін.' });
       renderDialogMessages();
     } finally {
       setButtonLoading(els.sendDialogBtn, false);
