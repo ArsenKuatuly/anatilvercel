@@ -163,6 +163,43 @@ function looksLikeParrotReply(userMessage, assistantText) {
   return false;
 }
 
+function looksLikeLearnerAnswer(body, assistantText, correction) {
+  const scenario = getScenario(body);
+  const text = normalizeText(assistantText).toLowerCase();
+  if (!text) return false;
+
+  const hasCorrection = !!(correction && (correction.hasIssue || correction.better));
+
+  if (scenario.key === 'intro') {
+    if (/^менің атым\b/.test(text) || /^мен\s+[а-яәіңғүұқөһa-z]/i.test(text)) {
+      return hasCorrection;
+    }
+    if (/^сәлеметсіз бе[,!]?\s*менің атым\b/.test(text)) return true;
+  }
+
+  if (scenario.key === 'cafe') {
+    if (/^маған\b/.test(text) || /^бір\s+.+\s+(беріңізші|беріңіз)\b/.test(text)) return true;
+  }
+
+  if (scenario.key === 'shop') {
+    if (/^маған\b.+\b(керек|қажет)\b/.test(text)) return true;
+  }
+
+  if (scenario.key === 'taxi') {
+    if (/^мына\s+мекенжайға\b/.test(text) || /^осы\s+жерге\s+тоқтаңызшы\b/.test(text)) return true;
+  }
+
+  if (scenario.key === 'university') {
+    if (/^дәріс\s+қайда\b/.test(text) || /^үй\s+тапсырмасы\s+бар\s+ма\b/.test(text)) return true;
+  }
+
+  if (scenario.key === 'work') {
+    if (/^мен\s+тапсырманы\b/.test(text) || /^маған\s+көмек\s+керек\b/.test(text)) return true;
+  }
+
+  return false;
+}
+
 function looksLikeRoleBreak(body, assistantText) {
   const scenario = getScenario(body);
   const text = normalizeText(assistantText).toLowerCase();
@@ -336,7 +373,14 @@ function sanitizeReply(raw, message, body) {
       isUnclearInput: !!parsed?.meta?.isUnclearInput
     };
 
-    if (normalizeText(body?.action || 'message') === 'message' && (looksLikeParrotReply(message, assistantText) || looksLikeRoleBreak(body, assistantText))) {
+    if (
+      normalizeText(body?.action || 'message') === 'message' &&
+      (
+        looksLikeParrotReply(message, assistantText) ||
+        looksLikeLearnerAnswer(body, assistantText, correction) ||
+        looksLikeRoleBreak(body, assistantText)
+      )
+    ) {
       assistantText = buildNaturalScenarioReply(message, body);
       ttsText = assistantText;
     }
