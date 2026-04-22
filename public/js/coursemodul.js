@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function loadFinalTask(courseId) {
         try {
-            const out = await authFetch(`/api/course/${courseId}/task`);
+            const out = await authFetch(`/api/${courseId}/task`);
             if (!out) return;
 
             const data = out.data;

@@ -1,9 +1,4 @@
-/**
- * Course page UI: same layout/classes as demo anatil_html_css_js.zip
- * Data source: your backend (authFetch)
- * - GET /api/course/:slug  -> { success, course, modules }
- * - GET /api/course/:courseId/task -> { success, task }
- */
+
 
 function qs(sel, root = document){ return root.querySelector(sel); }
 function qsa(sel, root = document){ return [...root.querySelectorAll(sel)]; }
@@ -288,7 +283,7 @@ function allLessonsCompleted(modules){
 
 async function fetchFinalTask(courseId){
   try{
-    const out = await authFetch(`/api/course/${courseId}/task`);
+      const out = await authFetch(`/api/${courseId}/task`);
     if (!out) return null;
     const data = out.data;
     if (!data?.success || !data?.task) return null;
@@ -416,7 +411,7 @@ async function renderApp(){
       btnFinal.addEventListener("click", () => {
         if (!finalTask.isUnlocked || finalTask.isCompleted) return;
         if (!finalTask.taskId){
-          alert("Не удалось определить taskId. Проверь API /api/course/{id}/task");
+            alert("Не удалось определить taskId. Проверь API /api/{id}/task");
           return;
         }
         window.location.href = `/finallytask.html?taskId=${finalTask.taskId}`;

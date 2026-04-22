@@ -102,7 +102,7 @@ function setBusy(isBusy) {
 async function fetchFinalTaskId(courseId) {
     if (!courseId) return null;
     try {
-        const taskOut = await authFetch(`/api/course/${courseId}/task`);
+        const taskOut = await authFetch(`/api/${courseId}/task`);
         if (taskOut?.data?.success && taskOut.data.task?.id) return taskOut.data.task.id;
     } catch (e) {
         console.error('task fetch error:', e);
