@@ -1,5 +1,6 @@
 const { setCors } = require("../lib/cors");
 const { readJson } = require("../lib/body");
+const myCertificates = require("../server/routes/my-certificates.js");
 
 // ===== STATIC REQUIRES (ВАЖНО ДЛЯ VERCEL) =====
 const authLogin = require("../server/routes/auth/login.js");
@@ -140,6 +141,10 @@ module.exports = async (req, res) => {
         if (path === "/api/admin/courses" && method === "GET") return adminCourses(req, res);
         if (path === "/api/admin/tasks" && method === "GET") return adminTasks(req, res);
         if (path === "/api/admin/library/materials" && method === "GET") return adminLibraryMaterials(req, res);
+
+        if (path === "/api/my-certificates" && method === "GET") {
+            return myCertificates(req, res);
+        }
 
         {
             const p = matchPath(path, "/api/admin/users/:id");
