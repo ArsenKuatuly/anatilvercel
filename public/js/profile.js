@@ -203,7 +203,7 @@
         try {
             localStorage.removeItem(TOKEN_KEY);
         } catch {}
-        window.location.href = "/";
+        window.location.replace("/");
     }
 
     if (logoutBtn) logoutBtn.addEventListener("click", doLogout);

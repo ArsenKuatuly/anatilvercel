@@ -52,7 +52,7 @@
         if (res.status === 401) {
             localStorage.removeItem("token");
             alert("Сессия истекла, войдите снова");
-            window.location.href = "/auth.html";
+            window.location.replace("/auth.html");
             return;
         }
 

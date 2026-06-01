@@ -14,7 +14,7 @@ const downloadCertificateBtn = document.getElementById("downloadCertificateBtn")
 async function loadCertificate() {
   if (!courseId) {
     alert("Сертификат не найден");
-    window.location.href = "/dashboard.html";
+    window.location.replace("/dashboard.html");
     return;
   }
 
@@ -42,7 +42,7 @@ async function loadCertificate() {
   } catch (err) {
     console.error("certificate load error:", err);
     alert("Не удалось загрузить сертификат");
-    window.location.href = "/dashboard.html";
+    window.location.replace("/dashboard.html");
   }
 }
 

@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
             setMessage("Регистрация успешна", "success");
 
             setTimeout(() => {
-                window.location.href = "/onboarding.html";
+                window.location.replace("/onboarding.html");
             }, 400);
         } catch {
             setMessage("Ошибка соединения с сервером", "error");

@@ -55,7 +55,7 @@ let interactiveState = {
 
 if (!lessonId) {
     alert('Урок не найден');
-    window.location.href = '/dashboard';
+    window.location.replace('/dashboard');
 }
 
 const lessonTitle = document.getElementById('lessonTitle');
@@ -555,7 +555,7 @@ async function loadLesson() {
         const data = out.data;
         if (!data?.success) {
             alert(data?.message || 'Нет доступа к уроку');
-            window.location.href = '/dashboard';
+            window.location.replace('/dashboard');
             return;
         }
 

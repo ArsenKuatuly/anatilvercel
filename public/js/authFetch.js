@@ -29,7 +29,7 @@ window.authFetch = async function authFetch(url, options = {}) {
 
     if (res.status === 401) {
         localStorage.removeItem("token");
-        window.location.href = "/auth";
+        window.location.replace("/auth");
         return null;
     }
 

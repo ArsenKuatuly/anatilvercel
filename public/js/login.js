@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("token", result.token);
             setMsg("Вход выполнен", true);
             setTimeout(() => {
-                window.location.href = "/dashboard.html";
+                window.location.replace("/dashboard.html");
             }, 200);
         } catch {
             setMsg("Ошибка соединения с сервером", false);

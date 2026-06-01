@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       setMessage('Пароль успешно обновлён', true);
       await supabaseClient.auth.signOut().catch(() => {});
       setTimeout(() => {
-        window.location.href = '/auth.html';
+        window.location.replace('/auth.html');
       }, 1200);
     } catch (e) {
       console.error('reset-password submit error:', e);

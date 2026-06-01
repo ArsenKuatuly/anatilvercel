@@ -11,6 +11,14 @@ function authHeaders() {
     return token ? { Authorization: "Bearer " + token } : {};
 }
 
+function navigate(url, { replace = false } = {}) {
+    if (replace) {
+        window.location.replace(url);
+        return;
+    }
+    window.location.href = url;
+}
+
 async function goToCourse(slug) {
     try {
         const res = await fetch(`/api/course/${encodeURIComponent(slug)}`, {
@@ -20,7 +28,7 @@ async function goToCourse(slug) {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok || !data?.success || !Array.isArray(data.modules)) {
-            window.location.href = `/courses/${encodeURIComponent(slug)}`;
+            navigate(`/courses/${encodeURIComponent(slug)}`, { replace: true });
             return;
         }
 
@@ -43,14 +51,14 @@ async function goToCourse(slug) {
         }
 
         if (targetLessonId) {
-            window.location.href = `/lesson/${targetLessonId}`;
+            navigate(`/lesson/${targetLessonId}`, { replace: true });
             return;
         }
 
-        window.location.href = `/courses/${encodeURIComponent(slug)}`;
+        navigate(`/courses/${encodeURIComponent(slug)}`, { replace: true });
     } catch (err) {
         console.error("Ошибка прямого перехода в курс:", err);
-        window.location.href = `/courses/${encodeURIComponent(slug)}`;
+        navigate(`/courses/${encodeURIComponent(slug)}`, { replace: true });
     }
 }
 

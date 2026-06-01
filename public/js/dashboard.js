@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", async () => {
             localStorage.removeItem("token");
-            window.location.href = "/index.html";
+            window.location.replace("/index.html");
         });
     }
 
