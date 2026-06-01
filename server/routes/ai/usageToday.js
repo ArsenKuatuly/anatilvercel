@@ -29,6 +29,7 @@ module.exports = async (req, res) => {
             remaining: Math.max(DAILY_LIMIT - used, 0),
         });
     } catch (e) {
-        return res.status(500).json({ success: false, message: "DB error", details: e.message });
+        console.error("[ai/usage/today] db error:", e?.message || e);
+        return res.status(500).json({ success: false, message: "DB error" });
     }
 };

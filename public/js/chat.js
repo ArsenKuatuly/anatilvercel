@@ -1,4 +1,4 @@
-// js/chat.js
+
 
 (() => {
     const fab = document.querySelector(".chat-fab");

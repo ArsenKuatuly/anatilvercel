@@ -50,7 +50,7 @@ module.exports = async (req, res) => {
     console.error("[ai/tts] error:", err?.message || err);
     return res.status(500).json({
       error: "TTS error",
-      details: err?.message || String(err)
+      details: "Внутренняя ошибка TTS сервиса"
     });
   }
 };

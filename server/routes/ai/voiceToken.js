@@ -118,7 +118,7 @@ module.exports = async (req, res) => {
     if (!response.ok) {
       return res.status(response.status).json({
         error: "Failed to create realtime session",
-        details: data?.error?.message || data || "Unknown error",
+        details: "Не удалось создать голосовую сессию",
       });
     }
 
@@ -150,7 +150,7 @@ module.exports = async (req, res) => {
     console.error("[ai/voice/token] error:", error?.message || error);
     return res.status(500).json({
       error: "Voice token error",
-      details: error?.message || String(error),
+      details: "Внутренняя ошибка голосового сервиса",
     });
   }
 };

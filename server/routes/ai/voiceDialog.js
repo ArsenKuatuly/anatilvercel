@@ -498,7 +498,7 @@ module.exports = async (req, res) => {
     console.error("[ai/voice-dialog] error:", err?.message || err);
     return res.status(500).json({
       error: "AI error",
-      details: err?.message || String(err)
+      details: "Внутренняя ошибка AI сервиса"
     });
   }
 };

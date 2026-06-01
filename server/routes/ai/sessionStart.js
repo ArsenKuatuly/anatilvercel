@@ -30,6 +30,7 @@ module.exports = async (req, res) => {
 
         return res.json({ success: true, session: r.rows[0] });
     } catch (e) {
-        return res.status(500).json({ success: false, message: "DB error", details: e.message });
+        console.error("[ai/session/start] db error:", e?.message || e);
+        return res.status(500).json({ success: false, message: "DB error" });
     }
 };
