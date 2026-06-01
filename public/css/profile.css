@@ -557,7 +557,7 @@ img{max-width:100%;display:block}
 .profile-certificates__title{
     margin:0 0 6px;
     font-size:18px;
-    font-weight:800;
+    font-weight:700;
 }
 
 .profile-certificates__text{
@@ -601,7 +601,7 @@ img{max-width:100%;display:block}
     border:1px solid var(--primary);
     background:var(--primary);
     color:#fff;
-    font-weight:800;
+    font-weight:700;
 }
 
 .profile-certificates__btn:hover{background:var(--primary2);border-color:var(--primary2)}
