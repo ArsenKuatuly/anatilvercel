@@ -3,7 +3,7 @@
     const mobile = document.querySelector(".header__mobile");
     if (!burger || !mobile) return;
 
-    // создаём overlay 1 раз
+
     const overlay = document.createElement("div");
     overlay.className = "header__overlay";
     overlay.hidden = true;
@@ -47,6 +47,6 @@
         if (window.innerWidth >= 1024) closeMenu();
     });
 
-    // старт
+
     closeMenu();
 })();

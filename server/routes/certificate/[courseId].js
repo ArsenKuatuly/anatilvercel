@@ -37,8 +37,8 @@ module.exports = async (req, res) => {
         c.slug,
         c.title,
         c.level,
-        ucp.completed,
-        ucp.final_passed,
+        (COALESCE(ucp.final_passed, FALSE) OR COALESCE(ucp.completed, FALSE) OR COALESCE(uc.final_passed, FALSE) OR COALESCE(uc.completed, FALSE)) AS has_certificate,
+        (COALESCE(ucp.final_passed, FALSE) OR COALESCE(uc.final_passed, FALSE)) AS final_passed,
         ucp.final_score,
         COALESCE(ucp.completed_at, uc.completed_at, NOW()) AS issued_at,
         COALESCE(NULLIF(TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))), ''), u.login) AS full_name,
@@ -61,7 +61,7 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found" });
     }
 
-    if (!row.final_passed && !row.completed) {
+    if (!row.has_certificate) {
       return res.status(403).json({ success: false, message: "Certificate is not available yet" });
     }
 
