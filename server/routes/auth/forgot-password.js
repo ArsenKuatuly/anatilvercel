@@ -53,7 +53,40 @@ module.exports = async (req, res) => {
       message: 'Если такой email существует, мы отправили письмо со ссылкой для сброса пароля',
     });
   } catch (err) {
-    console.error('forgot-password error:', err);
-    return res.status(500).json({ success: false, message: 'Не удалось отправить письмо для сброса пароля' });
+    const rawMessage = String(err?.message || '');
+    const message = rawMessage.toLowerCase();
+
+    console.error('forgot-password error:', {
+      message: rawMessage,
+      status: err?.status,
+      code: err?.code,
+      name: err?.name,
+    });
+
+    if (message.includes('rate limit') || err?.status === 429) {
+      return res.status(429).json({
+        success: false,
+        message: 'Слишком много запросов на отправку письма. Подождите и попробуйте позже.',
+      });
+    }
+
+    if (message.includes('redirect') || message.includes('invalid') || message.includes('url')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Письмо не отправлено: проверьте APP_URL и Redirect URL в Supabase.',
+      });
+    }
+
+    if (message.includes('smtp') || message.includes('email provider') || message.includes('mailer')) {
+      return res.status(500).json({
+        success: false,
+        message: 'Письмо не отправлено: проблема с email-провайдером (SMTP/Supabase Mailer).',
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Не удалось отправить письмо для сброса пароля',
+    });
   }
 };
