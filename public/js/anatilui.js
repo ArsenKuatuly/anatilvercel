@@ -1244,7 +1244,8 @@
     setUsage(state.usage.used, state.usage.total);
   }
 
-  setupDashHeader();
+  // Header burger logic is handled by /js/headerdash.js on this page.
+  // Avoid double-binding click handlers, which causes instant open+close.
   loadState();
   seedInitialData();
   bindEvents();
