@@ -9,6 +9,7 @@ const authForgotPassword = require("../server/routes/auth/forgot-password.js");
 const authResetPassword = require("../server/routes/auth/reset-password.js");
 const authMe = require("../server/routes/auth/me.js");
 const authConfig = require("../server/routes/auth/config.js");
+const brandLogo = require("../server/routes/brand/logo.js");
 
 const aiChat = require("../server/routes/ai/chat.js");
 const aiVoiceDialog = require("../server/routes/ai/voiceDialog.js");
@@ -109,6 +110,7 @@ module.exports = async (req, res) => {
         if (path === "/api/auth/reset-password" && method === "POST") return authResetPassword(req, res);
         if (path === "/api/auth/me" && method === "GET") return authMe(req, res);
         if (path === "/api/auth/config" && method === "GET") return authConfig(req, res);
+        if (path === "/api/brand/logo" && method === "GET") return brandLogo(req, res);
 
         if (path === "/api/ai/chat" && method === "POST") return aiChat(req, res);
         if (path === "/api/ai/voice-dialog" && method === "POST") return aiVoiceDialog(req, res);
