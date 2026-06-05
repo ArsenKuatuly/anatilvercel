@@ -36,8 +36,7 @@ module.exports = async (req, res) => {
         const row = q.rows[0];
         if (!row) return res.status(404).json({ success: false, message: "Lesson not found" });
 
-        // проверка доступа: модуль не должен быть "закрыт" по логике предыдущих модулей
-        // (если модуль не первый — предыдущий модуль должен быть завершён)
+
         const prev = await db.query(
             `
       SELECT m2.id

@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({ success: true, materials: q.rows });
   } catch (e) {
-    // If library tables aren't installed yet, return a soft error.
+
     const msg = String(e?.message || e || "Server error");
     const code = e?.status || (msg.toLowerCase().includes("unauthorized") ? 401 : 500);
     return res.status(code).json({ success: false, message: msg });

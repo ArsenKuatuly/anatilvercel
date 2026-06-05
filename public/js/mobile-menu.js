@@ -19,12 +19,10 @@ burger?.addEventListener("click", () => {
     isOpen ? closeMenu() : openMenu();
 });
 
-// закрыть по Esc
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeMenu();
 });
 
-// закрыть при клике по пункту меню
 mobileMenu?.addEventListener("click", (e) => {
     const link = e.target.closest("a");
     if (link) closeMenu();

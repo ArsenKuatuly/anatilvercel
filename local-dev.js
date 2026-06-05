@@ -12,11 +12,11 @@ app.use((req, res, next) => {
     next();
 });
 
-// статика
+
 app.use(express.static(path.join(__dirname, "public")));
 
 
-// API роутер через RegExp (без проблем с *)
+
 app.all(/^\/api\/(.+)$/, async (req, res) => {
     try {
         const rel = req.params[0]; // "ai/chat"
@@ -29,12 +29,10 @@ app.all(/^\/api\/(.+)$/, async (req, res) => {
     } catch (e) {
         console.error("API load error:", e);
 
-        // если файл не найден — 404
         if (e && (e.code === "MODULE_NOT_FOUND" || String(e.message || "").includes("Cannot find module"))) {
             return res.status(404).json({ error: "API route not found", details: e.message });
         }
 
-        // иначе — это ошибка внутри обработчика
         return res.status(500).json({ error: "API handler crashed", details: e.message });
     }
 

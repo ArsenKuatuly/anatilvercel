@@ -10,11 +10,11 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // текущий уровень пользователя (если поле есть)
+
         const u = await db.query(`SELECT current_level FROM users WHERE id = $1 LIMIT 1`, [user.id]);
         const currentLevel = u.rows[0]?.current_level || null;
 
-        // берём курсы (если currentLevel есть — сначала его, но отдаём все)
+
         const coursesQ = await db.query(
             `
       SELECT id, slug, title, level, position
@@ -33,7 +33,7 @@ module.exports = async (req, res) => {
             return res.status(200).json({ success: true, currentLevel, courses: [] });
         }
 
-        // считаем уроки и завершенные уроки по каждому курсу
+
         const statsQ = await db.query(
             `
       SELECT
@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
             statsQ.rows.map(r => [Number(r.course_id), { total: Number(r.total_lessons||0), done: Number(r.completed_lessons||0) }])
         );
 
-        // nextLesson по каждому курсу (первый незавершенный в порядке модуль/урок)
+
         const nextQ = await db.query(
             `
       SELECT DISTINCT ON (c.id)

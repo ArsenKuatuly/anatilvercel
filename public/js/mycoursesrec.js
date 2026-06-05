@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const token = localStorage.getItem("token");
 
-    // если не залогинен
+
     if (!token) {
         container.innerHTML = `
       <p>Войдите, чтобы увидеть рекомендованный курс</p>
@@ -62,11 +62,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
         document.getElementById("openCourseBtn")?.addEventListener("click", () => {
-            // ✅ универсально для Vercel: slug через query
+
             window.location.href = `/coursemodul.html?slug=${encodeURIComponent(course.slug)}`;
 
-            // если ты хочешь “красивый URL”, и настроил vercel.json:
-            // window.location.href = `/courses/${encodeURIComponent(course.slug)}`;
+
         });
     } catch (e) {
         console.error(e);

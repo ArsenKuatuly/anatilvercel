@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // берём текущий уровень пользователя и первый курс этого уровня
+
         const u = await db.query(`SELECT current_level FROM users WHERE id = $1 LIMIT 1`, [user.id]);
         const level = u.rows[0]?.current_level || "elementary";
 
@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
         const courseId = c.rows[0]?.id;
         if (!courseId) return res.status(200).json({ success: false });
 
-        // следующий урок = первый НЕ завершённый по порядку
+
         const next = await db.query(
             `
       SELECT l.id

@@ -5,7 +5,6 @@ function getSlug() {
     const s = qs.get("slug") || qs.get("course") || qs.get("courseSlug");
     if (s) return s;
 
-    // fallback: /courses/<slug>
     const parts = window.location.pathname.split("/").filter(Boolean);
     const idx = parts.indexOf("courses");
     if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];

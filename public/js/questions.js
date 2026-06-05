@@ -45,7 +45,6 @@ export const subjects = {
       { question: "Әкесі не істейді?", answers: ["Көлік жөндейді", "Ағаштан жиһаз жасайды", "Тамақ пісіреді"], correct: 1 },
       { question: "Аулада не бар?", answers: ["Тек гараж", "Бассейн мен ағаш", "Дүкен"], correct: 1 },
     ],
-    // для удобства (можешь поменять путь)
     globalAudioSrc: "assets/audio/textexam.mp3",
   },
 };

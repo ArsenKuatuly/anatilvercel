@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing slug" });
     }
 
-    // 1) курс
+
     const c = await db.query(
       `SELECT id, slug, title, level, position
        FROM courses
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found" });
     }
 
-    // 2) гарантируем строку прогресса курса (как в старом MySQL: INSERT IGNORE)
+
     await db.query(
       `INSERT INTO user_course_progress (user_id, course_id, completed, final_passed)
        VALUES ($1, $2, false, false)
@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
       [user.id, courseRow.id]
     );
 
-    // 3) прогресс курса для UI (completed/final_passed/final_score)
+
     const prog = await db.query(
       `SELECT completed, final_passed, final_score
        FROM user_course_progress
@@ -56,7 +56,6 @@ module.exports = async (req, res) => {
       final_score: progress.final_score,
     };
 
-    // 4) модули курса
     const m = await db.query(
       `SELECT id, course_id, title, position
        FROM modules
@@ -66,7 +65,6 @@ module.exports = async (req, res) => {
     );
     const modules = m.rows;
 
-    // 5) уроки курса (одним запросом)
     const l = await db.query(
       `SELECT l.id, l.module_id, l.title, l.position
        FROM lessons l
@@ -77,7 +75,7 @@ module.exports = async (req, res) => {
     );
     const lessons = l.rows;
 
-    // 6) прогресс пользователя по урокам курса
+
     const p = await db.query(
       `SELECT ulp.lesson_id, ulp.completed
        FROM user_lesson_progress ulp
@@ -90,7 +88,6 @@ module.exports = async (req, res) => {
 
     const completedSet = new Set(p.rows.filter(r => r.completed).map(r => r.lesson_id));
 
-    // 7) соберём lessons по module_id
     const lessonsByModule = new Map();
     for (const lesson of lessons) {
       if (!lessonsByModule.has(lesson.module_id)) lessonsByModule.set(lesson.module_id, []);
@@ -102,13 +99,12 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 8) completed для модулей: все уроки completed
     const moduleCompletedFlags = modules.map(mod => {
       const modLessons = lessonsByModule.get(mod.id) || [];
       return modLessons.length > 0 && modLessons.every(x => !!x.completed);
     });
 
-    // 9) lock: первый модуль открыт, остальные — если предыдущий модуль завершён
+
     const outModules = modules.map((mod, idx) => {
       const locked = idx === 0 ? false : !moduleCompletedFlags[idx - 1];
       const modLessons = lessonsByModule.get(mod.id) || [];

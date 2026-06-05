@@ -1,18 +1,18 @@
-// i18n.js — version for your current HTML (desktop + mobile)
+
 
 const langButtons = document.querySelectorAll(".lang-switch__btn");
 const elements = document.querySelectorAll("[data-key]");
 
 const translations = {
     ru: {
-        // NAV / header
+
         about: "О нас",
         courses_nav: "Курсы",
         important: "Преимущества",
         contacts: "Контакты",
         check_level: "Проверить свой уровень",
 
-        // HERO
+
         hero_badge_open: "Набор открыт",
         hero_title: "Поможем поднять<br />ваш <span class='hero__title-accent'>казахский язык</span>",
         hero_subtitle:
@@ -25,13 +25,11 @@ const translations = {
         hero_levels_subtitle: "Выберите подходящий для вас уровень обучения",
         hero_levels_note: "От базового A1 до продвинутого C1 уровня владения языком",
 
-        // PROMO
         promo_title:
             "AnaTil — место, где начинается свободное владение <span class='promo__highlight'>казахским языком</span>",
         promo_subtitle:
             "Более 2000 наших выпускников успешно сдали экзамены и используют казахский язык в повседневной жизни и профессиональной деятельности. Присоединяйтесь к сообществу тех, кто уже достиг своих целей вместе с AnaTil.",
 
-        // REASONS
         reasons_title: "9 причин, почему вы должны выбрать AnaTil",
         reasons_subtitle:
             "Почему обучение с AnaTil даёт результат — быстро, понятно и с поддержкой.",
@@ -48,7 +46,6 @@ const translations = {
         reason_8: "Объяснения на понятном языке. Сложная грамматика объясняется простыми словами.",
         reason_9: "Практика живого общения. Учитесь через реальные диалоги, которые используете в жизни.",
 
-        // COURSES
         courses_title: "Доступные курсы",
         courses_subtitle: "Выберите уровень и начните обучение — от базового до продвинутого.",
         next_start: "Ближайший старт:",
@@ -66,7 +63,6 @@ const translations = {
         course_c1_title: "C1 - Высокий уровень",
         course_c1_desc: "Почти свободное владение языком.",
 
-        // FOOTER
         footer_info: "AnaTil",
         footer_text: "место, где каждый, независимо от уровня подготовки, может изучать казахский язык",
         footer_info_title: "Информация",
@@ -82,14 +78,12 @@ const translations = {
     },
 
     kz: {
-        // NAV / header
         about: "Біз туралы",
         courses_nav: "Курстар",
         important: "Артықшылықтар",
         contacts: "Байланыс",
         check_level: "Деңгейіңізді тексеру",
 
-        // HERO
         hero_badge_open: "Қабылдау ашық",
         hero_title: "Қазақ тілін<br />жақсартуға <span class='hero__title-accent'>көмектесеміз</span>",
         hero_subtitle:
@@ -102,13 +96,11 @@ const translations = {
         hero_levels_subtitle: "Өзіңізге ыңғайлы оқу деңгейін таңдаңыз",
         hero_levels_note: "A1 базалық деңгейінен C1 жоғары деңгейіне дейін",
 
-        // PROMO
         promo_title:
             "AnaTil — <span class='promo__highlight'>қазақ тілін</span> еркін меңгеру басталатын орын",
         promo_subtitle:
             "2000+ түлегіміз емтихандарды сәтті тапсырып, қазақ тілін күнделікті өмірде және жұмыста қолданады. Мақсатына AnaTil-мен бірге жеткендер қатарына қосылыңыз.",
 
-        // REASONS
         reasons_title: "AnaTil таңдаудың 9 себебі",
         reasons_subtitle: "AnaTil-мен оқу нәтижелі — тез, түсінікті және қолдаумен.",
         reason_1: "2025 жылғы бағдарлама, әр 3 ай сайын жаңартылады",
@@ -121,7 +113,6 @@ const translations = {
         reason_8: "Қарапайым түсіндіру. Күрделі грамматика жеңіл тілмен беріледі.",
         reason_9: "Тірі сөйлесу практикасы. Нағыз диалогтар арқылы үйренесіз.",
 
-        // COURSES
         courses_title: "Қолжетімді курстар",
         courses_subtitle: "Деңгейді таңдаңыз да оқуды бастаңыз — бастапқыдан жоғарыға дейін.",
         next_start: "Жақын басталу:",
@@ -139,7 +130,6 @@ const translations = {
         course_c1_title: "C1 – Жоғары деңгей",
         course_c1_desc: "Тілді дерлік еркін меңгеру.",
 
-        // FOOTER
         footer_info: "AnaTil",
         footer_text: "әр адам дайындық деңгейіне қарамастан қазақ тілін үйрене алатын орын",
         footer_info_title: "Ақпарат",
@@ -155,14 +145,12 @@ const translations = {
     },
 
     en: {
-        // NAV / header
         about: "About",
         courses_nav: "Courses",
         important: "Important",
         contacts: "Contacts",
         check_level: "Check your level",
 
-        // HERO
         hero_badge_open: "Enrollment open",
         hero_title: "We help you improve<br />your <span class='hero__title-accent'>Kazakh language</span>",
         hero_subtitle:
@@ -175,13 +163,11 @@ const translations = {
         hero_levels_subtitle: "Choose the level that suits you best",
         hero_levels_note: "From basic A1 to advanced C1 proficiency",
 
-        // PROMO
         promo_title:
             "AnaTil — the place where fluent <span class='promo__highlight'>Kazakh</span> begins",
         promo_subtitle:
             "More than 2000 graduates have successfully passed exams and use Kazakh in everyday life and professional work. Join the community of people who reached their goals with AnaTil.",
 
-        // REASONS
         reasons_title: "9 reasons to choose AnaTil",
         reasons_subtitle: "Learning with AnaTil works — fast, clear, and with support.",
         reason_1: "2025 program updated every 3 months",
@@ -194,7 +180,6 @@ const translations = {
         reason_8: "Clear explanations — complex grammar made simple.",
         reason_9: "Real communication practice through lifelike dialogues.",
 
-        // COURSES
         courses_title: "Available courses",
         courses_subtitle: "Pick a level and start learning — from basic to advanced.",
         next_start: "Next start:",
@@ -211,8 +196,7 @@ const translations = {
         course_b2_desc: "Fluent and confident use of the language.",
         course_c1_title: "C1 – Advanced level",
         course_c1_desc: "Near-native command of the language.",
-
-        // FOOTER
+        
         footer_info: "AnaTil",
         footer_text: "a place where anyone can learn Kazakh regardless of their level",
         footer_info_title: "Information",

@@ -1,8 +1,8 @@
-/* ===== Layout ===== */
+
 .page{background:var(--bg); min-height:calc(100vh - 64px)}
 .container{max-width:var(--container); margin:0 auto; padding:18px 16px 40px}
 
-/* ===== Buttons / badges ===== */
+
 .btn{
   display:inline-flex;
   align-items:center;
@@ -45,7 +45,7 @@
 .badge--muted{background:rgba(107,114,128,.08)}
 .badge--danger{border-color:rgba(220,38,38,.25); background:rgba(220,38,38,.08); color:var(--red)}
 
-/* ===== Hero ===== */
+
 .course-hero{
   background:var(--white);
   border:1px solid var(--border);
@@ -105,7 +105,7 @@
 }
 .course-hero__note-text{color:rgba(15,23,42,.85)}
 
-/* ===== Modules ===== */
+
 .modules{margin-top:14px}
 .modules__list{display:flex; flex-direction:column; gap:12px}
 
@@ -179,7 +179,7 @@
 .lesson-row__btn:hover{background:rgba(15,23,42,.04)}
 .lesson-row--locked .lesson-row__btn{cursor:not-allowed}
 
-/* ===== Final task ===== */
+
 .final{margin-top:14px}
 .final__card{
   background:var(--white);
@@ -195,7 +195,7 @@
 .final__title{margin:8px 0 0; font-size:18px}
 .final__desc{margin:8px 0 0; color:var(--muted); line-height:1.5}
 
-/* ===== State ===== */
+
 .state{margin-top:14px}
 .state__card{
   border:1px solid var(--border);
@@ -207,7 +207,7 @@
 .state__title{margin:0; font-size:18px}
 .state__desc{margin:8px 0 14px; color:var(--muted); line-height:1.5}
 
-/* ===== Responsive ===== */
+
 @media (max-width: 900px){
   .course-hero__top{flex-direction:column; align-items:stretch}
   .course-hero__actions{justify-content:flex-start}

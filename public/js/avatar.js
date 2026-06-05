@@ -5,7 +5,6 @@
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    /* ===== LOAD AVATAR ===== */
     try {
         const res = await fetch("/api/profile", {
             headers: { Authorization: "Bearer " + token }
@@ -25,12 +24,11 @@
         console.error(e);
     }
 
-    /* ===== UPLOAD AVATAR ===== */
     avatarInput?.addEventListener("change", async () => {
         const file = avatarInput.files?.[0];
         if (!file) return;
 
-        // простая валидация
+
         if (!file.type.startsWith("image/")) {
             alert("Можно загрузить только изображение");
             return;

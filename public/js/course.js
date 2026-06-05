@@ -5,7 +5,7 @@ function getCourseSlug() {
     const slugFromQuery = qs.get("slug") || qs.get("course") || qs.get("courseSlug");
     if (slugFromQuery) return slugFromQuery;
 
-    // fallback: если страница открыта как /courses/<slug>
+
     const parts = window.location.pathname.split("/").filter(Boolean);
     const idx = parts.indexOf("courses");
     if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
@@ -13,7 +13,7 @@ function getCourseSlug() {
     return null;
 }
 
-/* ================== ПРОВЕРКА СТРАНИЦЫ ================== */
+
 document.addEventListener("DOMContentLoaded", async () => {
     const titleEl = document.getElementById("courseTitle");
     const modulesEl = document.getElementById("modules");
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-/* ================== RENDER ================== */
+
 function renderCourse(course, modules) {
     const titleEl = document.getElementById("courseTitle");
     const modulesEl = document.getElementById("modules");

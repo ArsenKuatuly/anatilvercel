@@ -291,7 +291,7 @@
         if (!next) return;
         state.activeTab = next;
 
-        // reset per-tab views
+
         if (next === "courses") {
           coursesState.view = "courses";
           coursesState.selectedCourse = null;
@@ -820,7 +820,7 @@
   }
 
   function renderStats() {
-    // lightweight local KPIs (no backend endpoint yet)
+
     const stats = [
       { label: "Пользователи", value: usersState.items.length || 0, icon: icons.users, bg: "rgba(37,99,235,.1)", color: "#2563EB" },
       { label: "Курсы", value: coursesState.courses.length || 0, icon: icons.book, bg: "rgba(22,163,74,.12)", color: "#16A34A" },
@@ -1118,7 +1118,7 @@
             })
           });
 
-          // questions: save one by one
+
           for (const q of tasksState.questions) {
             await safeAuthFetch(`/api/admin/questions/${q.id}`, {
               method: "PATCH",
@@ -1131,7 +1131,7 @@
           }
 
           toast("Задание сохранено");
-          // refresh list label/course
+
           await loadTasks().catch(() => {});
         } catch (err) {
           console.error(err);

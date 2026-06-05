@@ -2,8 +2,7 @@ const db = require("../../lib/db");
 const { requireUser } = require("../../lib/jwt");
 const { resetAllProgress } = require("../../utils/resetProgress");
 
-// POST /api/save-result
-// body: { totalScore, level, reading, listening, math }
+
 module.exports = async (req, res) => {
   let user;
   try {
@@ -23,22 +22,18 @@ module.exports = async (req, res) => {
       ? "intermediate"
       : level;
 
-  // minimal validation to avoid breaking inserts
   if (typeof totalScore !== "number" || !cappedLevel) {
     return res.status(400).json({ success: false, message: "Некорректные данные" });
   }
 
   try {
-    // 1) сброс прогресса (как в старом MySQL API)
     await resetAllProgress(db, user.id);
 
-    // 2) обновление уровня пользователя
     await db.query(
       `UPDATE users SET current_level = $1 WHERE id = $2`,
       [cappedLevel, user.id]
     );
 
-    // 3) сохранение результата
     await db.query(
       `
         INSERT INTO test_results

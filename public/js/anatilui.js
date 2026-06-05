@@ -722,7 +722,7 @@
     els.dialogScenarioTitle.textContent = scenario.name;
     els.dialogScenarioDescription.textContent = scenario.description;
     els.dialogScenarioDifficulty.textContent = scenario.difficulty;
-    els.dialogGoalText.textContent = scenario.goal;
+    els.dialogGoalText.textContent = scenario.goal;  
     els.dialogScenarioEmoji.textContent = scenario.emoji;
     els.dialogPhraseList.innerHTML = scenario.phrases.map(function (phrase) {
       const parts = phrase.split(' — ');
@@ -1244,8 +1244,6 @@
     setUsage(state.usage.used, state.usage.total);
   }
 
-  // Header burger logic is handled by /js/headerdash.js on this page.
-  // Avoid double-binding click handlers, which causes instant open+close.
   loadState();
   seedInitialData();
   bindEvents();

@@ -311,7 +311,7 @@ function bindInteractions(stats){
     });
   }
 
-  // accordion
+
   qsa("[data-module-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.getAttribute("data-module-toggle");
@@ -323,7 +323,7 @@ function bindInteractions(stats){
     });
   });
 
-  // lessons
+
   qsa(".lesson").forEach(row => {
     const id = row.getAttribute("data-lesson");
     const can = row.getAttribute("data-can-open") === "1";
@@ -376,7 +376,7 @@ async function renderApp(){
     const modules = Array.isArray(data.modules) ? data.modules : [];
     const stats = computeStats(modules);
 
-    // final state
+
     const courseIsCompleted = !!course?.completed || allLessonsCompleted(modules);
     const finalPassed = !!course?.final_passed;
 
@@ -390,7 +390,6 @@ async function renderApp(){
       }
     }
 
-    // admin hint: ?admin=1
     const admin = new URL(window.location.href).searchParams.get("admin") === "1";
     if (admin){
       const a1 = qs("#adminLink"); const a2 = qs("#adminLinkMobile");

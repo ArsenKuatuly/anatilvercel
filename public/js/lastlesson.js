@@ -1,20 +1,15 @@
 function pickPayload(x) {
-    // authFetch может вернуть Response или {res,data}
     if (!x) return { ok: false, data: null };
 
-    // формат: { res: Response, data: parsedJson }
     if (x.data !== undefined) return { ok: !!x.res?.ok, data: x.data };
 
-    // формат: Response
     return { ok: !!x.ok, data: null };
 }
 
 async function toJson(x) {
-    // если это Response
     if (x && typeof x.json === "function") {
         try { return await x.json(); } catch { return null; }
     }
-    // если это уже объект
     if (x && typeof x === "object") return x;
     return null;
 }

@@ -17,16 +17,13 @@ function publicAvatarUrl(path) {
 function pickFirstFile(files) {
     if (!files || typeof files !== "object") return null;
 
-    // сначала пробуем стандартное имя поля
     let f = files.avatar;
 
-    // если нет — берём первый попавшийся файл
     if (!f) {
         const firstKey = Object.keys(files)[0];
         f = firstKey ? files[firstKey] : null;
     }
 
-    // formidable иногда возвращает массив
     if (Array.isArray(f)) f = f[0];
 
     return f || null;
@@ -35,7 +32,6 @@ function pickFirstFile(files) {
 function getFilePath(file) {
     if (!file) return null;
 
-    // разные версии formidable
     return (
         file.filepath ||
         file.path ||
@@ -80,7 +76,7 @@ module.exports = async (req, res) => {
         const form = new IncomingForm({
             multiples: false,
             maxFileSize: 2 * 1024 * 1024, // 2MB
-            // на некоторых окружениях помогает явно
+
             keepExtensions: true,
             filter: (part) => part.mimetype && part.mimetype.startsWith("image/")
         });

@@ -128,10 +128,8 @@
     el.courseNote.hidden = !completed;
     el.restartBtn.hidden = !completed;
 
-    // show final task only after completion (пример)
     el.finalTask.hidden = !data.showFinalTask;
 
-    // modules
     el.modules.innerHTML = '';
 
     data.modules.forEach((m, idx) => {
@@ -181,7 +179,6 @@
         `;
 
         row.querySelector('button')?.addEventListener('click', () => {
-          // тут можешь сделать навигацию: location.href = `/lesson.html?lessonId=${l.id}`
           console.log('Open lesson:', l.id);
         });
 
@@ -198,25 +195,24 @@
       el.modules.appendChild(card);
     });
 
-    // continue button
     el.continueBtn.onclick = () => {
       if (data.nextLessonId) {
         console.log('Continue to next lesson:', data.nextLessonId);
-        // location.href = `/lesson.html?lessonId=${data.nextLessonId}`;
+
       } else {
-        // если курс завершён — скроллим к финальному заданию
+
         document.getElementById('finalTask')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
 
     el.restartBtn.onclick = () => {
       console.log('Restart course');
-      // тут можно дернуть API reset прогресса
+
     };
 
     el.finalBtn.onclick = () => {
       console.log('Start final task');
-      // location.href = `/test.html?type=final&course=${encodeURIComponent(data.title)}`;
+
     };
   }
 
@@ -230,7 +226,7 @@
   }
 
   async function loadCourse() {
-    // DEMO: имитация загрузки
+
     setState({ show: true, title: 'Загрузка...', desc: 'Подгружаем данные курса', actionLabel: 'Ок', onAction: null });
     el.stateAction.style.display = 'none';
 
@@ -239,7 +235,6 @@
     el.stateAction.style.display = '';
     setState({ show: false });
 
-    // сценарий можно переключать через ?state=normal|completed
     const params = new URLSearchParams(location.search);
     const state = params.get('state') || 'normal';
 

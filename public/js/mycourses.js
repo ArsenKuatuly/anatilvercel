@@ -5,7 +5,7 @@ const historyBlock = document.getElementById("historyBlock");
 const retryBtn = document.getElementById("retryTestBtn");
 const historyBtn = document.getElementById("historyBtn");
 
-/* ===== ПЕРЕВОД УРОВНЕЙ ===== */
+
 function humanLevel(level) {
     const map = {
         elementary: "Элементарный",
@@ -17,7 +17,6 @@ function humanLevel(level) {
     return map[level] || level;
 }
 
-/* ===== ПОСЛЕДНИЙ РЕЗУЛЬТАТ ===== */
 (async () => {
     try {
         const res = await authFetch("/api/my-result");
@@ -50,12 +49,10 @@ function humanLevel(level) {
     }
 })();
 
-/* ===== СДАТЬ ТЕСТ ЗАНОВО ===== */
 retryBtn.addEventListener("click", () => {
     window.location.href = "/test.html";
 });
 
-/* ===== ИСТОРИЯ ПОПЫТОК ===== */
 historyBtn.addEventListener("click", async () => {
     const isVisible = historyBlock.style.display === "block";
 

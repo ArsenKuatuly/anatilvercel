@@ -2,7 +2,7 @@ const { setCors } = require("../lib/cors");
 const { readJson } = require("../lib/body");
 const myCertificates = require("../server/routes/my-certificates.js");
 
-// ===== STATIC REQUIRES (ВАЖНО ДЛЯ VERCEL) =====
+
 const authLogin = require("../server/routes/auth/login.js");
 const authRegister = require("../server/routes/auth/register.js");
 const authForgotPassword = require("../server/routes/auth/forgot-password.js");
