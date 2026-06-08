@@ -135,16 +135,8 @@ async function loadMyCoursesSmart() {
         }
 
         const course = rec.data.course;
-
-        courseCard.innerHTML = `
-      <div class="course__card">
-        <h2 class="course__title">${course.title}</h2>
-        <p class="course__level">Уровень: ${translateLevel(course.level)}</p>
-        <button class="btn btn--primary" id="openCourse">Продолжить</button>
-      </div>
-    `;
-
-        document.getElementById("openCourse").onclick = () => goToCourse(course.slug);
+        await goToCourse(course.slug);
+        return;
 
     } catch (err) {
         console.error(err);
