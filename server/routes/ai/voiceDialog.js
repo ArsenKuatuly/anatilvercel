@@ -89,6 +89,21 @@ function normalizeText(value) {
     .trim();
 }
 
+function resolveVoiceOptions(body) {
+  const options = body?.options || {};
+  const meta = body?.meta || {};
+
+  const readBool = (value, fallback) =>
+    typeof value === "boolean" ? value : fallback;
+
+  return {
+    showTranslation: readBool(options.showTranslation, readBool(meta.translation, true)),
+    gentleCorrection: readBool(options.gentleCorrection, readBool(meta.correction, true)),
+    hints: readBool(options.hints, readBool(meta.hints, true)),
+    slowSpeech: readBool(options.slowSpeech, readBool(meta.speed === "slow", false)),
+  };
+}
+
 function isLikelyUnclearInput(text) {
   const value = normalizeText(text);
   if (!value) return true;
@@ -220,6 +235,7 @@ function buildVoiceMessages(body) {
   const level = normalizeText(body?.level || body?.meta?.level || "A1");
   const action = normalizeText(body?.action || "message");
   const phrases = Array.isArray(body?.supportPhrases) ? body.supportPhrases.slice(0, 8).map(normalizeText).filter(Boolean) : [];
+  const opts = resolveVoiceOptions(body);
 
   const messages = [
     {
@@ -232,6 +248,18 @@ function buildVoiceMessages(body) {
         `Как вести разговор: ${scenario.flow}`,
         `Цель: ${goal}.`,
         `Уровень ученика: ${level}.`,
+        opts.slowSpeech
+          ? "Режим медленной речи включен: используй максимально простые слова и очень короткие фразы."
+          : "Говори естественно и понятно для уровня ученика.",
+        opts.showTranslation
+          ? "Можно добавить короткий перевод в поле translation, если это действительно помогает."
+          : "Поле translation по умолчанию оставляй пустым.",
+        opts.gentleCorrection
+          ? "Если ученик допустил заметную ошибку, можно мягко указать улучшенный вариант в correction."
+          : "Исправления отключены: в обычном режиме оставляй correction пустым и не акцентируй ошибки.",
+        opts.hints
+          ? "Подсказки включены: при action=hint дай короткий уместный пример ответа."
+          : "Подсказки отключены: при action=hint не давай готовый ответ, мягко предложи ученику ответить самостоятельно.",
         phrases.length ? `Полезные фразы по теме: ${phrases.join(" | ")}.` : "",
         scenario.followups.length ? `Примеры уместных следующих реплик: ${scenario.followups.join(" | ")}.` : "",
         "Главная реплика всегда должна быть на казахском.",
@@ -285,6 +313,7 @@ function buildVoiceMessages(body) {
 function fallbackVoiceReply(message, body) {
   const text = normalizeText(message);
   const scenario = getScenario(body);
+  const opts = resolveVoiceOptions(body);
   const unclear = isLikelyUnclearInput(text);
   if (unclear) {
     return {
@@ -305,6 +334,16 @@ function fallbackVoiceReply(message, body) {
 
   const action = normalizeText(body?.action || "message");
   if (action === "hint") {
+    if (!opts.hints) {
+      return {
+        assistantText: "Өзіңіз қысқа жауап беріп көріңіз. Қажет болса, кейін көмек беремін.",
+        ttsText: "Өзіңіз қысқа жауап беріп көріңіз. Қажет болса, кейін көмек беремін.",
+        translation: opts.showTranslation ? "Попробуйте ответить самостоятельно, потом подскажу." : "",
+        correction: { hasIssue: false, better: "", explanation: "" },
+        meta: { shouldRepeat: false, isUnclearInput: false }
+      };
+    }
+
     const hintMap = {
       intro: ["Менің атым Арсен.", "Мен Алматыданмын."],
       cafe: ["Маған бір кофе беріңізші.", "Шай емес, кофе аламын."],
@@ -359,10 +398,12 @@ function fallbackVoiceReply(message, body) {
 
 function sanitizeReply(raw, message, body) {
   try {
+    const opts = resolveVoiceOptions(body);
+    const action = normalizeText(body?.action || "message");
     const parsed = JSON.parse(raw || "{}");
     let assistantText = normalizeText(parsed?.assistantText || "Кешіріңіз, қайталап айта аласыз ба?");
     let ttsText = normalizeText(parsed?.ttsText || parsed?.assistantText || assistantText);
-    const translation = normalizeText(parsed?.translation || "");
+    const translation = opts.showTranslation ? normalizeText(parsed?.translation || "") : "";
     const correction = {
       hasIssue: !!parsed?.correction?.hasIssue,
       better: normalizeText(parsed?.correction?.better || ""),
@@ -374,7 +415,7 @@ function sanitizeReply(raw, message, body) {
     };
 
     if (
-      normalizeText(body?.action || 'message') === 'message' &&
+      action === 'message' &&
       (
         looksLikeParrotReply(message, assistantText) ||
         looksLikeLearnerAnswer(body, assistantText, correction) ||
@@ -383,6 +424,17 @@ function sanitizeReply(raw, message, body) {
     ) {
       assistantText = buildNaturalScenarioReply(message, body);
       ttsText = assistantText;
+    }
+
+    if (!opts.hints && action === "hint") {
+      assistantText = "Өзіңіз қысқа жауап беріп көріңіз.";
+      ttsText = assistantText;
+    }
+
+    if (!opts.gentleCorrection && action !== "explain") {
+      correction.hasIssue = false;
+      correction.better = "";
+      correction.explanation = "";
     }
 
     return { assistantText, ttsText, translation, correction, meta };

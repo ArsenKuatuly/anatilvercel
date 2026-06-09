@@ -141,6 +141,7 @@
   const summaryUseful = document.querySelector('.voice-summary-list--blue');
   const summaryReco = document.querySelector('.voice-summary-reco');
   const summaryGreen = document.querySelector('.voice-summary-green');
+  const helpButtons = Array.from(document.querySelectorAll('[data-help]'));
 
   function loadHistory(){
     try {
@@ -205,6 +206,21 @@
     state.options.correction = !!optCorrection.checked;
     state.options.hints = !!optHints.checked;
     state.options.slow = !!optSlow.checked;
+    updateHelpControls();
+  }
+
+  function updateHelpControls(){
+    helpButtons.forEach(function(btn){
+      const action = btn.getAttribute('data-help');
+      const hintBound = action === 'example' || action === 'simplify';
+      if (hintBound && !state.options.hints) {
+        btn.disabled = true;
+        btn.classList.add('is-disabled');
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('is-disabled');
+      }
+    });
   }
 
   function updateSupportContent(){
@@ -400,6 +416,13 @@
       scenario: scenario.title,
       scenarioGoal: scenario.goal,
       scenarioDifficulty: state.level === 'A1' ? 'Лёгкий' : (state.level === 'A2' ? 'Средний' : 'Выше среднего'),
+      level: state.level,
+      options:{
+        showTranslation: state.options.translation,
+        gentleCorrection: state.options.correction,
+        hints: state.options.hints,
+        slowSpeech: state.options.slow
+      },
       supportPhrases: scenario.phrases.map(function(item){ return item.split(' — ')[0]; }),
       history: state.messages.slice(-8).map(function(item){
         return { role:item.sender === 'ai' ? 'assistant' : 'user', text:item.text };
@@ -909,7 +932,7 @@
     setScreen('setup');
   });
 
-  document.querySelectorAll('[data-help]').forEach(function(btn){
+  helpButtons.forEach(function(btn){
     btn.addEventListener('click', function(){
       handleHelp(btn.dataset.help);
     });
